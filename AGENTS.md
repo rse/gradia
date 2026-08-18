@@ -60,8 +60,14 @@ No test target is defined.
 ## CLI Command
 
 ```
-gradia [-t graph|hub|grid] [-o <file>.svg] [--<render-option> <value>] <graph>.txt
+gradia [-t graph|hub|grid] [-f <format>] [-o <file>.svg] [--<render-option> <value>] <graph>.txt
 ```
+
+The output format is `svg:standalone` (a standalone SVG/XML document,
+the default), `svg:embedded` (the SVG without the `<?xml?>` declaration,
+for direct embedding into HTML), `url:xml` (a `data:image/svg+xml` URL
+with URL-encoded XML), or `url:base64` (a `data:image/svg+xml` URL with
+Base64-encoded XML).
 
 The rendering options (`--font-family`, `--font-embed`, and the
 `--color-*` family) can also be set through `#<option> <value>`

@@ -15,7 +15,8 @@ import { Command, Option } from "commander"
 
 /*  internal dependencies  */
 import { Config, configDefaults }                                       from "./gradia-api-config.js"
-import { renderDiagram, DiagramType, diagramTypes, diagramTypeDefault } from "./gradia-api.js"
+import { renderDiagram, DiagramType, diagramTypes, diagramTypeDefault,
+    DiagramFormat, diagramFormats, diagramFormatDefault }               from "./gradia-api.js"
 
 /*  internal package meta-information  */
 const pkg = JSON.parse(fs.readFileSync(
@@ -23,10 +24,11 @@ const pkg = JSON.parse(fs.readFileSync(
     { version: string, description: string }
 
 /*  the parsed command-line options ("output" is required and "type"
-    is defaulted, so both are guaranteed to be present strings)  */
+    and "format" are defaulted, so all are guaranteed to be present)  */
 interface CLIOptions {
     output: string
     type:   DiagramType
+    format: DiagramFormat
     [key: string]: string | boolean | undefined
 }
 
@@ -38,6 +40,8 @@ program.name("gradia")
     .requiredOption("-o, --output <file>",         "output SVG file")
     .addOption(new Option("-t, --type <type>",     "diagram type")
         .choices(diagramTypes).default(diagramTypeDefault))
+    .addOption(new Option("-f, --format <format>", "output format")
+        .choices(diagramFormats).default(diagramFormatDefault))
     .option("--font-family <family>",              "font family name or path to a WOFF2 file")
     .option("--font-embed",                        "embed the WOFF2 font file into the SVG")
     .option("--color-node-regular-name <color>",   "text color of regular nodes")
@@ -67,8 +71,8 @@ program.name("gradia")
 
         /*  read the input, render the diagram, and write the output  */
         const text = fs.readFileSync(input, "utf8")
-        const svg  = await renderDiagram(text, { type: options.type, config })
-        fs.writeFileSync(options.output, svg, "utf8")
+        const out  = await renderDiagram(text, { type: options.type, format: options.format, config })
+        fs.writeFileSync(options.output, out, "utf8")
     })
 
 /*  run the command-line interface  */
