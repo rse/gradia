@@ -1,0 +1,51 @@
+{
+    "name":                          "@rse/gradia",
+    "description":                   "Object Graph Diagram Rendering",
+    "keywords":                      [ "object", "graph", "diagram", "rendering", "svg", "layout", "api", "cli" ],
+    "version":                       "0.9.0",
+    "license":                       "MIT",
+    "author": {
+        "name":                      "Dr. Ralf S. Engelschall",
+        "email":                     "rse@engelschall.com",
+        "url":                       "http://engelschall.com"
+    },
+    "homepage":                      "https://github.com/rse/gradia",
+    "repository": {
+        "type":                      "git",
+        "url":                       "git+https://github.com/rse/gradia.git"
+    },
+    "main":                          "dst/gradia-api.js",
+    "types":                         "dst/gradia-api.d.ts",
+    "bin": {
+        "gradia":                    "dst/gradia-cli.js"
+    },
+    "files":                         [ "dst" ],
+    "type":                          "module",
+    "dependencies": {
+        "commander":                 "15.0.0",
+        "@antv/layout":              "2.0.0"
+    },
+    "devDependencies": {
+        "eslint":                    "9.39.5",
+        "@eslint/js":                "9.39.5",
+        "typescript-eslint":         "8.67.0",
+        "eslint-plugin-promise":     "7.3.0",
+        "eslint-plugin-import":      "2.32.0",
+        "neostandard":               "0.13.0",
+        "globals":                   "17.11.0",
+        "typescript":                "6.0.3",
+        "@types/node":               "26.2.0",
+        "@rse/stx":                  "1.1.6",
+        "shx":                       "0.4.0",
+        "nodemon":                   "3.1.14"
+    },
+    "engines": {
+        "node":                      ">=22.0.0"
+    },
+    "allowScripts": {
+        "fsevents":                  true
+    },
+    "scripts": {
+        "start":                     "stx -v4 -l warning -c etc/stx.conf"
+    }
+}

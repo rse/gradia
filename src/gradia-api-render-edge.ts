@@ -1,0 +1,250 @@
+/*
+**  Gradia -- Object Graph Diagram Rendering
+**  Copyright (c) 2026 Dr. Ralf S. Engelschall <rse@engelschall.com>
+**  Distributed under MIT license <https://spdx.org/licenses/MIT.html>
+*/
+
+/*  internal dependencies  */
+import { Edge }                     from "./gradia-api-model.js"
+import { Poly, RADIUS, HOP, SLOT }  from "./gradia-api-render-base.js"
+
+/*  edge attachment port geometry  */
+const PORT_SEP = 24  /*  maximum separation of adjacent ports     */
+const PORT_PAD = 10  /*  padding of the port band inside the box  */
+
+/*  drop duplicate and collinear intermediate points of a polyline  */
+export const simplifyPoly = (pts: Poly): Poly => {
+    /*  drop the collinear intermediate points first, as collapsing
+        a backtracking triple leaves a duplicate point pair behind  */
+    const flat: Poly = [ ...pts ]
+    for (let k = flat.length - 2; k > 0; k--) {
+        const [ a, b, c ] = [ flat[k - 1], flat[k], flat[k + 1] ]
+        if ((a[0] === b[0] && b[0] === c[0]) || (a[1] === b[1] && b[1] === c[1]))
+            flat.splice(k, 1)
+    }
+
+    /*  drop the remaining duplicate points  */
+    const out: Poly = []
+    for (const p of flat) {
+        if (out.length > 0 && out[out.length - 1][0] === p[0] && out[out.length - 1][1] === p[1])
+            continue
+        out.push(p)
+    }
+    return out
+}
+
+/*  the horizontal node side an edge attaches to (east or west)  */
+export type Side = "e" | "w"
+
+/*  distribute the edge attachment ports along each node side,
+    ordered by the vertical position of the opposite endpoint  */
+export const assignPorts = (
+    edges: Edge[],
+    sides: { s: Side, t: Side }[],
+    cx:    (id: string) => number,
+    cy:    (id: string) => number,
+    boxW:  Map<string, number>,
+    boxH:  Map<string, number>
+): Map<string, { x: number, y: number }> => {
+    /*  group the edge endpoints by the node side they attach to  */
+    const portGroups = new Map<string, { edge: number, role: "s" | "t" }[]>()
+    const addPort    = (key: string, edge: number, role: "s" | "t") => {
+        const group = portGroups.get(key)
+        if (group === undefined)
+            portGroups.set(key, [ { edge, role } ])
+        else
+            group.push({ edge, role })
+    }
+    edges.forEach((edge, i) => {
+        addPort(`${edge.source}:${sides[i].s}`, i, "s")
+        addPort(`${edge.target}:${sides[i].t}`, i, "t")
+    })
+
+    /*  place the ports of each group, ordered by the opposite endpoint  */
+    const portPos = new Map<string, { x: number, y: number }>()
+    for (const [ key, group ] of portGroups) {
+        const sep     = key.lastIndexOf(":")  /*  ids may contain a colon themselves  */
+        const id      = key.slice(0, sep)
+        const side    = key.slice(sep + 1)
+        const otherOf = (p: { edge: number, role: "s" | "t" }) =>
+            p.role === "s" ? edges[p.edge].target : edges[p.edge].source
+        group.sort((a, b) => (cy(otherOf(a)) - cy(otherOf(b))) || (a.edge - b.edge))
+        const spacing = Math.min(PORT_SEP, (boxH.get(id)! - PORT_PAD) / group.length)
+        group.forEach((p, idx) => {
+            portPos.set(`${p.edge}:${p.role}`, {
+                x: cx(id) + (side === "e" ? +1 : -1) * boxW.get(id)! / 2,
+                y: cy(id) + (idx - (group.length - 1) / 2) * spacing
+            })
+        })
+    }
+    return portPos
+}
+
+/*  a channel/gutter track user: an edge entering the channel/gutter at
+    cross-axis position posIn and leaving it at posOut (mirrored users
+    enter from the far instead of the near side)  */
+export interface TrackUser {
+    edge:   number
+    posIn:  number
+    posOut: number
+    mirror: boolean
+}
+
+/*  assign the parallel tracks within a channel or gutter: the users are
+    ordered by their entry/exit positions, so that a track-following
+    segment never has to cross the entering segment of a parallel
+    neighbor (back turners get near tracks entry-position-ordered,
+    forward turners far tracks, reversed for mirrored users which
+    enter the channel/gutter from the far side)  */
+export const assignTracks = (users: TrackUser[], width: number, pad: number): Map<number, number> => {
+    const order = (list: TrackUser[], mirror: boolean): TrackUser[] => {
+        const dir = mirror ? -1 : +1
+        const backs = list.filter((u) => u.posOut <  u.posIn)
+            .sort((a, b) => dir * ((a.posIn - b.posIn) || (a.posOut - b.posOut)))
+        const fores = list.filter((u) => u.posOut >= u.posIn)
+            .sort((a, b) => dir * ((b.posIn - a.posIn) || (b.posOut - a.posOut)))
+        return [ ...backs, ...fores ]
+    }
+    const ordered = [
+        ...order(users.filter((u) => !u.mirror), false),
+        ...order(users.filter((u) =>  u.mirror), true)
+    ]
+    const step    = Math.min(SLOT, (width - pad) / Math.max(ordered.length - 1, 1))
+    const offsets = new Map<number, number>()
+    ordered.forEach((u, idx) => {
+        offsets.set(u.edge, (idx - (ordered.length - 1) / 2) * step)
+    })
+    return offsets
+}
+
+/*  detect edge crossings: for every horizontal segment determine the
+    vertical segments of all other edges crossing it (hops are always
+    drawn on the horizontal segment of the crossing pair)  */
+export const computeHops = (polys: Poly[]): Map<number, number[]>[] => {
+    /*  collect all vertical segments once, instead of re-scanning
+        every polyline again for each single horizontal segment  */
+    const verts: { owner: number, x: number, y1: number, y2: number }[] = []
+    polys.forEach((poly, j) => {
+        for (let m = 0; m < poly.length - 1; m++) {
+            const [ c, d ] = [ poly[m], poly[m + 1] ]
+            if (c[0] !== d[0])
+                continue
+            verts.push({ owner: j, x: c[0], y1: Math.min(c[1], d[1]), y2: Math.max(c[1], d[1]) })
+        }
+    })
+    return polys.map((poly, i) => {
+        const result = new Map<number, number[]>()
+        for (let k = 0; k < poly.length - 1; k++) {
+            const [ a, b ] = [ poly[k], poly[k + 1] ]
+            if (a[1] !== b[1])
+                continue
+            const hy  = a[1]
+            const hx1 = Math.min(a[0], b[0])
+            const hx2 = Math.max(a[0], b[0])
+            const xs: number[] = []
+            for (const v of verts)
+                if (v.owner !== i && v.x > hx1 + 1 && v.x < hx2 - 1 && hy > v.y1 + 1 && hy < v.y2 - 1)
+                    xs.push(v.x)
+            if (xs.length > 0)
+                result.set(k, xs)
+        }
+        return result
+    })
+}
+
+/*  convert an edge polyline into an SVG path with rounded corners
+    at the bends and semi-circular hops at the crossing points  */
+export const pathOf = (poly: Poly, hop: Map<number, number[]>): string => {
+    const len = (a: [ number, number ], b: [ number, number ]) =>
+        Math.abs(b[0] - a[0]) + Math.abs(b[1] - a[1])
+    const radius = (k: number): number => {
+        if (k <= 0 || k >= poly.length - 1)
+            return 0
+        let r = Math.min(RADIUS, len(poly[k - 1], poly[k]) / 2, len(poly[k], poly[k + 1]) / 2)
+
+        /*  shrink the corner rounding when a crossing hop sits close
+            to the bend, so the hop is never swallowed by the arc  */
+        for (const seg of [ k - 1, k ])
+            for (const hx of hop.get(seg) ?? [])
+                r = Math.min(r, Math.max(Math.abs(hx - poly[k][0]) - HOP - 2, 4))
+        return r
+    }
+    const d: string[] = []
+    for (let k = 0; k < poly.length - 1; k++) {
+        const [ a, b ] = [ poly[k], poly[k + 1] ]
+        const l   = len(a, b)
+        const ux  = (b[0] - a[0]) / l
+        const uy  = (b[1] - a[1]) / l
+        const r0  = radius(k)
+        const r1  = radius(k + 1)
+        const p0: [ number, number ] = [ a[0] + ux * r0, a[1] + uy * r0 ]
+        const p1: [ number, number ] = [ b[0] - ux * r1, b[1] - uy * r1 ]
+        if (k === 0)
+            d.push(`M ${p0[0]} ${p0[1]}`)
+        if (a[1] === b[1] && hop.has(k)) {
+            const dir = Math.sign(b[0] - a[0])
+            const xs  = hop.get(k)!
+                .filter((hx) => (hx - p0[0]) * dir > 2 && (p1[0] - hx) * dir > 2)
+                .sort((m, n) => (m - n) * dir)
+
+            /*  merge closely adjacent crossings into groups, each
+                rendered as one single wide "long hop" arc (crossings
+                are merged whenever the flat line piece left between
+                their individual hops would be shorter than 14px)  */
+            const groups: number[][] = []
+            for (const hx of xs) {
+                const g = groups[groups.length - 1]
+                if (g !== undefined && Math.abs(hx - g[g.length - 1]) <= HOP * 2 + 14)
+                    g.push(hx)
+                else
+                    groups.push([ hx ])
+            }
+            for (const g of groups) {
+                let x1 = g[0] - dir * HOP
+                let x2 = g[g.length - 1] + dir * HOP
+
+                /*  clamp the arc into the drawable segment part, so
+                    crossings close to a corner still get their hop  */
+                if ((x1 - p0[0]) * dir < 0)
+                    x1 = p0[0]
+                if ((p1[0] - x2) * dir < 0)
+                    x2 = p1[0]
+                d.push(`L ${x1} ${a[1]}`)
+                d.push(`A ${Math.abs(x2 - x1) / 2} ${HOP} 0 0 ${dir > 0 ? 1 : 0} ${x2} ${a[1]}`)
+            }
+        }
+        d.push(`L ${p1[0]} ${p1[1]}`)
+        if (k < poly.length - 2) {
+            const c  = poly[k + 1]
+            const n  = poly[k + 2]
+            const nl = len(c, n)
+            const q: [ number, number ] = [
+                c[0] + (n[0] - c[0]) / nl * r1,
+                c[1] + (n[1] - c[1]) / nl * r1
+            ]
+            d.push(`Q ${b[0]} ${b[1]} ${q[0]} ${q[1]}`)
+        }
+    }
+    return d.join(" ")
+}
+
+/*  determine a point on a polyline at a given fraction of its length  */
+export const pointAt = (poly: Poly, fraction: number): { x: number, y: number, horizontal: boolean } => {
+    const lens  = poly.slice(0, -1).map((p, k) =>
+        Math.abs(poly[k + 1][0] - p[0]) + Math.abs(poly[k + 1][1] - p[1]))
+    const total = lens.reduce((a, b) => a + b, 0)
+    let want    = total * fraction
+    for (let k = 0; k < lens.length; k++) {
+        if (want <= lens[k] || k === lens.length - 1) {
+            const t = lens[k] > 0 ? want / lens[k] : 0
+            return {
+                x: poly[k][0] + (poly[k + 1][0] - poly[k][0]) * Math.min(t, 1),
+                y: poly[k][1] + (poly[k + 1][1] - poly[k][1]) * Math.min(t, 1),
+                horizontal: poly[k][1] === poly[k + 1][1]
+            }
+        }
+        want -= lens[k]
+    }
+    return { x: poly[0][0], y: poly[0][1], horizontal: true }
+}
+

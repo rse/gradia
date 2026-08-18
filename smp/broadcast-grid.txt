@@ -1,0 +1,27 @@
+
+#color-node-regular-name   #336699
+#color-node-regular-box    #e0f0ff
+#color-node-regular-border #c0d0e0
+#color-node-primary-name   #ffffff
+#color-node-primary-box    #336699
+#color-node-primary-border #003366
+#color-edge-line           #999999
+#color-edge-name           #333333
+#color-edge-arity          #333333
+
+Event [ url: "#event", primary: true ]
+AgendaPoint [ url: "#agendapoint" ]
+Channel [ url: "#channel" ]
+Resource [ url: "#resource" ]
+ResourceProviderParam [ url: "#resourceproviderparam" ]
+Role [ url: "#role" ]
+User [ url: "#user" ]
+Message [ url: "#message" ]
+MessageText [ url: "#messagetext" ]
+QuestionTag [ url: "#questiontag" ]
+AuthorizationToken [ url: "#authorizationtoken" ]
+SessionToken [ url: "#sessiontoken" ]
+EventStatistic [ url: "#eventstatistic" ]
+ChannelStatistic [ url: "#channelstatistic" ]
+UserStatistic [ url: "#userstatistic" ]
+

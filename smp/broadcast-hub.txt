@@ -1,0 +1,34 @@
+
+#color-node-regular-name   #336699
+#color-node-regular-box    #e0f0ff
+#color-node-regular-border #c0d0e0
+#color-node-primary-name   #ffffff
+#color-node-primary-box    #336699
+#color-node-primary-border #003366
+#color-edge-line           #999999
+#color-edge-name           #333333
+#color-edge-arity          #333333
+
+Event [ url: "#event", primary: true ]
+AgendaPoint [ url: "#agendapoint" ]
+Channel [ url: "#channel" ]
+Role [ url: "#role" ]
+User [ url: "#user" ]
+Message [ url: "#message" ]
+QuestionTag [ url: "#questiontag" ]
+AuthorizationToken [ url: "#authorizationtoken" ]
+SessionToken [ url: "#sessiontoken" ]
+EventStatistic [ url: "#eventstatistic" ]
+
+Event --(channels)-->[0..n] Channel
+Event --(roles)-->[0..n] Role
+Event --(accessList)-->[0..n] User
+Event --(messages)-->[0..n] Message
+Event --(statistics)-->[0..n] EventStatistic
+Event --(availableQuestionTags)-->[0..n] QuestionTag
+Event --(activeAgendaPoint)-->[0..1] AgendaPoint
+Event --(agendaPoints)-->[0..n] AgendaPoint
+Message --(event)-->[1] Event
+AuthorizationToken --(event)-->[1] Event
+SessionToken --(event)-->[1] Event
+

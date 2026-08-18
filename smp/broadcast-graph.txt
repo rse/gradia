@@ -1,0 +1,53 @@
+
+#color-node-regular-name   #336699
+#color-node-regular-box    #e0f0ff
+#color-node-regular-border #c0d0e0
+#color-node-primary-name   #ffffff
+#color-node-primary-box    #336699
+#color-node-primary-border #003366
+#color-edge-line           #999999
+#color-edge-name           #333333
+#color-edge-arity          #333333
+
+Event [ url: "#event", type: "ENTITY", primary: true ]
+AgendaPoint [ url: "#agendapoint" ]
+Channel [ url: "#channel" ]
+Resource [ url: "#resource" ]
+ResourceProviderParam [ url: "#resourceproviderparam" ]
+Role [ url: "#role" ]
+User [ url: "#user" ]
+Message [ url: "#message" ]
+MessageText [ url: "#messagetext" ]
+QuestionTag [ url: "#questiontag" ]
+AuthorizationToken [ url: "#authorizationtoken" ]
+SessionToken [ url: "#sessiontoken" ]
+EventStatistic [ url: "#eventstatistic" ]
+ChannelStatistic [ url: "#channelstatistic" ]
+UserStatistic [ url: "#userstatistic" ]
+
+Event --(channels)-->[0..n] Channel
+Event --(roles)-->[0..n] Role
+Event --(accessList)-->[0..n] User
+Event --(messages)-->[0..n] Message
+Event --(statistics)-->[0..n] EventStatistic
+Event --(availableQuestionTags)-->[0..n] QuestionTag
+Event --(activeAgendaPoint)-->[0..1] AgendaPoint
+Event --(agendaPoints)-->[0..n] AgendaPoint
+AgendaPoint --(correspondingTags)-->[0..n] QuestionTag
+Channel --(resources)-->[1..n] Resource
+Channel --(statistics)-->[0..n] ChannelStatistic
+Resource --(params)-->[0..n] ResourceProviderParam
+User --(likes)-->[0..n] Message
+User --(sentMessages)-->[0..n] Message
+User --(statistics)-->[0..n] UserStatistic
+Message --(sender)-->[0..1] User
+Message --(liker)-->[0..n] User
+Message --(event)-->[1] Event
+Message --(replyTo)-->[0..1] Message
+Message --(predecessor)-->[0..1] Message
+Message --(questionTags)-->[0..n] QuestionTag
+Message --(messageText)-->[1..n] MessageText
+AuthorizationToken --(user)-->[1] User
+AuthorizationToken --(event)-->[1] Event
+SessionToken --(user)-->[1] User
+SessionToken --(event)-->[1] Event

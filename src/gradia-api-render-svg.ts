@@ -1,0 +1,256 @@
+/*
+**  Gradia -- Object Graph Diagram Rendering
+**  Copyright (c) 2026 Dr. Ralf S. Engelschall <rse@engelschall.com>
+**  Distributed under MIT license <https://spdx.org/licenses/MIT.html>
+*/
+
+/*  internal dependencies  */
+import { Node, Edge }          from "./gradia-api-model.js"
+import { Config, resolveFont } from "./gradia-api-config.js"
+import {
+    Poly, NodeStyle,
+    FS_NAME, FS_TYPE, FS_ATTR, FS_EDGE, FS_ARITY, FS_GROUP, MARGIN,
+    textWidth, escapeXML
+} from "./gradia-api-render-base.js"
+import { attrsOfNode, typeOf, urlOf, defaultStyleOf, MIN_H, ATTR_H, ATTR_P, TYPE_H, TYPE_D }
+    from "./gradia-api-render-node.js"
+import { computeHops, pathOf, pointAt }
+    from "./gradia-api-render-edge.js"
+
+/*  escape a string for use inside a CSS string literal (the XML escaping
+    is resolved by the parser before the CSS is parsed, so quotes and
+    backslashes have to be neutralized to prevent a CSS injection)  */
+const escapeCSS = (text: string): string =>
+    text.replace(/[\\"']/g, "\\$&").replace(/[\r\n]/g, " ")
+
+/*  a decorated group box surrounding the nodes of a named group  */
+export interface GroupBox {
+    name: string
+    x:    number
+    y:    number
+    w:    number
+    h:    number
+}
+
+/*  the laid out graph handed over for SVG generation  */
+export interface Layout {
+    nodes:    Node[]
+    edges:    Edge[]
+    cx:       (id: string) => number
+    cy:       (id: string) => number
+    boxW:     Map<string, number>
+    boxH:     Map<string, number>
+    contentH: Map<string, number>
+    polys:    Poly[]
+    styleOf?: (node: Node) => NodeStyle
+    groups?:  GroupBox[]
+}
+
+/*  a rectangular area, given by its top-left and bottom-right corners  */
+type Box = [ number, number, number, number ]
+
+/*  the placement of a group tag in the top-left corner of its group box  */
+const TAG_DX = 18  /*  left offset of the group tag  */
+const TAG_DY = 12  /*  top offset of the group tag   */
+
+/*  track occupied areas (node boxes and already placed labels) to
+    let subsequent labels dodge into a collision-free position (the
+    returned "occupied" array grows with every claimed label box and
+    hence also serves as the box input of the overall bounding box)  */
+const labelPlacer = (layout: Layout): { claim: (candidates: Box[]) => Box, occupied: Box[] } => {
+    const { nodes, cx, cy, boxW, boxH } = layout
+    const occupied: Box[] = nodes.map((node) => [
+        cx(node.id) - boxW.get(node.id)! / 2, cy(node.id) - boxH.get(node.id)! / 2,
+        cx(node.id) + boxW.get(node.id)! / 2, cy(node.id) + boxH.get(node.id)! / 2
+    ])
+
+    /*  let the labels also dodge the group tags in the group box corners  */
+    for (const group of layout.groups ?? [])
+        occupied.push([ group.x + TAG_DX, group.y + TAG_DY,
+            group.x + TAG_DX + textWidth(group.name, FS_GROUP), group.y + TAG_DY + FS_GROUP * 1.2 ])
+    const collides = (box: Box): boolean =>
+        occupied.some((o) => box[0] < o[2] && box[2] > o[0] && box[1] < o[3] && box[3] > o[1])
+    const claim = (candidates: Box[]): Box => {
+        const box = candidates.find((c) => !collides(c)) ?? candidates[0]
+        occupied.push(box)
+        return box
+    }
+    return { claim, occupied }
+}
+
+/*  generate the SVG fragments for a single node box (a node with a
+    "url" attribute becomes a hyperlink covering the whole box)  */
+const renderNode = (node: Node, layout: Layout, style: NodeStyle, font: string): string[] => {
+    const { cx, cy, boxW, boxH, contentH } = layout
+    const w     = boxW.get(node.id)!
+    const h     = boxH.get(node.id)!
+    const x     = cx(node.id) - w / 2
+    const y     = cy(node.id) - h / 2
+    const attrs = attrsOfNode(node)
+    const type  = typeOf(node)
+    const url   = urlOf(node)
+    const parts: string[] = []
+    parts.push(`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="6" ` +
+        `fill="${escapeXML(style.fill)}" stroke="${escapeXML(style.stroke)}" stroke-width="4.0"` +
+        `${style.dash !== undefined ? ` stroke-dasharray="${escapeXML(style.dash)}"` : ""}/>`)
+
+    /*  vertically center the textual content block within the box, with
+        the optional type line shifting the name and attributes down  */
+    const ty    = cy(node.id) - contentH.get(node.id)! / 2
+    const th    = type !== undefined ? TYPE_H : 0
+    const nameY = attrs.length > 0 ? ty + th + 42 : cy(node.id) + th / 2 + FS_NAME * 0.36
+    if (type !== undefined)
+        parts.push(`<text x="${cx(node.id)}" y="${nameY - TYPE_D}" text-anchor="middle" ` +
+            `font-family="${font}" font-size="${FS_TYPE}" ` +
+            `fill="${escapeXML(style.text)}">${escapeXML(type)}</text>`)
+    parts.push(`<text x="${cx(node.id)}" y="${nameY}" text-anchor="middle" ` +
+        `font-family="${font}" font-size="${FS_NAME}" font-weight="600" ` +
+        `fill="${escapeXML(style.text)}">${escapeXML(node.name)}</text>`)
+    attrs.forEach((attr, k) => {
+        parts.push(`<text x="${cx(node.id)}" y="${ty + th + MIN_H + ATTR_P + k * ATTR_H}" text-anchor="middle" ` +
+            `font-family="${font}" font-size="${FS_ATTR}" ` +
+            `fill="${escapeXML(style.text)}">${escapeXML(`${attr.key}: ${attr.val}`)}</text>`)
+    })
+    if (url === undefined)
+        return parts
+    return [ `<a href="${escapeXML(url)}" xlink:href="${escapeXML(url)}">`, ...parts, "</a>" ]
+}
+
+/*  determine the overall bounding box of all rendered elements (the
+    node boxes and the placed labels are handed over as already
+    computed areas, the edge polylines are scanned here)  */
+const viewBoxOf = (layout: Layout, boxes: Box[]): { x: number, y: number, w: number, h: number } => {
+    const { polys } = layout
+    let [ minX, minY, maxX, maxY ] = [ Infinity, Infinity, -Infinity, -Infinity ]
+    for (const [ bx1, by1, bx2, by2 ] of boxes) {
+        minX = Math.min(minX, bx1)
+        minY = Math.min(minY, by1)
+        maxX = Math.max(maxX, bx2)
+        maxY = Math.max(maxY, by2)
+    }
+    for (const poly of polys) {
+        for (const [ px, py ] of poly) {
+            minX = Math.min(minX, px)
+            minY = Math.min(minY, py)
+            maxX = Math.max(maxX, px)
+            maxY = Math.max(maxY, py)
+        }
+    }
+    if (!Number.isFinite(minX))
+        [ minX, minY, maxX, maxY ] = [ 0, 0, 0, 0 ]
+    return {
+        x: Math.floor(minX - MARGIN / 2),
+        y: Math.floor(minY - MARGIN / 2),
+        w: Math.ceil(maxX - minX + MARGIN),
+        h: Math.ceil(maxY - minY + MARGIN)
+    }
+}
+
+/*  render a laid out graph into an SVG document  */
+export const renderSVG = (layout: Layout, config: Config): string => {
+    const { nodes, edges, polys } = layout
+    const groups  = layout.groups  ?? []
+    const styleOf = layout.styleOf ?? defaultStyleOf(config)
+
+    /*  resolve the configured font into the rendered font family stack  */
+    const { family, embed } = resolveFont(config)
+    const font = escapeXML(`'${escapeCSS(family)}', ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif`)
+
+    /*  detect the edge crossings requiring rendered hops  */
+    const hops = computeHops(polys)
+
+    /*  prepare the collision-free placement of the edge labels  */
+    const { claim, occupied } = labelPlacer(layout)
+
+    /*  generate the SVG fragments for the edges (paths below, labels above)  */
+    const svgEdges:  string[] = []
+    const svgLabels: string[] = []
+
+    /*  the white halo rendered behind the edge labels for readability  */
+    const halo = "stroke=\"#ffffff\" stroke-width=\"4.5\" paint-order=\"stroke\" stroke-linejoin=\"round\""
+    edges.forEach((edge, i) => {
+        svgEdges.push(`<path d="${pathOf(polys[i], hops[i])}" fill="none" ` +
+            `stroke="${escapeXML(config["color-edge-line"])}" stroke-width="3" marker-end="url(#arrow)"/>`)
+        if (edge.name !== undefined) {
+            const w = textWidth(edge.name, FS_EDGE)
+            const candidates: Box[] = []
+            for (const f of [ 0.50, 0.40, 0.60, 0.30, 0.70, 0.20, 0.80 ]) {
+                const p = pointAt(polys[i], f)
+                if (p.horizontal) {
+                    candidates.push([ p.x - w / 2, p.y - 23, p.x + w / 2, p.y - 3 ])
+                    candidates.push([ p.x - w / 2, p.y + 3,  p.x + w / 2, p.y + 23 ])
+                }
+                else {
+                    candidates.push([ p.x + 5,     p.y - 10, p.x + 5 + w, p.y + 10 ])
+                    candidates.push([ p.x - 5 - w, p.y - 10, p.x - 5,     p.y + 10 ])
+                }
+            }
+            const box = claim(candidates)
+            svgLabels.push(`<text x="${(box[0] + box[2]) / 2}" y="${box[3] - 3}" text-anchor="middle" ` +
+                `font-family="${font}" font-size="${FS_EDGE}" ` +
+                `fill="${escapeXML(config["color-edge-name"])}" ${halo}>${escapeXML(edge.name)}</text>`)
+        }
+        if (edge.arity !== undefined) {
+            const w    = textWidth(edge.arity, FS_ARITY)
+            const p    = pointAt(polys[i], 1.0)
+            const prev = pointAt(polys[i], 0.999)
+            const dx   = Math.sign(p.x - prev.x) || 1
+            const ax   = p.x - dx * (24 + w / 2)
+            const box  = claim([
+                [ ax - w / 2,           p.y - 17, ax + w / 2,           p.y - 4  ],
+                [ ax - w / 2,           p.y + 4,  ax + w / 2,           p.y + 17 ],
+                [ ax - w / 2 - dx * 14, p.y - 17, ax + w / 2 - dx * 14, p.y - 4  ]
+            ])
+            svgLabels.push(`<text x="${(box[0] + box[2]) / 2}" y="${box[3] - 3}" text-anchor="middle" ` +
+                `font-family="${font}" font-size="${FS_ARITY}" ` +
+                `fill="${escapeXML(config["color-edge-arity"])}" ${halo}>${escapeXML(edge.arity)}</text>`)
+        }
+    })
+
+    /*  generate the SVG fragments for the node boxes  */
+    const svgNodes = nodes.flatMap((node) => renderNode(node, layout, styleOf(node), font))
+
+    /*  generate the SVG fragments for the group boxes (drawn below
+        everything else) and their tags in the top-left corners  */
+    const svgGroups = groups.flatMap((group) => [
+        `<rect x="${group.x}" y="${group.y}" width="${group.w}" height="${group.h}" rx="12" ` +
+            `fill="${escapeXML(config["color-group-box"])}" ` +
+            `stroke="${escapeXML(config["color-group-border"])}" stroke-width="3.0"/>`,
+        `<text x="${group.x + TAG_DX}" y="${group.y + TAG_DY + FS_GROUP}" ` +
+            `font-family="${font}" font-size="${FS_GROUP}" font-weight="600" ` +
+            `fill="${escapeXML(config["color-group-name"])}">${escapeXML(group.name)}</text>`
+    ])
+
+    /*  determine the overall bounding box of all rendered elements  */
+    const groupBoxes: Box[] = groups.map((group) =>
+        [ group.x, group.y, group.x + group.w, group.y + group.h ])
+    const vb = viewBoxOf(layout, [ ...occupied, ...groupBoxes ])
+
+    /*  assemble the final SVG document  */
+    return [
+        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>",
+        "<svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" " +
+            `viewBox="${vb.x} ${vb.y} ${vb.w} ${vb.h}" width="${vb.w}" height="${vb.h}">`,
+        "<defs>",
+        ...(embed !== undefined ? [
+            "<style>",
+            `@font-face { font-family: "${escapeXML(escapeCSS(family))}"; ` +
+                `src: url(data:font/woff2;base64,${embed}) format("woff2"); }`,
+            "</style>"
+        ] : []),
+        "<marker id=\"arrow\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" " +
+            "markerWidth=\"21\" markerHeight=\"21\" markerUnits=\"userSpaceOnUse\" " +
+            "orient=\"auto-start-reverse\">",
+        `<path d="M 0 1 L 9 5 L 0 9 z" fill="${escapeXML(config["color-edge-line"])}"/>`,
+        "</marker>",
+        "</defs>",
+        `<rect x="${vb.x}" y="${vb.y}" width="${vb.w}" height="${vb.h}" fill="#ffffff"/>`,
+        ...svgGroups,
+        ...svgEdges,
+        ...svgNodes,
+        ...svgLabels,
+        "</svg>",
+        ""
+    ].join("\n")
+}
+
