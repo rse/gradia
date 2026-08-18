@@ -17,6 +17,7 @@
     },
     "main":                          "dst/gradia-api.js",
     "types":                         "dst/gradia-api.d.ts",
+    "browser":                       "dst/gradia-api.umd.js",
     "bin": {
         "gradia":                    "dst/gradia-cli.js"
     },
@@ -39,7 +40,8 @@
         "@types/node":               "26.2.0",
         "@rse/stx":                  "1.1.6",
         "shx":                       "0.4.0",
-        "nodemon":                   "3.1.14"
+        "nodemon":                   "3.1.14",
+        "vite":                      "8.2.1"
     },
     "engines": {
         "node":                      ">=22.0.0"

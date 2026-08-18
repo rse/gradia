@@ -35,10 +35,12 @@ tiles for an edge-less graph).
         layout via the Dagre algorithm of `@antv/layout`)
     -   `src/gradia-api-type-hub.ts`: the `hub` diagram type (hub graph layout)
     -   `src/gradia-api-type-grid.ts`: the `grid` diagram type (compact grid layout)
--   `etc/`: the tool configurations (`eslint.mjs`, `tsconfig.json`, `stx.conf`)
--   `smp/`: the sample graph descriptions (`*.txt`) and their rendered
-    SVG outputs (`*.svg`)
--   `dst/`: the compiled output (`bin` `gradia` is `dst/gradia-cli.js`)
+-   `etc/`: the tool configurations (`eslint.mjs`, `tsconfig.json`,
+    `stx.conf`, `vite.ts`)
+-   `smp/`: the sample graph descriptions (`*.txt`), their rendered
+    SVG outputs (`*.svg`), and the playground (`playground.html`)
+-   `dst/`: the compiled output (`bin` `gradia` is `dst/gradia-cli.js`,
+    the browser UMD bundle of the API is `dst/gradia-api.umd.js`)
     -- never edit it; it is regenerated
 
 ## Build System
@@ -47,8 +49,9 @@ Build orchestration uses `@rse/stx`, not plain npm scripts. The only npm
 script is `npm start`, which invokes stx with `etc/stx.conf`:
 
 ```
-npm start build         # lint + build-cmd
+npm start build         # lint + build-cmd + build-web
 npm start build-cmd     # tsc --project etc/tsconfig.json (emits into dst/)
+npm start build-web     # vite --config etc/vite.ts build (emits dst/gradia-api.umd.js)
 npm start lint          # eslint --config etc/eslint.mjs src/*.ts
 npm start build-watch   # nodemon rebuild on src/**/*.ts
 npm start lint-watch    # nodemon relint on src/**/*.ts

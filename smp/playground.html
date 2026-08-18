@@ -12,16 +12,7 @@
         <link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
         <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
         <script src="https://cdn.jsdelivr.net/npm/vue@3.5.41/dist/vue.global.prod.js"></script>
-        <script type="importmap">
-            {
-                "imports": {
-                    "@antv/layout": "https://cdn.jsdelivr.net/npm/@antv/layout@2.0.0/+esm",
-                    "nanoid":       "https://cdn.jsdelivr.net/npm/nanoid@6.0.1/+esm",
-                    "node:fs":      "data:text/javascript,export%20default%20%7B%7D",
-                    "node:path":    "data:text/javascript,export%20default%20%7B%20basename%3A%20(p)%20%3D%3E%20p%20%7D"
-                }
-            }
-        </script>
+        <script src="../dst/gradia-api.umd.js"></script>
         <style>
             [v-cloak] {
                 display: none;
@@ -259,25 +250,13 @@ ChannelStatistic [ url: "#channelstatistic" ]
 UserStatistic [ url: "#userstatistic" ]
         </script>
 
-        <script type="module">
-            /*  use the Gradia API (the Node-only "node:fs"/"node:path" imports
-                are stubbed via the import map, as the browser rendering path
-                never touches the WOFF2 font file resolution), located relative
-                to this file, with a fallback for a document root at "smp/"  */
-            let Gradia    = null
-            let loadError = ""
-            for (const url of [ "../dst/gradia-api.js", "./dst/gradia-api.js" ]) {
-                try {
-                    Gradia = (await import(url)).Gradia
-                    loadError = ""
-                    break
-                }
-                catch (ex) {
-                    loadError = `failed to load Gradia API from "${url}": ` +
-                        `${ex instanceof Error ? ex.message : String(ex)} ` +
-                        "(serve the repository root over HTTP so \"dst/gradia-api.js\" is reachable)"
-                }
-            }
+        <script>
+            /*  access the Gradia API class from the "Gradia" namespace
+                provided globally by the browser UMD bundle  */
+            const GradiaAPI = window.Gradia?.Gradia ?? null
+            const loadError = GradiaAPI !== null ? "" :
+                "failed to load the Gradia API from \"../dst/gradia-api.umd.js\" " +
+                "(build it with \"npm start build\" and serve the repository root over HTTP)"
 
             /*  fetch an embedded sample graph description  */
             const sampleOf = (id) =>
@@ -330,12 +309,12 @@ UserStatistic [ url: "#userstatistic" ]
                         out-of-order async results)  */
                     async render () {
                         const seq = ++this.seq
-                        if (Gradia === null) {
+                        if (GradiaAPI === null) {
                             this.error = loadError
                             return
                         }
                         try {
-                            const svg = await Gradia.render(this.input,
+                            const svg = await GradiaAPI.render(this.input,
                                 { format: "svg:embedded" })
                             if (seq === this.seq) {
                                 this.svg   = svg
