@@ -244,7 +244,6 @@ export const renderSVG = (layout: Layout, config: Config): string => {
         `<path d="M 0 1 L 9 5 L 0 9 z" fill="${escapeXML(config["color-edge-line"])}"/>`,
         "</marker>",
         "</defs>",
-        `<rect x="${vb.x}" y="${vb.y}" width="${vb.w}" height="${vb.h}" fill="#ffffff"/>`,
         ...svgGroups,
         ...svgEdges,
         ...svgNodes,
