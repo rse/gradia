@@ -19,7 +19,7 @@ described in a concise textual input language, as SVG diagrams. Three
 diagram types are supported which fit the scenario of visualizing object
 graphs:
 
-- `graph`: a loosly grid-snapped layered layout of the whole graph,
+- `graph`: a loosely grid-snapped layered layout of the whole graph,
   based on the Dagre algorithm of [@antv/layout](https://github.com/antvis/layout).
 - `hub`: a hub graph, placing one primary hub node between its input and
   output nodes.

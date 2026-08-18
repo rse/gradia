@@ -39,7 +39,7 @@ tiles for an edge-less graph).
 -   `smp/`: the sample graph descriptions (`*.txt`) and their rendered
     SVG outputs (`*.svg`)
 -   `dst/`: the compiled output (`bin` `gradia` is `dst/gradia-cli.js`)
-    -- never edit it, it is regenerated
+    -- never edit it; it is regenerated
 
 ## Build System
 
