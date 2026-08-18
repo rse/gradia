@@ -45,6 +45,10 @@ Usage
 $ gradia [-t graph|hub|grid] [-f <format>] [-c <name>=<value>] -o <file>.svg <graph>.txt
 ```
 
+The diagram type is selected with the `-t` command-line option or, when
+this is absent, by the `#type` directive inside the input, and defaults
+to `graph`.
+
 The output format is `svg:standalone` (a standalone SVG/XML document,
 the default), `svg:embedded` (the SVG without the `<?xml?>` declaration,
 for direct embedding into HTML), `url:xml` (a `data:image/svg+xml` URL
@@ -84,7 +88,9 @@ separated by `|`.
 <string-char>    ::= ( <char> - ( "\"" | "\\" | <newline> ) ) | ( "\\" ( <char> - <newline> ) )
 <comment>        ::= "#" { <char> - <newline> }
 <directive>      ::= "#config" <whitespace> { <whitespace> } <option> <whitespace> { <whitespace> } ( <string> | <word> )
+                   | "#type" <whitespace> { <whitespace> } <type>
 <option>         ::= <letter> { <letter> | <digit> | "-" }
+<type>           ::= "graph" | "hub" | "grid"
 <word>           ::= <char> - <whitespace> { <char> - <whitespace> }
 <newline>        ::= "\n"
 <whitespace>     ::= " " | "\t" | "\r"
@@ -110,10 +116,10 @@ separated by `|`.
 - A `<string>` cannot span lines. Inside it, `\` escapes the following
   character (especially `\"` and `\\`).
 
-- A `<directive>` is a `<comment>` which occupies its entire line,
-  starts with the keyword `#config`, and whose `<option>` is one of the
-  recognized rendering options (see below). All other comments are
-  ignored.
+- A `<directive>` is a `<comment>` which occupies its entire line and
+  starts with the keyword `#config` or `#type`. For `#config`, the
+  `<option>` has to be one of the recognized rendering options (see
+  below). All other comments are ignored.
 
 ### Semantic Rules
 
@@ -155,8 +161,13 @@ separated by `|`.
 
 ### Directives
 
-A `<directive>` sets one of the rendering options, which otherwise are
-settable through the corresponding `--config <option>=<value>`
+A `#type` directive sets the diagram type (`graph`, `hub`, or `grid`),
+which otherwise is settable through the `-t`/`--type` command-line
+option (which takes precedence). The last occurrence wins and an invalid
+type is silently ignored. Without both, the type defaults to `graph`.
+
+A `#config` directive sets one of the rendering options, which otherwise
+are settable through the corresponding `--config <option>=<value>`
 command-line options. The recognized options are:
 
 ```
@@ -196,6 +207,8 @@ as untrusted. Both are available on the command-line only.
 ### Example
 
 ```
+#type   graph
+
 #config color-node-primary-box  #336699
 #config color-edge-line         #999999
 
