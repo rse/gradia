@@ -95,3 +95,4 @@ export class Gradia {
         return Gradia.generate(graph, { ...options, config })
     }
 }
+
