@@ -49,7 +49,9 @@ export class Gradia {
 
     /*  generate an SVG document or data URL from a graph model
         (the rendering configuration is layered: defaults, then the
-        explicit config options)  */
+        explicit config options; the directly embedded options become
+        hard-coded values when explicitly configured and CSS custom
+        property lookups "--gradia-<option>" otherwise)  */
     static async generate (graph: Graph, options: DiagramOptions = {}): Promise<string> {
         /*  determine and validate the diagram type and output format  */
         const type   = options.type ?? diagramTypeDefault
@@ -60,7 +62,8 @@ export class Gradia {
             throw new Error(`invalid output format "${format}"`)
 
         /*  layer the rendering configuration  */
-        const config = { ...configDefaults, ...(options.config ?? {}) }
+        const explicit = options.config ?? {}
+        const config   = { ...configDefaults, ...explicit }
 
         /*  lay out the graph model: either as a whole, or partitioned
             into its named groups which are laid out individually and
@@ -72,7 +75,7 @@ export class Gradia {
                 parts.map((part) => renderers[type](part.graph, config))), config)
 
         /*  render the laid out graph into an SVG document  */
-        const svg = renderSVG(layout, config)
+        const svg = renderSVG(layout, config, explicit)
 
         /*  convert the SVG document into the requested output format  */
         if (format === "svg:embedded")

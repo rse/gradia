@@ -5,8 +5,8 @@
 */
 
 /*  internal dependencies  */
-import { Node, Edge }          from "./gradia-api-model.js"
-import { Config, resolveFont } from "./gradia-api-config.js"
+import { Node, Edge }                                       from "./gradia-api-model.js"
+import { Config, ConfigEmbedded, resolveFont, cssValueOf }  from "./gradia-api-config.js"
 import {
     Poly, NodeStyle,
     FS_NAME, FS_TYPE, FS_ATTR, FS_EDGE, FS_ARITY, FS_GROUP,
@@ -82,7 +82,8 @@ const labelPlacer = (layout: Layout): { claim: (candidates: Box[]) => Box, occup
 
 /*  generate the SVG fragments for a single node box (a node with a
     "url" attribute becomes a hyperlink covering the whole box)  */
-const renderNode = (node: Node, layout: Layout, style: NodeStyle, font: string): string[] => {
+const renderNode = (node: Node, layout: Layout, style: NodeStyle, font: string,
+    color: (key: ConfigEmbedded) => string): string[] => {
     const { cx, cy, boxW, boxH, contentH } = layout
     const w     = boxW.get(node.id)!
     const h     = boxH.get(node.id)!
@@ -93,7 +94,7 @@ const renderNode = (node: Node, layout: Layout, style: NodeStyle, font: string):
     const url   = urlOf(node)
     const parts: string[] = []
     parts.push(`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="6" ` +
-        `fill="${escapeXML(style.fill)}" stroke="${escapeXML(style.stroke)}" stroke-width="4.0"` +
+        `style="fill: ${color(style.fill)}; stroke: ${color(style.stroke)}" stroke-width="4.0"` +
         `${style.dash !== undefined ? ` stroke-dasharray="${escapeXML(style.dash)}"` : ""}/>`)
 
     /*  vertically center the textual content block within the box, with
@@ -103,15 +104,15 @@ const renderNode = (node: Node, layout: Layout, style: NodeStyle, font: string):
     const nameY = attrs.length > 0 ? ty + th + 42 : cy(node.id) + th / 2 + FS_NAME * 0.36
     if (type !== undefined)
         parts.push(`<text x="${cx(node.id)}" y="${nameY - TYPE_D}" text-anchor="middle" ` +
-            `font-family="${font}" font-size="${FS_TYPE}" ` +
-            `fill="${escapeXML(style.text)}">${escapeXML(type)}</text>`)
+            `font-size="${FS_TYPE}" ` +
+            `style="font-family: ${font}; fill: ${color(style.text)}">${escapeXML(type)}</text>`)
     parts.push(`<text x="${cx(node.id)}" y="${nameY}" text-anchor="middle" ` +
-        `font-family="${font}" font-size="${FS_NAME}" font-weight="600" ` +
-        `fill="${escapeXML(style.text)}">${escapeXML(node.name)}</text>`)
+        `font-size="${FS_NAME}" font-weight="600" ` +
+        `style="font-family: ${font}; fill: ${color(style.text)}">${escapeXML(node.name)}</text>`)
     attrs.forEach((attr, k) => {
         parts.push(`<text x="${cx(node.id)}" y="${ty + th + MIN_H + ATTR_P + k * ATTR_H}" text-anchor="middle" ` +
-            `font-family="${font}" font-size="${FS_ATTR}" ` +
-            `fill="${escapeXML(style.text)}">${escapeXML(`${attr.key}: ${attr.val}`)}</text>`)
+            `font-size="${FS_ATTR}" ` +
+            `style="font-family: ${font}; fill: ${color(style.text)}">${escapeXML(`${attr.key}: ${attr.val}`)}</text>`)
     })
     if (url === undefined)
         return parts
@@ -149,14 +150,23 @@ const viewBoxOf = (layout: Layout, boxes: Box[], margin: number): { x: number, y
 }
 
 /*  render a laid out graph into an SVG document  */
-export const renderSVG = (layout: Layout, config: Config): string => {
+export const renderSVG = (layout: Layout, config: Config, explicit: Partial<Config>): string => {
     const { nodes, edges, polys } = layout
     const groups  = layout.groups  ?? []
-    const styleOf = layout.styleOf ?? defaultStyleOf(config)
+    const styleOf = layout.styleOf ?? defaultStyleOf
+
+    /*  resolve the directly embedded configuration options into CSS
+        values: explicitly configured values are hard-coded, while all
+        others are fetched at display time from the "--gradia-<option>"
+        CSS custom properties, falling back to the built-in defaults  */
+    const color = (key: ConfigEmbedded): string => escapeXML(cssValueOf(explicit, key))
 
     /*  resolve the configured font into the rendered font family stack  */
     const { family, embed } = resolveFont(config)
-    const font = escapeXML(`'${escapeCSS(family)}', ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif`)
+    const stack = Object.hasOwn(explicit, "font-family") ?
+        `'${escapeCSS(family)}'` :
+        `var(--gradia-font-family, '${escapeCSS(family)}')`
+    const font = escapeXML(`${stack}, ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif`)
 
     /*  detect the edge crossings requiring rendered hops  */
     const hops = computeHops(polys)
@@ -173,7 +183,7 @@ export const renderSVG = (layout: Layout, config: Config): string => {
     edges.forEach((edge, i) => {
         svgEdges.push(`<path d="${pathOf(polys[i], hops[i],
             config["size-edge-corner-radius"], config["size-edge-hop-radius"])}" fill="none" ` +
-            `stroke="${escapeXML(config["color-edge-line"])}" stroke-width="3.0" marker-end="url(#arrow)"/>`)
+            `style="stroke: ${color("color-edge-line")}" stroke-width="3.0" marker-end="url(#arrow)"/>`)
         if (edge.name !== undefined) {
             const w = textWidth(edge.name, FS_EDGE)
             const candidates: Box[] = []
@@ -190,8 +200,9 @@ export const renderSVG = (layout: Layout, config: Config): string => {
             }
             const box = claim(candidates)
             svgLabels.push(`<text x="${(box[0] + box[2]) / 2}" y="${box[3] - 3}" text-anchor="middle" ` +
-                `font-family="${font}" font-size="${FS_EDGE}" ` +
-                `fill="${escapeXML(config["color-edge-name"])}" ${halo}>${escapeXML(edge.name)}</text>`)
+                `font-size="${FS_EDGE}" ` +
+                `style="font-family: ${font}; fill: ${color("color-edge-name")}" ` +
+                `${halo}>${escapeXML(edge.name)}</text>`)
         }
         if (edge.arity !== undefined) {
             const w    = textWidth(edge.arity, FS_ARITY)
@@ -205,23 +216,24 @@ export const renderSVG = (layout: Layout, config: Config): string => {
                 [ ax - w / 2 - dx * 14, p.y - 17, ax + w / 2 - dx * 14, p.y - 4  ]
             ])
             svgLabels.push(`<text x="${(box[0] + box[2]) / 2}" y="${box[3] - 3}" text-anchor="middle" ` +
-                `font-family="${font}" font-size="${FS_ARITY}" ` +
-                `fill="${escapeXML(config["color-edge-arity"])}" ${halo}>${escapeXML(edge.arity)}</text>`)
+                `font-size="${FS_ARITY}" ` +
+                `style="font-family: ${font}; fill: ${color("color-edge-arity")}" ` +
+                `${halo}>${escapeXML(edge.arity)}</text>`)
         }
     })
 
     /*  generate the SVG fragments for the node boxes  */
-    const svgNodes = nodes.flatMap((node) => renderNode(node, layout, styleOf(node), font))
+    const svgNodes = nodes.flatMap((node) => renderNode(node, layout, styleOf(node), font, color))
 
     /*  generate the SVG fragments for the group boxes (drawn below
         everything else) and their tags in the top-left corners  */
     const svgGroups = groups.flatMap((group) => [
         `<rect x="${group.x}" y="${group.y}" width="${group.w}" height="${group.h}" rx="12" ` +
-            `fill="${escapeXML(config["color-group-box"])}" ` +
-            `stroke="${escapeXML(config["color-group-border"])}" stroke-width="3.0"/>`,
+            `style="fill: ${color("color-group-box")}; ` +
+            `stroke: ${color("color-group-border")}" stroke-width="3.0"/>`,
         `<text x="${group.x + TAG_DX}" y="${group.y + TAG_DY + FS_GROUP}" ` +
-            `font-family="${font}" font-size="${FS_GROUP}" font-weight="600" ` +
-            `fill="${escapeXML(config["color-group-name"])}">${escapeXML(group.name)}</text>`
+            `font-size="${FS_GROUP}" font-weight="600" ` +
+            `style="font-family: ${font}; fill: ${color("color-group-name")}">${escapeXML(group.name)}</text>`
     ])
 
     /*  determine the overall bounding box of all rendered elements  */
@@ -244,7 +256,7 @@ export const renderSVG = (layout: Layout, config: Config): string => {
         "<marker id=\"arrow\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" " +
             "markerWidth=\"21\" markerHeight=\"21\" markerUnits=\"userSpaceOnUse\" " +
             "orient=\"auto-start-reverse\">",
-        `<path d="M 0 1 L 9 5 L 0 9 z" fill="${escapeXML(config["color-edge-line"])}"/>`,
+        `<path d="M 0 1 L 9 5 L 0 9 z" style="fill: ${color("color-edge-line")}"/>`,
         "</marker>",
         "</defs>",
         ...svgGroups,

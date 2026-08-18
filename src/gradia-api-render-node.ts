@@ -15,15 +15,15 @@ export const isPrimary = (node: Node): boolean =>
     node.attrs.findLast((attr) => attr.key === "primary")?.val === "true"
 
 /*  the default node box coloring (primary node boxes get a distinct one)  */
-export const defaultStyleOf = (config: Config) => (node: Node): NodeStyle =>
+export const defaultStyleOf = (node: Node): NodeStyle =>
     isPrimary(node) ? {
-        fill:   config["color-node-primary-box"],
-        stroke: config["color-node-primary-border"],
-        text:   config["color-node-primary-name"]
+        fill:   "color-node-primary-box",
+        stroke: "color-node-primary-border",
+        text:   "color-node-primary-name"
     } : {
-        fill:   config["color-node-regular-box"],
-        stroke: config["color-node-regular-border"],
-        text:   config["color-node-regular-name"]
+        fill:   "color-node-regular-box",
+        stroke: "color-node-regular-border",
+        text:   "color-node-regular-name"
     }
 
 /*  the special "type" annotation (rendered above the node name)  */

@@ -174,6 +174,15 @@ control the rendering geometry (canvas margin, node box sizing, edge
 routing, group box spacing, and the per-diagram-type layout) and take
 non-negative numbers.
 
+The `font-family` and `color-*` options are embedded directly into the
+generated SVG. When such an option is *not* explicitly configured, the
+SVG references the CSS custom property `--gradia-<option>` (definable by
+the embedding document, e.g. for the `svg:embedded` output format) and
+falls back to the built-in default. An explicitly configured value is
+hard-coded into the SVG instead. The resulting precedence is: first
+`#config`/`--config`, then the CSS custom property `--gradia-<option>`,
+and finally the built-in default.
+
 The option `font-embed`, and a `font-family` value pointing to a WOFF2
 file, are intentionally rejected in directives, as the input is treated
 as untrusted. Both are available on the command-line only.

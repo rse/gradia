@@ -4,6 +4,9 @@
 **  Distributed under MIT license <https://spdx.org/licenses/MIT.html>
 */
 
+/*  internal dependencies  */
+import { ConfigEmbedded } from "./gradia-api-config.js"
+
 /*  rendering font size constants (the further geometry is configurable,
     see the "size-*" and per-diagram-type options in the configuration)  */
 export const FS_NAME  = 30   /*  font size of node names       */
@@ -28,11 +31,12 @@ export const escapeXML = (text: string): string =>
 /*  an orthogonal edge polyline  */
 export type Poly = [ number, number ][]
 
-/*  the node box coloring  */
+/*  the node box coloring (given as configuration option keys which
+    are resolved into CSS color values at SVG generation time)  */
 export interface NodeStyle {
-    fill:   string
-    stroke: string
-    text:   string
+    fill:   ConfigEmbedded
+    stroke: ConfigEmbedded
+    text:   ConfigEmbedded
     dash?:  string
 }
 

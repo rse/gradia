@@ -202,14 +202,13 @@ export const render = async (graph: Graph, config: Config): Promise<Layout> => {
     /*  hand over the laid out graph for SVG rendering (the output copy
         of a twice-placed node is rendered as a dashed grey "ghost" box,
         all other boxes get the default primary/regular coloring)  */
-    const styleDefault = defaultStyleOf(config)
-    const styleOf      = (node: Node): NodeStyle =>
+    const styleOf = (node: Node): NodeStyle =>
         node.id.endsWith(CLONE + "out") ? {
-            fill:   config["color-node-ghost-box"],
-            stroke: config["color-node-ghost-border"],
-            text:   config["color-node-ghost-name"],
+            fill:   "color-node-ghost-box",
+            stroke: "color-node-ghost-border",
+            text:   "color-node-ghost-name",
             dash:   "10 6"
-        } : styleDefault(node)
+        } : defaultStyleOf(node)
     return { nodes, edges, cx, cy, boxW, boxH, contentH, polys, styleOf }
 }
 

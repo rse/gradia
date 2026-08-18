@@ -77,7 +77,11 @@ family, and the numeric geometry families `size-*`, `group-*`,
 `--config <name>=<value>` command-line option, or through `#config
 <option> <value>` directives inside the input, except `font-embed` and
 WOFF2 file paths, which are command-line-only, as the input is treated
-as untrusted.
+as untrusted. The `font-family` and `color-*` options are embedded into
+the SVG as CSS values: explicitly configured values are hard-coded, all
+others become `var(--gradia-<option>, <default>)` CSS custom property
+lookups resolvable by the embedding document (precedence: explicit
+config, then CSS `--gradia-<option>`, then the built-in default).
 
 ## Code Style
 

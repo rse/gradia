@@ -49,6 +49,22 @@ export const configDefaults = {
 }
 export type Config = typeof configDefaults
 
+/*  the configuration options which are directly embedded into the
+    generated SVG (and hence can alternatively be provided at display
+    time through "--gradia-<option>" CSS custom properties)  */
+export type ConfigEmbedded = { [K in keyof Config]: Config[K] extends string ? K : never }[keyof Config]
+
+/*  resolve a directly embedded configuration option into a CSS value:
+    an explicitly configured value is hard-coded (stripped of the
+    characters which would end the CSS declaration, to prevent a CSS
+    injection from untrusted values), while otherwise the value is
+    fetched at display time from the CSS custom property
+    "--gradia-<option>", falling back to the built-in default  */
+export const cssValueOf = (explicit: Partial<Config>, key: ConfigEmbedded): string =>
+    Object.hasOwn(explicit, key) ?
+        explicit[key]!.replace(/[;{}]/g, "") :
+        `var(--gradia-${key}, ${configDefaults[key]})`
+
 /*  parse "#config <option> <value>" configuration directives from a graph
     description (lines which are otherwise treated as plain comments)  */
 export const parseDirectives = (input: string): Partial<Config> => {
