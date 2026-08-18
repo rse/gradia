@@ -23,12 +23,13 @@ const pkg = JSON.parse(fs.readFileSync(
     fileURLToPath(new URL("../package.json", import.meta.url)), "utf8")) as
     { version: string, description: string }
 
-/*  the parsed command-line options ("output" is required and "type",
-    "format" and "config" are defaulted, so all are guaranteed to be
-    present)  */
+/*  the parsed command-line options ("output" is required and "format"
+    and "config" are defaulted, while "type" is intentionally left
+    undefined if not given, to let a "#type" directive of the input take
+    effect)  */
 interface CLIOptions {
     output: string
-    type:   DiagramType
+    type?:  DiagramType
     format: DiagramFormat
     config: string[]
 }
@@ -39,8 +40,9 @@ program.name("gradia")
     .description(pkg.description)
     .version(pkg.version)
     .requiredOption("-o, --output <file>",         "output SVG file")
-    .addOption(new Option("-t, --type <type>",     "diagram type")
-        .choices(diagramTypes).default(diagramTypeDefault))
+    .addOption(new Option("-t, --type <type>",
+        `diagram type (default: "#type" directive of input, else "${diagramTypeDefault}")`)
+        .choices(diagramTypes))
     .addOption(new Option("-f, --format <format>", "output format")
         .choices(diagramFormats).default(diagramFormatDefault))
     .option("-c, --config <name>=<value>",         "rendering configuration option (repeatable)",

@@ -71,6 +71,10 @@ for direct embedding into HTML), `url:xml` (a `data:image/svg+xml` URL
 with URL-encoded XML), or `url:base64` (a `data:image/svg+xml` URL with
 Base64-encoded XML).
 
+The diagram type is either given through the `--type` command-line
+option or through a `#type <type>` directive inside the input, with the
+command-line option taking precedence (the built-in default is `graph`).
+
 All identifiers inside the generated SVG are namespaced with a
 `gradia-<nanoid>-` prefix, freshly generated per rendered document, so
 that multiple diagrams can be embedded into one and the same document

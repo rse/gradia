@@ -28,6 +28,21 @@ export type DiagramType = keyof typeof renderers
 export const diagramTypes = Object.keys(renderers) as DiagramType[]
 export const diagramTypeDefault: DiagramType = "graph"
 
+/*  parse the "#type <type>" directive from a graph description (a line
+    which is otherwise treated as a plain comment): the last occurrence
+    wins and an invalid type is silently skipped, as the directives are
+    lines of an untrusted input and never abort the rendering  */
+const parseTypeDirective = (input: string): DiagramType | undefined => {
+    let type: DiagramType | undefined
+    for (const line of input.split(/\r?\n/)) {
+        const m = /^[ \t]*#type[ \t]+([a-z][a-z0-9-]*)[ \t]*$/.exec(line)
+        if (m === null || !Object.hasOwn(renderers, m[1]))
+            continue
+        type = m[1] as DiagramType
+    }
+    return type
+}
+
 /*  the supported output formats  */
 export const diagramFormats = [ "svg:standalone", "svg:embedded", "url:xml", "url:base64" ] as const
 export type DiagramFormat = typeof diagramFormats[number]
@@ -89,13 +104,14 @@ export class Gradia {
     }
 
     /*  render a graph description into an SVG document or data URL
-        (combines parse and generate, with the "#config <option> <value>"
-        directives from the spec layered between the defaults and the
-        explicit config options)  */
+        (combines parse and generate, with the "#type <type>" and
+        "#config <option> <value>" directives from the spec layered
+        between the defaults and the explicit options)  */
     static async render (spec: string, options: DiagramOptions = {}): Promise<string> {
         const graph  = Gradia.parse(spec)
+        const type   = options.type ?? parseTypeDirective(spec)
         const config = { ...parseDirectives(spec), ...(options.config ?? {}) }
-        return Gradia.generate(graph, { ...options, config })
+        return Gradia.generate(graph, { ...options, type, config })
     }
 }
 
