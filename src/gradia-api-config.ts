@@ -26,14 +26,33 @@ export const configDefaults = {
     "color-group-border":        "#c0d0e0",
     "color-edge-line":           "#999999",
     "color-edge-name":           "#333333",
-    "color-edge-arity":          "#333333"
+    "color-edge-arity":          "#333333",
+    "size-canvas-margin":        40,    /*  outer margin of the canvas             */
+    "size-node-width-min":       220,   /*  minimum node box width                 */
+    "size-node-height-scale":    2.25,  /*  height scale of node boxes             */
+    "size-edge-corner-radius":   20,    /*  corner rounding radius of edges        */
+    "size-edge-hop-radius":      8,     /*  radius of edge crossing hops           */
+    "size-edge-track-gap":       12,    /*  offset between parallel edge routes    */
+    "group-box-padding":         30,    /*  inner padding of group boxes           */
+    "group-box-gap":             40,    /*  vertical gap between group boxes       */
+    "graph-columns-max":         5,     /*  graph: max side-by-side nodes          */
+    "graph-channel-width-max":   140,   /*  graph: max width of column channels    */
+    "graph-gutter-height-max":   90,    /*  graph: max height of row gutters       */
+    "graph-node-separation":     30,    /*  graph: layered layout node separation  */
+    "graph-rank-separation":     60,    /*  graph: layered layout rank separation  */
+    "hub-channel-width-max":     340,   /*  hub: max width of column channels      */
+    "hub-channel-width-min":     240,   /*  hub: min width of column channels      */
+    "hub-node-gap":              20,    /*  hub: vertical gap of stacked nodes     */
+    "grid-columns-max":          4,     /*  grid: max side-by-side tiles           */
+    "grid-gap-horizontal":       40,    /*  grid: horizontal gap between tiles     */
+    "grid-gap-vertical":         20     /*  grid: vertical gap between tiles       */
 }
 export type Config = typeof configDefaults
 
 /*  parse "#config <option> <value>" configuration directives from a graph
     description (lines which are otherwise treated as plain comments)  */
 export const parseDirectives = (input: string): Partial<Config> => {
-    const partial: Record<string, string | boolean> = {}
+    const partial: Record<string, string | boolean | number> = {}
     for (const line of input.split(/\r?\n/)) {
         const m = /^[ \t]*#config[ \t]+([a-z][a-z0-9-]*)[ \t]+(?:"((?:[^"\\]|\\.)*)"|(\S+))[ \t]*$/.exec(line)
         if (m === null || !Object.hasOwn(configDefaults, m[1]))
@@ -45,8 +64,18 @@ export const parseDirectives = (input: string): Partial<Config> => {
             description, as they would let it read arbitrary local WOFF2 files  */
         if (key === "font-embed" || (key === "font-family" && val.endsWith(".woff2")))
             continue
-        partial[key] = typeof configDefaults[key] === "boolean" ?
-            val === "true" : val
+        if (typeof configDefaults[key] === "boolean")
+            partial[key] = val === "true"
+        else if (typeof configDefaults[key] === "number") {
+            /*  silently skip invalid numeric values, as directives are
+                lines of an untrusted input and never abort the rendering  */
+            const num = Number(val)
+            if (val === "" || !Number.isFinite(num) || num < 0)
+                continue
+            partial[key] = num
+        }
+        else
+            partial[key] = val
     }
     return partial as Partial<Config>
 }

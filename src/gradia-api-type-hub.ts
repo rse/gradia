@@ -7,15 +7,10 @@
 /*  internal dependencies  */
 import { Node, Edge, Graph }                       from "./gradia-api-model.js"
 import { Config }                                  from "./gradia-api-config.js"
-import { Poly, NodeStyle, SLOT, SCALE_H, MARGIN }  from "./gradia-api-render-base.js"
+import { Poly, NodeStyle }                         from "./gradia-api-render-base.js"
 import { isPrimary, measureNodes, defaultStyleOf } from "./gradia-api-render-node.js"
 import { Layout }                                  from "./gradia-api-render-svg.js"
 import { Side, TrackUser, simplifyPoly, assignPorts, assignTracks } from "./gradia-api-render-edge.js"
-
-/*  rendering geometry constants  */
-const CHANNEL = 340  /*  max width of inter-column channels  */
-const CHANMIN = 240  /*  min width of inter-column channels  */
-const STACK   = 20   /*  vertical gap between stacked nodes  */
 
 /*  the separator between a node id and its placement suffix,
     distinguishing the two clones of a twice-placed node  */
@@ -94,29 +89,34 @@ export const render = async (graph: Graph, config: Config): Promise<Layout> => {
     const { center, inputs, outputs, nodes, edges } = classifyTopology(graph)
     const inputSet = new Set(inputs.map((node) => node.id))
 
+    /*  resolve the configurable rendering geometry  */
+    const margin = config["size-canvas-margin"]
+    const gap    = config["hub-node-gap"]
+    const scale  = config["size-node-height-scale"]
+
     /*  determine node box sizes from their textual content (the primary
         box at full and all other boxes at half height scale)  */
-    const { boxW, boxH, contentH } = measureNodes(nodes, (node) =>
-        node.id === center.id ? SCALE_H : SCALE_H / 2)
+    const { boxW, boxH, contentH } = measureNodes(nodes, config, (node) =>
+        node.id === center.id ? scale : scale / 2)
 
     /*  fixed three-column layout: stack the input nodes in the first
         column and the output nodes in the third column (each stack
         vertically centered), and place the center node in the second
         column at the vertical center of the canvas  */
     const stackH = (list: Node[]): number =>
-        list.reduce((a, node) => a + boxH.get(node.id)!, 0) + Math.max(list.length - 1, 0) * STACK
+        list.reduce((a, node) => a + boxH.get(node.id)!, 0) + Math.max(list.length - 1, 0) * gap
     const totalH = Math.max(stackH(inputs), boxH.get(center.id)!, stackH(outputs))
     const nodeCY = new Map<string, number>()
     const stack  = (list: Node[]): void => {
-        let y = MARGIN + (totalH - stackH(list)) / 2
+        let y = margin + (totalH - stackH(list)) / 2
         for (const node of list) {
             nodeCY.set(node.id, y + boxH.get(node.id)! / 2)
-            y += boxH.get(node.id)! + STACK
+            y += boxH.get(node.id)! + gap
         }
     }
     stack(inputs)
     stack(outputs)
-    nodeCY.set(center.id, MARGIN + totalH / 2)
+    nodeCY.set(center.id, margin + totalH / 2)
 
     /*  determine column widths and left edge positions, with the two
         inter-column channel widths sized by actual edge usage  */
@@ -134,9 +134,10 @@ export const render = async (graph: Graph, config: Config): Promise<Layout> => {
         edges.filter((edge) => chanOf(edge) === 1).length
     ]
     const chanW    = chanCnt.map((cnt) =>
-        Math.min(CHANNEL, Math.max(CHANMIN, 28 + (cnt - 1) * SLOT)))
+        Math.min(config["hub-channel-width-max"], Math.max(config["hub-channel-width-min"],
+            28 + (cnt - 1) * config["size-edge-track-gap"])))
     const colLX: number[] = []
-    let x = MARGIN
+    let x = margin
     for (let c = 0; c < 3; c++) {
         colLX.push(x)
         x += colWidth[c] + (c < 2 ? chanW[c] : 0)
@@ -177,7 +178,7 @@ export const render = async (graph: Graph, config: Config): Promise<Layout> => {
     })
     const chanOff = new Map<string, number>()
     chanUsers.forEach((users, c) => {
-        for (const [ edge, off ] of assignTracks(users, chanW[c], 16))
+        for (const [ edge, off ] of assignTracks(users, chanW[c], 16, config["size-edge-track-gap"]))
             chanOff.set(`${c}:${edge}`, off)
     })
 

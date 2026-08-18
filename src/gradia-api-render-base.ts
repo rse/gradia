@@ -4,18 +4,14 @@
 **  Distributed under MIT license <https://spdx.org/licenses/MIT.html>
 */
 
-/*  rendering geometry constants  */
-export const FS_NAME  = 30   /*  font size of node names          */
-export const FS_TYPE  = 16   /*  font size of node types          */
-export const FS_ATTR  = 22   /*  font size of node attributes     */
-export const FS_EDGE  = 16   /*  font size of edge labels         */
-export const FS_ARITY = 16   /*  font size of edge arities        */
-export const FS_GROUP = 24   /*  font size of group tags          */
-export const MARGIN   = 40   /*  outer margin of the canvas       */
-export const SLOT     = 12   /*  offset between parallel routes   */
-export const RADIUS   = 20   /*  corner rounding radius of edges  */
-export const HOP      = 8    /*  radius of edge crossing hops     */
-export const SCALE_H  = 2.25 /*  height scale of node boxes       */
+/*  rendering font size constants (the further geometry is configurable,
+    see the "size-*" and per-diagram-type options in the configuration)  */
+export const FS_NAME  = 30   /*  font size of node names       */
+export const FS_TYPE  = 16   /*  font size of node types       */
+export const FS_ATTR  = 22   /*  font size of node attributes  */
+export const FS_EDGE  = 16   /*  font size of edge labels      */
+export const FS_ARITY = 16   /*  font size of edge arities     */
+export const FS_GROUP = 24   /*  font size of group tags       */
 
 /*  estimate rendered text width (no canvas available under Node,
     factor tuned for the average glyph advance of Source Sans 3)  */

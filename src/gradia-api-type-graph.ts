@@ -10,17 +10,14 @@ import { DagreLayout } from "@antv/layout"
 /*  internal dependencies  */
 import { Graph, Node, Edge }                 from "./gradia-api-model.js"
 import { Config }                            from "./gradia-api-config.js"
-import { Poly, SLOT, SCALE_H, MARGIN }       from "./gradia-api-render-base.js"
+import { Poly }                              from "./gradia-api-render-base.js"
 import { measureNodes }                      from "./gradia-api-render-node.js"
 import { Layout }                            from "./gradia-api-render-svg.js"
 import { Side, TrackUser, simplifyPoly, assignPorts, assignTracks } from "./gradia-api-render-edge.js"
 
 /*  rendering geometry constants  */
-const CHANNEL = 140  /*  max width of inter-column channels  */
-const GUTTER  = 90   /*  max height of inter-row gutters     */
-const MAXCOLS = 5    /*  max number of side-by-side nodes    */
-const CLUSTX  = 26   /*  max X distance within a grid column */
-const CLUSTY  = 72   /*  max Y distance within a grid row    */
+const CLUSTX = 26  /*  max X distance within a grid column  */
+const CLUSTY = 72  /*  max Y distance within a grid row     */
 
 /*  snap raw node positions onto a discrete grid by clustering the
     distinct X coordinates into columns and Y coordinates into rows  */
@@ -189,7 +186,8 @@ const computeGrid = (
     ncols:   number,
     nrows:   number,
     chanCnt: Map<number, number>,
-    gutCnt:  Map<number, number>
+    gutCnt:  Map<number, number>,
+    config:  Config
 ): Grid => {
     const colWidth  = Array.from({ length: ncols }, () => 0)
     const rowHeight = Array.from({ length: nrows }, () => 0)
@@ -201,22 +199,24 @@ const computeGrid = (
     /*  size the channels and gutters by their actual edge usage  */
     const chanW = Array.from({ length: ncols }, (_, c) => {
         const cnt = chanCnt.get(c) ?? 0
-        return cnt === 0 ? 24 : Math.min(CHANNEL, 28 + (cnt - 1) * SLOT)
+        return cnt === 0 ? 24 : Math.min(config["graph-channel-width-max"],
+            28 + (cnt - 1) * config["size-edge-track-gap"])
     })
     const gutH = Array.from({ length: nrows }, (_, g) => {
         const cnt = gutCnt.get(g) ?? 0
-        return cnt === 0 ? 20 : Math.min(GUTTER, 24 + (cnt - 1) * SLOT)
+        return cnt === 0 ? 20 : Math.min(config["graph-gutter-height-max"],
+            24 + (cnt - 1) * config["size-edge-track-gap"])
     })
 
     /*  derive the column and row center positions  */
     const colCX: number[] = []
     const rowCY: number[] = []
-    let x = MARGIN
+    let x = config["size-canvas-margin"]
     for (let c = 0; c < colWidth.length; c++) {
         colCX.push(x + colWidth[c] / 2)
         x += colWidth[c] + chanW[c]
     }
-    let y = MARGIN
+    let y = config["size-canvas-margin"]
     for (let r = 0; r < rowHeight.length; r++) {
         rowCY.push(y + rowHeight[r] / 2)
         y += rowHeight[r] + gutH[r]
@@ -235,7 +235,8 @@ const assignTrackCoords = (
     plans:   RoutePlan[],
     col:     Map<string, number>,
     portPos: Map<string, { x: number, y: number }>,
-    grid:    Grid
+    grid:    Grid,
+    config:  Config
 ): { chanX: (c: number, edge: number) => number, gutY: (g: number, edge: number) => number } => {
     const { colWidth, rowHeight, chanW, gutH, colCX, rowCY } = grid
     const gutBase = (g: number) => rowCY[g] + rowHeight[g] / 2 + gutH[g] / 2
@@ -259,7 +260,7 @@ const assignTrackCoords = (
     })
     const chanOff = new Map<string, number>()
     for (const [ c, users ] of chanUsers)
-        for (const [ edge, off ] of assignTracks(users, chanW[c], 16))
+        for (const [ edge, off ] of assignTracks(users, chanW[c], 16, config["size-edge-track-gap"]))
             chanOff.set(`${c}:${edge}`, off)
     const chanX = (c: number, edge: number) => colCX[c] + colWidth[c] / 2 + chanW[c] / 2 +
         chanOff.get(`${c}:${edge}`)!
@@ -280,7 +281,7 @@ const assignTrackCoords = (
     })
     const gutOff = new Map<string, number>()
     for (const [ g, users ] of gutUsers)
-        for (const [ edge, off ] of assignTracks(users, gutH[g], 12))
+        for (const [ edge, off ] of assignTracks(users, gutH[g], 12, config["size-edge-track-gap"]))
             gutOff.set(`${g}:${edge}`, off)
     const gutY = (g: number, edge: number) => gutBase(g) + gutOff.get(`${g}:${edge}`)!
     return { chanX, gutY }
@@ -296,7 +297,8 @@ const routePolys = (
     boxW:    Map<string, number>,
     cx:      (id: string) => number,
     chanX:   (c: number, edge: number) => number,
-    gutY:    (g: number, edge: number) => number
+    gutY:    (g: number, edge: number) => number,
+    config:  Config
 ): Poly[] => {
     const loopUse = new Map<string, number>()
     return edges.map((edge, i) => {
@@ -309,7 +311,7 @@ const routePolys = (
         if (edge.source === edge.target) {
             const k  = loopUse.get(edge.source) ?? 0
             loopUse.set(edge.source, k + 1)
-            const ox = cx(edge.source) + boxW.get(edge.source)! / 2 + 24 + k * SLOT
+            const ox = cx(edge.source) + boxW.get(edge.source)! / 2 + 24 + k * config["size-edge-track-gap"]
             pts = [ [ sp.x, sp.y ], [ ox, sp.y ], [ ox, tp.y ], [ tp.x, tp.y ] ]
         }
         else if (chans.length === 1) {
@@ -330,18 +332,18 @@ const routePolys = (
 }
 
 /*  lay out a directed graph model  */
-export const render = async (graph: Graph, _config: Config): Promise<Layout> => {
+export const render = async (graph: Graph, config: Config): Promise<Layout> => {
     const nodes = Array.from(graph.nodes.values())
     const edges = graph.edges
 
     /*  determine node box sizes from their textual content  */
-    const { boxW, boxH, contentH } = measureNodes(nodes, () => SCALE_H)
+    const { boxW, boxH, contentH } = measureNodes(nodes, config, () => config["size-node-height-scale"])
 
     /*  determine raw node positions with the AntV Dagre layout  */
     const layout = new DagreLayout({
         rankdir:  "LR",
-        nodesep:  30,
-        ranksep:  60,
+        nodesep:  config["graph-node-separation"],
+        ranksep:  config["graph-rank-separation"],
         nodeSize: (node) => (node as { size: [ number, number ] }).size
     })
     await layout.execute({
@@ -363,16 +365,18 @@ export const render = async (graph: Graph, _config: Config): Promise<Layout> => 
     refineRows(nodes, edges, col, row)
 
     /*  fold the grid columns: constrain the diagram width to at most
-        MAXCOLS side-by-side nodes by wrapping excess columns into
-        additional row bands below, so wide graphs grow in height  */
-    if (gridCols > MAXCOLS) {
+        the configured maximum of side-by-side nodes by wrapping excess
+        columns into additional row bands below, so wide graphs grow in
+        height  */
+    const maxCols = Math.max(Math.floor(config["graph-columns-max"]), 1)
+    if (gridCols > maxCols) {
         for (const node of nodes) {
             const c = col.get(node.id)!
-            col.set(node.id, c % MAXCOLS)
-            row.set(node.id, row.get(node.id)! + Math.floor(c / MAXCOLS) * gridRows)
+            col.set(node.id, c % maxCols)
+            row.set(node.id, row.get(node.id)! + Math.floor(c / maxCols) * gridRows)
         }
     }
-    const ncols = Math.min(gridCols, MAXCOLS)
+    const ncols = Math.min(gridCols, maxCols)
 
     /*  drop the grid rows which are completely empty  */
     const usedRows = Array.from(new Set(nodes.map((node) => row.get(node.id)!))).sort((a, b) => a - b)
@@ -385,7 +389,7 @@ export const render = async (graph: Graph, _config: Config): Promise<Layout> => 
     const { plans, chanCnt, gutCnt } = planRoutes(edges, col, row)
 
     /*  determine grid cell sizes and final node center positions  */
-    const grid = computeGrid(nodes, col, row, boxW, boxH, ncols, nrows, chanCnt, gutCnt)
+    const grid = computeGrid(nodes, col, row, boxW, boxH, ncols, nrows, chanCnt, gutCnt, config)
     const cx   = (id: string) => grid.colCX[col.get(id)!]
     const cy   = (id: string) => grid.rowCY[row.get(id)!]
 
@@ -403,11 +407,11 @@ export const render = async (graph: Graph, _config: Config): Promise<Layout> => 
     const portPos = assignPorts(edges, sides, cx, cy, boxW, boxH)
 
     /*  assign the parallel tracks within the channels and gutters  */
-    const { chanX, gutY } = assignTrackCoords(edges, plans, col, portPos, grid)
+    const { chanX, gutY } = assignTrackCoords(edges, plans, col, portPos, grid, config)
 
     /*  route every edge as an orthogonal polyline through the channels
         between columns and the gutters between rows  */
-    const polys = routePolys(edges, plans, col, portPos, boxW, cx, chanX, gutY)
+    const polys = routePolys(edges, plans, col, portPos, boxW, cx, chanX, gutY, config)
 
     /*  hand over the laid out graph for SVG rendering  */
     return { nodes, edges, cx, cy, boxW, boxH, contentH, polys }

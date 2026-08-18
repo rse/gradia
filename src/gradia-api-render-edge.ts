@@ -5,8 +5,8 @@
 */
 
 /*  internal dependencies  */
-import { Edge }                     from "./gradia-api-model.js"
-import { Poly, RADIUS, HOP, SLOT }  from "./gradia-api-render-base.js"
+import { Edge }  from "./gradia-api-model.js"
+import { Poly }  from "./gradia-api-render-base.js"
 
 /*  edge attachment port geometry  */
 const PORT_SEP = 24  /*  maximum separation of adjacent ports     */
@@ -96,7 +96,7 @@ export interface TrackUser {
     neighbor (back turners get near tracks entry-position-ordered,
     forward turners far tracks, reversed for mirrored users which
     enter the channel/gutter from the far side)  */
-export const assignTracks = (users: TrackUser[], width: number, pad: number): Map<number, number> => {
+export const assignTracks = (users: TrackUser[], width: number, pad: number, gap: number): Map<number, number> => {
     const order = (list: TrackUser[], mirror: boolean): TrackUser[] => {
         const dir = mirror ? -1 : +1
         const backs = list.filter((u) => u.posOut <  u.posIn)
@@ -109,7 +109,7 @@ export const assignTracks = (users: TrackUser[], width: number, pad: number): Ma
         ...order(users.filter((u) => !u.mirror), false),
         ...order(users.filter((u) =>  u.mirror), true)
     ]
-    const step    = Math.min(SLOT, (width - pad) / Math.max(ordered.length - 1, 1))
+    const step    = Math.min(gap, (width - pad) / Math.max(ordered.length - 1, 1))
     const offsets = new Map<number, number>()
     ordered.forEach((u, idx) => {
         offsets.set(u.edge, (idx - (ordered.length - 1) / 2) * step)
@@ -154,19 +154,19 @@ export const computeHops = (polys: Poly[]): Map<number, number[]>[] => {
 
 /*  convert an edge polyline into an SVG path with rounded corners
     at the bends and semi-circular hops at the crossing points  */
-export const pathOf = (poly: Poly, hop: Map<number, number[]>): string => {
+export const pathOf = (poly: Poly, hop: Map<number, number[]>, rounding: number, hopRadius: number): string => {
     const len = (a: [ number, number ], b: [ number, number ]) =>
         Math.abs(b[0] - a[0]) + Math.abs(b[1] - a[1])
     const radius = (k: number): number => {
         if (k <= 0 || k >= poly.length - 1)
             return 0
-        let r = Math.min(RADIUS, len(poly[k - 1], poly[k]) / 2, len(poly[k], poly[k + 1]) / 2)
+        let r = Math.min(rounding, len(poly[k - 1], poly[k]) / 2, len(poly[k], poly[k + 1]) / 2)
 
         /*  shrink the corner rounding when a crossing hop sits close
             to the bend, so the hop is never swallowed by the arc  */
         for (const seg of [ k - 1, k ])
             for (const hx of hop.get(seg) ?? [])
-                r = Math.min(r, Math.max(Math.abs(hx - poly[k][0]) - HOP - 2, 4))
+                r = Math.min(r, Math.max(Math.abs(hx - poly[k][0]) - hopRadius - 2, 4))
         return r
     }
     const d: string[] = []
@@ -194,14 +194,14 @@ export const pathOf = (poly: Poly, hop: Map<number, number[]>): string => {
             const groups: number[][] = []
             for (const hx of xs) {
                 const g = groups[groups.length - 1]
-                if (g !== undefined && Math.abs(hx - g[g.length - 1]) <= HOP * 2 + 14)
+                if (g !== undefined && Math.abs(hx - g[g.length - 1]) <= hopRadius * 2 + 14)
                     g.push(hx)
                 else
                     groups.push([ hx ])
             }
             for (const g of groups) {
-                let x1 = g[0] - dir * HOP
-                let x2 = g[g.length - 1] + dir * HOP
+                let x1 = g[0] - dir * hopRadius
+                let x2 = g[g.length - 1] + dir * hopRadius
 
                 /*  clamp the arc into the drawable segment part, so
                     crossings close to a corner still get their hop  */
@@ -210,7 +210,7 @@ export const pathOf = (poly: Poly, hop: Map<number, number[]>): string => {
                 if ((p1[0] - x2) * dir < 0)
                     x2 = p1[0]
                 d.push(`L ${x1} ${a[1]}`)
-                d.push(`A ${Math.abs(x2 - x1) / 2} ${HOP} 0 0 ${dir > 0 ? 1 : 0} ${x2} ${a[1]}`)
+                d.push(`A ${Math.abs(x2 - x1) / 2} ${hopRadius} 0 0 ${dir > 0 ? 1 : 0} ${x2} ${a[1]}`)
             }
         }
         d.push(`L ${p1[0]} ${p1[1]}`)

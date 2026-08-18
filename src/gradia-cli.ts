@@ -49,7 +49,7 @@ program.name("gradia")
     .action(async (input: string, options: CLIOptions) => {
         /*  parse and validate the rendering configuration options  */
         const config: Partial<Config> = {}
-        const store = config as Record<string, string | boolean>
+        const store = config as Record<string, string | boolean | number>
         for (const nv of options.config) {
             const m = /^([a-z][a-z0-9-]*)=(.*)$/.exec(nv)
             if (m === null)
@@ -61,6 +61,12 @@ program.name("gradia")
                 if (m[2] !== "true" && m[2] !== "false")
                     throw new Error(`invalid value "${m[2]}" for boolean configuration option "${key}" (expected "true" or "false")`)
                 store[key] = m[2] === "true"
+            }
+            else if (typeof configDefaults[key] === "number") {
+                const num = Number(m[2])
+                if (m[2] === "" || !Number.isFinite(num) || num < 0)
+                    throw new Error(`invalid value "${m[2]}" for numeric configuration option "${key}" (expected a non-negative number)`)
+                store[key] = num
             }
             else
                 store[key] = m[2]

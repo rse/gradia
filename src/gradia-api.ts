@@ -69,7 +69,7 @@ export class Gradia {
         const layout = parts === null ?
             await renderers[type](graph, config) :
             composeGroups(parts, await Promise.all(
-                parts.map((part) => renderers[type](part.graph, config))))
+                parts.map((part) => renderers[type](part.graph, config))), config)
 
         /*  render the laid out graph into an SVG document  */
         const svg = renderSVG(layout, config)

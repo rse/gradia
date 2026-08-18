@@ -67,10 +67,10 @@ export const TYPE_D = 36  /*  baseline distance of the type to the name */
     give the edges more attachment room)  */
 export const measureNodes = (
     nodes:   Node[],
+    config:  Config,
     scaleOf: (node: Node) => number
 ): { boxW: Map<string, number>, boxH: Map<string, number>, contentH: Map<string, number> } => {
-    const MIN_W = 220  /*  minimum node box width            */
-    const PAD_W = 18   /*  left/right node box text padding  */
+    const PAD_W = 18  /*  left/right node box text padding  */
 
     /*  the resulting node box dimensions  */
     const boxW     = new Map<string, number>()
@@ -88,7 +88,7 @@ export const measureNodes = (
             w = Math.max(w, textWidth(`${attr.key}: ${attr.val}`, FS_ATTR))
         const h = MIN_H + (type !== undefined ? TYPE_H : 0) +
             (attrs.length > 0 ? attrs.length * ATTR_H + ATTR_P : 0)
-        boxW.set(node.id, Math.max(MIN_W, Math.ceil(w) + PAD_W * 2))
+        boxW.set(node.id, Math.max(config["size-node-width-min"], Math.ceil(w) + PAD_W * 2))
         boxH.set(node.id, Math.ceil(h * scaleOf(node)))
         contentH.set(node.id, h)
     }

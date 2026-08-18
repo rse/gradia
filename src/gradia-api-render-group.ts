@@ -5,14 +5,13 @@
 */
 
 /*  internal dependencies  */
-import { Node, Graph }                       from "./gradia-api-model.js"
-import { Poly, FS_GROUP, MARGIN, textWidth } from "./gradia-api-render-base.js"
-import { Layout, GroupBox }                  from "./gradia-api-render-svg.js"
+import { Node, Graph }               from "./gradia-api-model.js"
+import { Config }                    from "./gradia-api-config.js"
+import { Poly, FS_GROUP, textWidth } from "./gradia-api-render-base.js"
+import { Layout, GroupBox }          from "./gradia-api-render-svg.js"
 
 /*  rendering geometry constants  */
-const GROUP_PAD  = 30   /*  inner padding of group boxes              */
-const GROUP_HEAD = 34   /*  extra top space for the group tag         */
-const GROUP_GAP  = 40   /*  vertical gap between stacked group boxes  */
+const GROUP_HEAD = 34  /*  extra top space for the group tag  */
 
 /*  the special "group" annotation (assigning a node to a named group)  */
 export const groupOf = (node: Node): string | undefined =>
@@ -81,25 +80,30 @@ const boundsOf = (layout: Layout): { minX: number, minY: number, maxX: number, m
     (a node id is unique across the groups, as every node is a member
     of exactly one group, so the maps can be merged and the coordinate
     functions can dispatch on the node id)  */
-export const composeGroups = (parts: GroupPart[], layouts: Layout[]): Layout => {
+export const composeGroups = (parts: GroupPart[], layouts: Layout[], config: Config): Layout => {
+    /*  resolve the configurable rendering geometry  */
+    const margin = config["size-canvas-margin"]
+    const pad    = config["group-box-padding"]
+    const gap    = config["group-box-gap"]
+
     /*  stack the group boxes vertically and determine the coordinate
         offset which shifts each layout into its group box  */
     const groups: GroupBox[] = []
     const dxs:    number[]   = []
     const dys:    number[]   = []
     const groupIdx = new Map<string, number>()
-    let y = MARGIN
+    let y = margin
     layouts.forEach((layout, i) => {
         const b = boundsOf(layout)
-        const w = Math.max(b.maxX - b.minX + GROUP_PAD * 2,
-            textWidth(parts[i].name, FS_GROUP) + GROUP_PAD * 2)
-        const h = b.maxY - b.minY + GROUP_PAD * 2 + GROUP_HEAD
-        dxs.push(MARGIN + GROUP_PAD - b.minX)
-        dys.push(y + GROUP_HEAD + GROUP_PAD - b.minY)
+        const w = Math.max(b.maxX - b.minX + pad * 2,
+            textWidth(parts[i].name, FS_GROUP) + pad * 2)
+        const h = b.maxY - b.minY + pad * 2 + GROUP_HEAD
+        dxs.push(margin + pad - b.minX)
+        dys.push(y + GROUP_HEAD + pad - b.minY)
         for (const node of layout.nodes)
             groupIdx.set(node.id, i)
-        groups.push({ name: parts[i].name, x: MARGIN, y, w, h })
-        y += h + GROUP_GAP
+        groups.push({ name: parts[i].name, x: margin, y, w, h })
+        y += h + gap
     })
 
     /*  merge the per-group layouts into the composed layout  */

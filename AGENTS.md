@@ -71,11 +71,13 @@ for direct embedding into HTML), `url:xml` (a `data:image/svg+xml` URL
 with URL-encoded XML), or `url:base64` (a `data:image/svg+xml` URL with
 Base64-encoded XML).
 
-The rendering options (`font-family`, `font-embed`, and the `color-*`
-family) are set through the repeatable `--config <name>=<value>`
-command-line option, or through `#config <option> <value>` directives inside
-the input, except `font-embed` and WOFF2 file paths, which are
-command-line-only, as the input is treated as untrusted.
+The rendering options (`font-family`, `font-embed`, the `color-*`
+family, and the numeric geometry families `size-*`, `group-*`,
+`graph-*`, `hub-*`, and `grid-*`) are set through the repeatable
+`--config <name>=<value>` command-line option, or through `#config
+<option> <value>` directives inside the input, except `font-embed` and
+WOFF2 file paths, which are command-line-only, as the input is treated
+as untrusted.
 
 ## Code Style
 

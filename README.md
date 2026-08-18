@@ -154,14 +154,25 @@ settable through the corresponding `--config <option>=<value>`
 command-line options. The recognized options are:
 
 ```
-font-family                  color-node-ghost-name        color-group-name
-                             color-node-ghost-box         color-group-box
-color-node-regular-name      color-node-ghost-border      color-group-border
-color-node-regular-box
-color-node-regular-border    color-node-primary-name      color-edge-line
-                             color-node-primary-box       color-edge-name
-                             color-node-primary-border    color-edge-arity
+font-family                  color-edge-line              graph-columns-max
+color-node-regular-name      color-edge-name              graph-channel-width-max
+color-node-regular-box       color-edge-arity             graph-gutter-height-max
+color-node-regular-border                                 graph-node-separation
+color-node-primary-name      size-canvas-margin           graph-rank-separation
+color-node-primary-box       size-node-width-min          hub-channel-width-max
+color-node-primary-border    size-node-height-scale       hub-channel-width-min
+color-node-ghost-name        size-edge-corner-radius      hub-node-gap
+color-node-ghost-box         size-edge-hop-radius         grid-columns-max
+color-node-ghost-border      size-edge-track-gap          grid-gap-horizontal
+color-group-name             group-box-padding            grid-gap-vertical
+color-group-box              group-box-gap
+color-group-border
 ```
+
+The `size-*`, `group-*`, `graph-*`, `hub-*`, and `grid-*` options
+control the rendering geometry (canvas margin, node box sizing, edge
+routing, group box spacing, and the per-diagram-type layout) and take
+non-negative numbers.
 
 The option `font-embed`, and a `font-family` value pointing to a WOFF2
 file, are intentionally rejected in directives, as the input is treated

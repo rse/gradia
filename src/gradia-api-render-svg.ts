@@ -9,7 +9,7 @@ import { Node, Edge }          from "./gradia-api-model.js"
 import { Config, resolveFont } from "./gradia-api-config.js"
 import {
     Poly, NodeStyle,
-    FS_NAME, FS_TYPE, FS_ATTR, FS_EDGE, FS_ARITY, FS_GROUP, MARGIN,
+    FS_NAME, FS_TYPE, FS_ATTR, FS_EDGE, FS_ARITY, FS_GROUP,
     textWidth, escapeXML
 } from "./gradia-api-render-base.js"
 import { attrsOfNode, typeOf, urlOf, defaultStyleOf, MIN_H, ATTR_H, ATTR_P, TYPE_H, TYPE_D }
@@ -121,7 +121,7 @@ const renderNode = (node: Node, layout: Layout, style: NodeStyle, font: string):
 /*  determine the overall bounding box of all rendered elements (the
     node boxes and the placed labels are handed over as already
     computed areas, the edge polylines are scanned here)  */
-const viewBoxOf = (layout: Layout, boxes: Box[]): { x: number, y: number, w: number, h: number } => {
+const viewBoxOf = (layout: Layout, boxes: Box[], margin: number): { x: number, y: number, w: number, h: number } => {
     const { polys } = layout
     let [ minX, minY, maxX, maxY ] = [ Infinity, Infinity, -Infinity, -Infinity ]
     for (const [ bx1, by1, bx2, by2 ] of boxes) {
@@ -141,10 +141,10 @@ const viewBoxOf = (layout: Layout, boxes: Box[]): { x: number, y: number, w: num
     if (!Number.isFinite(minX))
         [ minX, minY, maxX, maxY ] = [ 0, 0, 0, 0 ]
     return {
-        x: Math.floor(minX - MARGIN / 2),
-        y: Math.floor(minY - MARGIN / 2),
-        w: Math.ceil(maxX - minX + MARGIN),
-        h: Math.ceil(maxY - minY + MARGIN)
+        x: Math.floor(minX - margin / 2),
+        y: Math.floor(minY - margin / 2),
+        w: Math.ceil(maxX - minX + margin),
+        h: Math.ceil(maxY - minY + margin)
     }
 }
 
@@ -171,7 +171,8 @@ export const renderSVG = (layout: Layout, config: Config): string => {
     /*  the white halo rendered behind the edge labels for readability  */
     const halo = "stroke=\"#ffffff\" stroke-width=\"4.5\" paint-order=\"stroke\" stroke-linejoin=\"round\""
     edges.forEach((edge, i) => {
-        svgEdges.push(`<path d="${pathOf(polys[i], hops[i])}" fill="none" ` +
+        svgEdges.push(`<path d="${pathOf(polys[i], hops[i],
+            config["size-edge-corner-radius"], config["size-edge-hop-radius"])}" fill="none" ` +
             `stroke="${escapeXML(config["color-edge-line"])}" stroke-width="3.0" marker-end="url(#arrow)"/>`)
         if (edge.name !== undefined) {
             const w = textWidth(edge.name, FS_EDGE)
@@ -226,7 +227,7 @@ export const renderSVG = (layout: Layout, config: Config): string => {
     /*  determine the overall bounding box of all rendered elements  */
     const groupBoxes: Box[] = groups.map((group) =>
         [ group.x, group.y, group.x + group.w, group.y + group.h ])
-    const vb = viewBoxOf(layout, [ ...occupied, ...groupBoxes ])
+    const vb = viewBoxOf(layout, [ ...occupied, ...groupBoxes ], config["size-canvas-margin"])
 
     /*  assemble the final SVG document  */
     return [
