@@ -4,6 +4,9 @@
 **  Distributed under MIT license <https://spdx.org/licenses/MIT.html>
 */
 
+/*  external dependencies  */
+import { customAlphabet }                                   from "nanoid"
+
 /*  internal dependencies  */
 import { Node, Edge }                                       from "./gradia-api-model.js"
 import { Config, ConfigEmbedded, resolveFont, cssValueOf }  from "./gradia-api-config.js"
@@ -22,6 +25,13 @@ import { computeHops, pathOf, pointAt }
     backslashes have to be neutralized to prevent a CSS injection)  */
 const escapeCSS = (text: string): string =>
     text.replace(/[\\"']/g, "\\$&").replace(/[\r\n]/g, " ")
+
+/*  generate a per-document identifier prefix, as the SVG identifiers
+    are DOM-global and would collide once multiple diagrams are embedded
+    into the very same document (the alphabet is restricted to
+    alphanumerics to stay a valid XML name and CSS/URL fragment)  */
+const nanoid = customAlphabet("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", 12)
+const idPrefix = (): string => `gradia-${nanoid()}`
 
 /*  a decorated group box surrounding the nodes of a named group  */
 export interface GroupBox {
@@ -161,6 +171,10 @@ export const renderSVG = (layout: Layout, config: Config, explicit: Partial<Conf
         CSS custom properties, falling back to the built-in defaults  */
     const color = (key: ConfigEmbedded): string => escapeXML(cssValueOf(explicit, key))
 
+    /*  derive the collision-free identifiers of this SVG document  */
+    const prefix  = idPrefix()
+    const idArrow = `${prefix}-arrow`
+
     /*  resolve the configured font into the rendered font family stack  */
     const { family, embed } = resolveFont(config)
     const stack = Object.hasOwn(explicit, "font-family") ?
@@ -183,7 +197,7 @@ export const renderSVG = (layout: Layout, config: Config, explicit: Partial<Conf
     edges.forEach((edge, i) => {
         svgEdges.push(`<path d="${pathOf(polys[i], hops[i],
             config["size-edge-corner-radius"], config["size-edge-hop-radius"])}" fill="none" ` +
-            `style="stroke: ${color("color-edge-line")}" stroke-width="3.0" marker-end="url(#arrow)"/>`)
+            `style="stroke: ${color("color-edge-line")}" stroke-width="3.0" marker-end="url(#${idArrow})"/>`)
         if (edge.name !== undefined) {
             const w = textWidth(edge.name, FS_EDGE)
             const candidates: Box[] = []
@@ -253,7 +267,7 @@ export const renderSVG = (layout: Layout, config: Config, explicit: Partial<Conf
                 `src: url(data:font/woff2;base64,${embed}) format("woff2"); }`,
             "</style>"
         ] : []),
-        "<marker id=\"arrow\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" " +
+        `<marker id="${idArrow}" viewBox="0 0 10 10" refX="9" refY="5" ` +
             "markerWidth=\"21\" markerHeight=\"21\" markerUnits=\"userSpaceOnUse\" " +
             "orient=\"auto-start-reverse\">",
         `<path d="M 0 1 L 9 5 L 0 9 z" style="fill: ${color("color-edge-line")}"/>`,

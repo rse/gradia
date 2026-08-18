@@ -71,6 +71,11 @@ for direct embedding into HTML), `url:xml` (a `data:image/svg+xml` URL
 with URL-encoded XML), or `url:base64` (a `data:image/svg+xml` URL with
 Base64-encoded XML).
 
+All identifiers inside the generated SVG are namespaced with a
+`gradia-<nanoid>-` prefix, freshly generated per rendered document, so
+that multiple diagrams can be embedded into one and the same document
+without colliding in the DOM-global identifier namespace.
+
 The rendering options (`font-family`, `font-embed`, the `color-*`
 family, and the numeric geometry families `size-*`, `group-*`,
 `graph-*`, `hub-*`, and `grid-*`) are set through the repeatable
