@@ -68,6 +68,8 @@ const labelPlacer = (layout: Layout): { claim: (candidates: Box[]) => Box, occup
     for (const group of layout.groups ?? [])
         occupied.push([ group.x + TAG_DX, group.y + TAG_DY,
             group.x + TAG_DX + textWidth(group.name, FS_GROUP), group.y + TAG_DY + FS_GROUP * 1.2 ])
+
+    /*  claim the first collision-free candidate box  */
     const collides = (box: Box): boolean =>
         occupied.some((o) => box[0] < o[2] && box[2] > o[0] && box[1] < o[3] && box[3] > o[1])
     const claim = (candidates: Box[]): Box => {
@@ -170,7 +172,7 @@ export const renderSVG = (layout: Layout, config: Config): string => {
     const halo = "stroke=\"#ffffff\" stroke-width=\"4.5\" paint-order=\"stroke\" stroke-linejoin=\"round\""
     edges.forEach((edge, i) => {
         svgEdges.push(`<path d="${pathOf(polys[i], hops[i])}" fill="none" ` +
-            `stroke="${escapeXML(config["color-edge-line"])}" stroke-width="3" marker-end="url(#arrow)"/>`)
+            `stroke="${escapeXML(config["color-edge-line"])}" stroke-width="3.0" marker-end="url(#arrow)"/>`)
         if (edge.name !== undefined) {
             const w = textWidth(edge.name, FS_EDGE)
             const candidates: Box[] = []

@@ -57,7 +57,13 @@ program.name("gradia")
             const key = m[1] as keyof Config
             if (!Object.hasOwn(configDefaults, key))
                 throw new Error(`unknown configuration option "${m[1]}"`)
-            store[key] = typeof configDefaults[key] === "boolean" ? m[2] === "true" : m[2]
+            if (typeof configDefaults[key] === "boolean") {
+                if (m[2] !== "true" && m[2] !== "false")
+                    throw new Error(`invalid value "${m[2]}" for boolean configuration option "${key}" (expected "true" or "false")`)
+                store[key] = m[2] === "true"
+            }
+            else
+                store[key] = m[2]
         }
 
         /*  read the input, render the diagram, and write the output  */

@@ -57,7 +57,7 @@ export class Gradia {
             throw new Error(`invalid diagram type "${type}"`)
         const format = options.format ?? diagramFormatDefault
         if (!diagramFormats.includes(format))
-            throw new Error(`invalid output format "${format as string}"`)
+            throw new Error(`invalid output format "${format}"`)
 
         /*  layer the rendering configuration  */
         const config = { ...configDefaults, ...(options.config ?? {}) }

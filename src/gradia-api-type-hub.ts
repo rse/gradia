@@ -33,6 +33,9 @@ const classifyTopology = (graph: Graph): {
     center: Node, inputs: Node[], outputs: Node[], nodes: Node[], edges: Edge[]
 } => {
     const declared  = Array.from(graph.nodes.values())
+    for (const node of declared)
+        if (node.id.includes(CLONE))
+            throw new Error(`node id ${JSON.stringify(node.id)} contains a reserved control character`)
     const primaries = declared.filter(isPrimary)
     if (primaries.length !== 1)
         throw new Error(`expected exactly one node annotated with "primary: true" (found ${primaries.length})`)
@@ -161,7 +164,7 @@ export const render = async (graph: Graph, config: Config): Promise<Layout> => {
     const portPos = assignPorts(edges, sides, cx, cy, boxW, boxH)
 
     /*  assign the vertical tracks within each channel (see assignTracks
-        for the crossing-avoiding ordering scheme; an IOG has no backward
+        for the crossing-avoiding ordering scheme; a hub graph has no backward
         edges, hence no channel user is ever mirrored)  */
     const chanUsers: TrackUser[][] = [ [], [] ]
     edges.forEach((edge, i) => {

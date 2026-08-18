@@ -161,7 +161,7 @@ export const parse = (input: string): Graph => {
                 /*  a node has to stay in a single group, so reject any
                     attempt to re-assign it to a different group  */
                 if (attr.key === "group" && node.attrs[k].val !== attr.val)
-                    throw new Error(`node "${id}" cannot be member of more than one group ` +
+                    throw new Error(`node "${id}" cannot be a member of more than one group ` +
                         `("${node.attrs[k].val}" vs "${attr.val}") ` +
                         `at line ${start.line}, column ${start.col}`)
                 node.attrs[k] = attr
