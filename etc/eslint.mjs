@@ -6,8 +6,6 @@
 
 import pluginJs      from "@eslint/js"
 import pluginStd     from "neostandard"
-import pluginImport  from "eslint-plugin-import"
-import pluginPromise from "eslint-plugin-promise"
 import pluginTS      from "typescript-eslint"
 import globals       from "globals"
 
@@ -20,10 +18,6 @@ export default [
         ignores: pluginStd.resolveIgnoresFromGitignore()
     }),
     {
-        plugins: {
-            "import":  pluginImport,
-            "promise": pluginPromise
-        },
         files: [ "**/*.ts" ],
         languageOptions: {
             ecmaVersion: 2024,
