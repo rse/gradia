@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<!--
+**  Gradia - Object Graph Diagram Rendering
+**  Copyright (c) 2026 Dr. Ralf S. Engelschall <rse@engelschall.com>
+**  Distributed under MIT license <https://spdx.org/licenses/MIT.html>
+-->
+<html>
+    <head>
+        <title>Gradia Playground</title>
+        <meta charset="UTF-8"/>
+        <link rel="preconnect" href="https://fonts.gstatic.com">
+        <link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+        <script src="https://cdn.jsdelivr.net/npm/vue@3.5.41/dist/vue.global.prod.js"></script>
+        <script type="importmap">
+            {
+                "imports": {
+                    "@antv/layout": "https://cdn.jsdelivr.net/npm/@antv/layout@2.0.0/+esm",
+                    "nanoid":       "https://cdn.jsdelivr.net/npm/nanoid@6.0.1/+esm",
+                    "node:fs":      "data:text/javascript,export%20default%20%7B%7D",
+                    "node:path":    "data:text/javascript,export%20default%20%7B%20basename%3A%20(p)%20%3D%3E%20p%20%7D"
+                }
+            }
+        </script>
+        <style>
+            [v-cloak] {
+                display: none;
+            }
+            html, body {
+                margin: 0;
+                height: 100%;
+            }
+            body {
+                background-color: #303030;
+                color: #ffffff;
+                font-family: "Source Sans Pro", sans-serif;
+                font-size: 11pt;
+                box-sizing: border-box;
+                padding: 30px 50px;
+            }
+            .app {
+                display: flex;
+                flex-direction: column;
+                height: 100%;
+            }
+            .app h1 {
+                margin: 0 0 10px 0;
+            }
+            .app .toolbar {
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+                gap: 8px;
+                margin-bottom: 16px;
+            }
+            .app .toolbar .label {
+                color: #c0c0c0;
+                margin-left: 12px;
+            }
+            .app .toolbar .label:first-child {
+                margin-left: 0;
+            }
+            .app .toolbar select {
+                color: #f0f0f0;
+                background-color: #505050;
+                border: 0;
+                border-radius: 4px;
+                font-family: "Source Code Pro", monospace;
+                font-size: 11pt;
+                padding: 4px 8px;
+            }
+            .app .toolbar select:hover,
+            .app .toolbar select:focus {
+                color: #b0d0ff;
+                background-color: #507090;
+                outline: none;
+            }
+            .app .panes {
+                display: flex;
+                flex-direction: row;
+                gap: 16px;
+                flex-grow: 1;
+                min-height: 0;
+            }
+            .app .panes .editor {
+                width: 34%;
+                color: #f0f0f0;
+                background-color: #404040;
+                border: 0;
+                border-radius: 4px;
+                font-family: "Source Code Pro", monospace;
+                font-size: 10pt;
+                padding: 12px;
+                resize: none;
+                white-space: pre;
+                outline: none;
+            }
+            .app .panes .editor:hover,
+            .app .panes .editor:focus {
+                background-color: #444850;
+            }
+            .app .panes .output {
+                width: 66%;
+                background-color: #ffffff;
+                border-radius: 4px;
+                overflow: auto;
+                padding: 12px;
+            }
+            .app .panes .output svg {
+                max-width: 100%;
+                height: auto;
+            }
+            .app .panes .output .error {
+                color: #cc3333;
+                font-family: "Source Code Pro", monospace;
+                font-size: 10pt;
+                white-space: pre-wrap;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="app" v-cloak>
+            <h1>Gradia Playground</h1>
+            <div class="toolbar">
+                <div class="label">sample:</div>
+                <select v-model="sample">
+                    <option v-for="name in sampleNames" v-bind:key="name" v-bind:value="name">{{ name }}</option>
+                </select>
+            </div>
+            <div class="panes">
+                <textarea class="editor" v-model="input" spellcheck="false"></textarea>
+                <div class="output">
+                    <div v-if="error !== ''" class="error">{{ error }}</div>
+                    <div v-else v-html="svg"></div>
+                </div>
+            </div>
+        </div>
+
+        <!--  the embedded sample graph descriptions (verbatim copies of the smp/broadcast-*.txt files)  -->
+        <script type="text/x-gradia" id="sample-broadcast-graph">
+#type graph
+
+#config color-node-regular-name   #336699
+#config color-node-regular-box    #e0f0ff
+#config color-node-regular-border #c0d0e0
+#config color-node-primary-name   #ffffff
+#config color-node-primary-box    #336699
+#config color-node-primary-border #003366
+#config color-edge-line           #999999
+#config color-edge-name           #333333
+#config color-edge-arity          #333333
+
+Event [ url: "#event", type: "ENTITY", primary: true ]
+AgendaPoint [ url: "#agendapoint" ]
+Channel [ url: "#channel" ]
+Resource [ url: "#resource" ]
+ResourceProviderParam [ url: "#resourceproviderparam" ]
+Role [ url: "#role" ]
+User [ url: "#user" ]
+Message [ url: "#message" ]
+MessageText [ url: "#messagetext" ]
+QuestionTag [ url: "#questiontag" ]
+AuthorizationToken [ url: "#authorizationtoken" ]
+SessionToken [ url: "#sessiontoken" ]
+EventStatistic [ url: "#eventstatistic" ]
+ChannelStatistic [ url: "#channelstatistic" ]
+UserStatistic [ url: "#userstatistic" ]
+
+Event --(channels)-->[0..n] Channel
+Event --(roles)-->[0..n] Role
+Event --(accessList)-->[0..n] User
+Event --(messages)-->[0..n] Message
+Event --(statistics)-->[0..n] EventStatistic
+Event --(availableQuestionTags)-->[0..n] QuestionTag
+Event --(activeAgendaPoint)-->[0..1] AgendaPoint
+Event --(agendaPoints)-->[0..n] AgendaPoint
+AgendaPoint --(correspondingTags)-->[0..n] QuestionTag
+Channel --(resources)-->[1..n] Resource
+Channel --(statistics)-->[0..n] ChannelStatistic
+Resource --(params)-->[0..n] ResourceProviderParam
+User --(likes)-->[0..n] Message
+User --(sentMessages)-->[0..n] Message
+User --(statistics)-->[0..n] UserStatistic
+Message --(sender)-->[0..1] User
+Message --(liker)-->[0..n] User
+Message --(event)-->[1] Event
+Message --(replyTo)-->[0..1] Message
+Message --(predecessor)-->[0..1] Message
+Message --(questionTags)-->[0..n] QuestionTag
+Message --(messageText)-->[1..n] MessageText
+AuthorizationToken --(user)-->[1] User
+AuthorizationToken --(event)-->[1] Event
+SessionToken --(user)-->[1] User
+SessionToken --(event)-->[1] Event
+        </script>
+        <script type="text/x-gradia" id="sample-broadcast-hub">
+#type hub
+
+#config color-node-regular-name   #336699
+#config color-node-regular-box    #e0f0ff
+#config color-node-regular-border #c0d0e0
+#config color-node-primary-name   #ffffff
+#config color-node-primary-box    #336699
+#config color-node-primary-border #003366
+#config color-edge-line           #999999
+#config color-edge-name           #333333
+#config color-edge-arity          #333333
+
+Event [ url: "#event", primary: true ]
+AgendaPoint [ url: "#agendapoint" ]
+Channel [ url: "#channel" ]
+Role [ url: "#role" ]
+User [ url: "#user" ]
+Message [ url: "#message" ]
+QuestionTag [ url: "#questiontag" ]
+AuthorizationToken [ url: "#authorizationtoken" ]
+SessionToken [ url: "#sessiontoken" ]
+EventStatistic [ url: "#eventstatistic" ]
+
+Event --(channels)-->[0..n] Channel
+Event --(roles)-->[0..n] Role
+Event --(accessList)-->[0..n] User
+Event --(messages)-->[0..n] Message
+Event --(statistics)-->[0..n] EventStatistic
+Event --(availableQuestionTags)-->[0..n] QuestionTag
+Event --(activeAgendaPoint)-->[0..1] AgendaPoint
+Event --(agendaPoints)-->[0..n] AgendaPoint
+Message --(event)-->[1] Event
+AuthorizationToken --(event)-->[1] Event
+SessionToken --(event)-->[1] Event
+        </script>
+        <script type="text/x-gradia" id="sample-broadcast-grid">
+#type grid
+
+#config color-node-regular-name   #336699
+#config color-node-regular-box    #e0f0ff
+#config color-node-regular-border #c0d0e0
+#config color-node-primary-name   #ffffff
+#config color-node-primary-box    #336699
+#config color-node-primary-border #003366
+#config color-edge-line           #999999
+#config color-edge-name           #333333
+#config color-edge-arity          #333333
+
+Event [ url: "#event", primary: true ]
+AgendaPoint [ url: "#agendapoint" ]
+Channel [ url: "#channel" ]
+Resource [ url: "#resource" ]
+ResourceProviderParam [ url: "#resourceproviderparam" ]
+Role [ url: "#role" ]
+User [ url: "#user" ]
+Message [ url: "#message" ]
+MessageText [ url: "#messagetext" ]
+QuestionTag [ url: "#questiontag" ]
+AuthorizationToken [ url: "#authorizationtoken" ]
+SessionToken [ url: "#sessiontoken" ]
+EventStatistic [ url: "#eventstatistic" ]
+ChannelStatistic [ url: "#channelstatistic" ]
+UserStatistic [ url: "#userstatistic" ]
+        </script>
+
+        <script type="module">
+            /*  use the Gradia API (the Node-only "node:fs"/"node:path" imports
+                are stubbed via the import map, as the browser rendering path
+                never touches the WOFF2 font file resolution), located relative
+                to this file, with a fallback for a document root at "smp/"  */
+            let Gradia    = null
+            let loadError = ""
+            for (const url of [ "../dst/gradia-api.js", "./dst/gradia-api.js" ]) {
+                try {
+                    Gradia = (await import(url)).Gradia
+                    loadError = ""
+                    break
+                }
+                catch (ex) {
+                    loadError = `failed to load Gradia API from "${url}": ` +
+                        `${ex instanceof Error ? ex.message : String(ex)} ` +
+                        "(serve the repository root over HTTP so \"dst/gradia-api.js\" is reachable)"
+                }
+            }
+
+            /*  fetch an embedded sample graph description  */
+            const sampleOf = (id) =>
+                document.getElementById(id).textContent.replace(/^\n/, "")
+
+            /*  the embedded samples (their diagram type is determined
+                by their own "#type <type>" directive)  */
+            const samples = {
+                "broadcast-graph.txt": sampleOf("sample-broadcast-graph"),
+                "broadcast-hub.txt":   sampleOf("sample-broadcast-hub"),
+                "broadcast-grid.txt":  sampleOf("sample-broadcast-grid")
+            }
+
+            const app = Vue.createApp({
+                data () {
+                    return {
+                        sampleNames: Object.keys(samples),
+                        sample:      "broadcast-graph.txt",
+                        input:       samples["broadcast-graph.txt"],
+                        svg:         "",
+                        error:       ""
+                    }
+                },
+                created () {
+                    /*  the debounce timer and render sequence guard (non-reactive)  */
+                    this.timer = null
+                    this.seq   = 0
+                },
+                watch: {
+                    /*  selecting a sample overrides the input box content  */
+                    sample () {
+                        this.input = samples[this.sample]
+                    },
+                    input: {
+                        handler () { this.renderDebounced() },
+                        immediate: true
+                    }
+                },
+                methods: {
+                    /*  re-render (debounced against rapid typing)  */
+                    renderDebounced () {
+                        if (this.timer !== null)
+                            clearTimeout(this.timer)
+                        this.timer = setTimeout(() => { this.render() }, 250)
+                    },
+
+                    /*  render the input into an embeddable SVG through the Gradia
+                        API, with the diagram type taken from the "#type <type>"
+                        directive of the input (the sequence guard discards
+                        out-of-order async results)  */
+                    async render () {
+                        const seq = ++this.seq
+                        if (Gradia === null) {
+                            this.error = loadError
+                            return
+                        }
+                        try {
+                            const svg = await Gradia.render(this.input,
+                                { format: "svg:embedded" })
+                            if (seq === this.seq) {
+                                this.svg   = svg
+                                this.error = ""
+                            }
+                        }
+                        catch (ex) {
+                            if (seq === this.seq)
+                                this.error = ex instanceof Error ? ex.message : String(ex)
+                        }
+                    }
+                }
+            })
+            app.mount(".app")
+        </script>
+    </body>
+</html>

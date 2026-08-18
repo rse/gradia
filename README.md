@@ -25,6 +25,13 @@ graphs:
   output nodes.
 - `grid`: a compact grid of tiles for an edge-less graph.
 
+Playground
+----------
+
+See [playground.html](smp/playground.html) for a demo playground.
+
+![Playground](smp/playground.png)
+
 Installation
 ------------
 

@@ -1,4 +1,6 @@
 
+#type graph
+
 #config color-node-regular-name   #336699
 #config color-node-regular-box    #e0f0ff
 #config color-node-regular-border #c0d0e0
