@@ -14,6 +14,10 @@ import { render as renderGraph }                   from "./gradia-api-type-graph
 import { render as renderHub }                     from "./gradia-api-type-hub.js"
 import { render as renderGrid }                    from "./gradia-api-type-grid.js"
 
+/*  re-export the graph model and configuration companion types  */
+export type { Attr, Node, Edge, Graph }            from "./gradia-api-model.js"
+export type { Config }                             from "./gradia-api-config.js"
+
 /*  the supported diagram types and their renderers  */
 const renderers = {
     graph: renderGraph,
@@ -36,43 +40,58 @@ export interface DiagramOptions {
     config?: Partial<Config>
 }
 
-/*  the diagram rendering API: render a graph description into an SVG
-    document or data URL (the rendering configuration is layered:
-    defaults, then "#<option> <value>" directives from the input, then
-    the explicit config options)  */
-export const renderDiagram = async (input: string, options: DiagramOptions = {}): Promise<string> => {
-    /*  determine and validate the diagram type and output format  */
-    const type   = options.type ?? diagramTypeDefault
-    if (!Object.hasOwn(renderers, type))
-        throw new Error(`invalid diagram type "${type}"`)
-    const format = options.format ?? diagramFormatDefault
-    if (!diagramFormats.includes(format))
-        throw new Error(`invalid output format "${format as string}"`)
+/*  the Gradia API facade  */
+export class Gradia {
+    /*  parse a graph description into the graph model  */
+    static parse (spec: string): Graph {
+        return parse(spec)
+    }
 
-    /*  layer the rendering configuration and parse the graph description  */
-    const config = { ...configDefaults, ...parseDirectives(input), ...(options.config ?? {}) }
-    const graph  = parse(input)
+    /*  generate an SVG document or data URL from a graph model
+        (the rendering configuration is layered: defaults, then the
+        explicit config options)  */
+    static async generate (graph: Graph, options: DiagramOptions = {}): Promise<string> {
+        /*  determine and validate the diagram type and output format  */
+        const type   = options.type ?? diagramTypeDefault
+        if (!Object.hasOwn(renderers, type))
+            throw new Error(`invalid diagram type "${type}"`)
+        const format = options.format ?? diagramFormatDefault
+        if (!diagramFormats.includes(format))
+            throw new Error(`invalid output format "${format as string}"`)
 
-    /*  lay out the graph model: either as a whole, or partitioned
-        into its named groups which are laid out individually and
-        then stacked vertically as decorated group boxes  */
-    const parts  = partitionGroups(graph)
-    const layout = parts === null ?
-        await renderers[type](graph, config) :
-        composeGroups(parts, await Promise.all(
-            parts.map((part) => renderers[type](part.graph, config))))
+        /*  layer the rendering configuration  */
+        const config = { ...configDefaults, ...(options.config ?? {}) }
 
-    /*  render the laid out graph into an SVG document  */
-    const svg = renderSVG(layout, config)
+        /*  lay out the graph model: either as a whole, or partitioned
+            into its named groups which are laid out individually and
+            then stacked vertically as decorated group boxes  */
+        const parts  = partitionGroups(graph)
+        const layout = parts === null ?
+            await renderers[type](graph, config) :
+            composeGroups(parts, await Promise.all(
+                parts.map((part) => renderers[type](part.graph, config))))
 
-    /*  convert the SVG document into the requested output format  */
-    if (format === "svg:embedded")
-        return svg.replace(/^<\?xml[^?]*\?>\n/, "")
-    else if (format === "url:xml")
-        return `data:image/svg+xml,${encodeURIComponent(svg)}`
-    else if (format === "url:base64")
-        return `data:image/svg+xml;base64,${Buffer.from(svg, "utf8").toString("base64")}`
-    else
-        return svg
+        /*  render the laid out graph into an SVG document  */
+        const svg = renderSVG(layout, config)
+
+        /*  convert the SVG document into the requested output format  */
+        if (format === "svg:embedded")
+            return svg.replace(/^<\?xml[^?]*\?>\n/, "")
+        else if (format === "url:xml")
+            return `data:image/svg+xml,${encodeURIComponent(svg)}`
+        else if (format === "url:base64")
+            return `data:image/svg+xml;base64,${Buffer.from(svg, "utf8").toString("base64")}`
+        else
+            return svg
+    }
+
+    /*  render a graph description into an SVG document or data URL
+        (combines parse and generate, with the "#<option> <value>"
+        directives from the spec layered between the defaults and the
+        explicit config options)  */
+    static async render (spec: string, options: DiagramOptions = {}): Promise<string> {
+        const graph  = Gradia.parse(spec)
+        const config = { ...parseDirectives(spec), ...(options.config ?? {}) }
+        return Gradia.generate(graph, { ...options, config })
+    }
 }
-

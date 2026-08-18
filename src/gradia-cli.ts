@@ -15,7 +15,7 @@ import { Command, Option } from "commander"
 
 /*  internal dependencies  */
 import { Config, configDefaults }                                       from "./gradia-api-config.js"
-import { renderDiagram, DiagramType, diagramTypes, diagramTypeDefault,
+import { Gradia, DiagramType, diagramTypes, diagramTypeDefault,
     DiagramFormat, diagramFormats, diagramFormatDefault }               from "./gradia-api.js"
 
 /*  internal package meta-information  */
@@ -71,7 +71,7 @@ program.name("gradia")
 
         /*  read the input, render the diagram, and write the output  */
         const text = fs.readFileSync(input, "utf8")
-        const out  = await renderDiagram(text, { type: options.type, format: options.format, config })
+        const out  = await Gradia.render(text, { type: options.type, format: options.format, config })
         fs.writeFileSync(options.output, out, "utf8")
     })
 

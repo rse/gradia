@@ -13,9 +13,11 @@ tiles for an edge-less graph).
 
 -   `src/`: the TypeScript sources
     -   `src/gradia-cli.ts`: the Commander-based CLI (thin wrapper over the API)
-    -   `src/gradia-api.ts`: the rendering API `renderDiagram`, wiring
+    -   `src/gradia-api.ts`: the API facade class `Gradia` (static
+        methods `parse`, `generate`, and the combined `render`), wiring
         parser, configuration, group partitioning, the per-type
-        renderers, and the SVG output
+        renderers, and the SVG output, plus the re-exported companion
+        types (`Graph`, `Node`, `Edge`, `Attr`, `Config`)
     -   `src/gradia-api-model.ts`: the graph model types (`Attr`, `Node`, `Edge`, `Graph`)
     -   `src/gradia-api-parser.ts`: the input language parser, producing the graph model
     -   `src/gradia-api-config.ts`: the rendering options (defaults,

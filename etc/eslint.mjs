@@ -46,6 +46,7 @@ export default [
             "no-dupe-class-members":                              "off",
             "no-control-regex":                                   "off",
             "@typescript-eslint/no-non-null-assertion":           "off",
+            "@typescript-eslint/no-extraneous-class":             "off",
 
             "@stylistic/indent":                                  [ "error", 4, { SwitchCase: 1 } ],
             "@stylistic/linebreak-style":                         [ "error", "unix" ],
