@@ -23,13 +23,14 @@ const pkg = JSON.parse(fs.readFileSync(
     fileURLToPath(new URL("../package.json", import.meta.url)), "utf8")) as
     { version: string, description: string }
 
-/*  the parsed command-line options ("output" is required and "type"
-    and "format" are defaulted, so all are guaranteed to be present)  */
+/*  the parsed command-line options ("output" is required and "type",
+    "format" and "config" are defaulted, so all are guaranteed to be
+    present)  */
 interface CLIOptions {
     output: string
     type:   DiagramType
     format: DiagramFormat
-    [key: string]: string | boolean | undefined
+    config: string[]
 }
 
 /*  establish the command-line interface  */
@@ -42,31 +43,21 @@ program.name("gradia")
         .choices(diagramTypes).default(diagramTypeDefault))
     .addOption(new Option("-f, --format <format>", "output format")
         .choices(diagramFormats).default(diagramFormatDefault))
-    .option("--font-family <family>",              "font family name or path to a WOFF2 file")
-    .option("--font-embed",                        "embed the WOFF2 font file into the SVG")
-    .option("--color-node-regular-name <color>",   "text color of regular nodes")
-    .option("--color-node-regular-box <color>",    "box color of regular nodes")
-    .option("--color-node-regular-border <color>", "border color of regular nodes")
-    .option("--color-node-primary-name <color>",   "text color of primary nodes")
-    .option("--color-node-primary-box <color>",    "box color of primary nodes")
-    .option("--color-node-primary-border <color>", "border color of primary nodes")
-    .option("--color-node-ghost-name <color>",     "text color of ghost nodes")
-    .option("--color-node-ghost-box <color>",      "box color of ghost nodes")
-    .option("--color-node-ghost-border <color>",   "border color of ghost nodes")
-    .option("--color-group-name <color>",          "tag color of group boxes")
-    .option("--color-group-box <color>",           "box color of group boxes")
-    .option("--color-group-border <color>",        "border color of group boxes")
-    .option("--color-edge-line <color>",           "line color of edges")
-    .option("--color-edge-name <color>",           "name label color of edges")
-    .option("--color-edge-arity <color>",          "arity label color of edges")
+    .option("-c, --config <name>=<value>",         "rendering configuration option (repeatable)",
+        (nv: string, prev: string[]) => prev.concat(nv), [] as string[])
     .argument("<input>", "input graph description file")
     .action(async (input: string, options: CLIOptions) => {
-        /*  pass through the explicitly given rendering configuration options  */
+        /*  parse and validate the rendering configuration options  */
         const config: Partial<Config> = {}
-        for (const key of Object.keys(configDefaults) as (keyof Config)[]) {
-            const val = options[key.replace(/-([a-z])/g, (_, c: string) => c.toUpperCase())]
-            if (val !== undefined)
-                (config as Record<string, string | boolean>)[key] = val
+        const store = config as Record<string, string | boolean>
+        for (const nv of options.config) {
+            const m = /^([a-z][a-z0-9-]*)=(.*)$/.exec(nv)
+            if (m === null)
+                throw new Error(`invalid configuration option "${nv}" (expected "<name>=<value>")`)
+            const key = m[1] as keyof Config
+            if (!Object.hasOwn(configDefaults, key))
+                throw new Error(`unknown configuration option "${m[1]}"`)
+            store[key] = typeof configDefaults[key] === "boolean" ? m[2] === "true" : m[2]
         }
 
         /*  read the input, render the diagram, and write the output  */

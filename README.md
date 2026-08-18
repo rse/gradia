@@ -36,7 +36,7 @@ Usage
 -----
 
 ```sh
-$ gradia [-t graph|hub|grid] [-f <format>] -o <file>.svg <graph>.txt
+$ gradia [-t graph|hub|grid] [-f <format>] [-c <name>=<value>] -o <file>.svg <graph>.txt
 ```
 
 The output format is `svg:standalone` (a standalone SVG/XML document,
@@ -77,7 +77,7 @@ separated by `|`.
 <string>         ::= "\"" { <string-char> } "\""
 <string-char>    ::= ( <char> - ( "\"" | "\\" | <newline> ) ) | ( "\\" ( <char> - <newline> ) )
 <comment>        ::= "#" { <char> - <newline> }
-<directive>      ::= "#" <option> <whitespace> { <whitespace> } ( <string> | <word> )
+<directive>      ::= "#config" <whitespace> { <whitespace> } <option> <whitespace> { <whitespace> } ( <string> | <word> )
 <option>         ::= <letter> { <letter> | <digit> | "-" }
 <word>           ::= <char> - <whitespace> { <char> - <whitespace> }
 <newline>        ::= "\n"
@@ -104,9 +104,10 @@ separated by `|`.
 - A `<string>` cannot span lines. Inside it, `\` escapes the following
   character (especially `\"` and `\\`).
 
-- A `<directive>` is a `<comment>` which occupies its entire line and
-  whose `<option>` is one of the recognized rendering options (see
-  below). All other comments are ignored.
+- A `<directive>` is a `<comment>` which occupies its entire line,
+  starts with the keyword `#config`, and whose `<option>` is one of the
+  recognized rendering options (see below). All other comments are
+  ignored.
 
 ### Semantic Rules
 
@@ -149,8 +150,8 @@ separated by `|`.
 ### Directives
 
 A `<directive>` sets one of the rendering options, which otherwise are
-settable through the corresponding `--<option> <value>` command-line
-options. The recognized options are:
+settable through the corresponding `--config <option>=<value>`
+command-line options. The recognized options are:
 
 ```
 font-family                  color-node-ghost-name        color-group-name
@@ -169,8 +170,8 @@ as untrusted. Both are available on the command-line only.
 ### Example
 
 ```
-#color-node-primary-box  #336699
-#color-edge-line         #999999
+#config color-node-primary-box  #336699
+#config color-edge-line         #999999
 
 Animal: animal [ type: "abstract class", kind: base, url: "#animal", primary: true ]
 Dog: dog

@@ -30,12 +30,12 @@ export const configDefaults = {
 }
 export type Config = typeof configDefaults
 
-/*  parse "#<option> <value>" configuration directives from a graph
+/*  parse "#config <option> <value>" configuration directives from a graph
     description (lines which are otherwise treated as plain comments)  */
 export const parseDirectives = (input: string): Partial<Config> => {
     const partial: Record<string, string | boolean> = {}
     for (const line of input.split(/\r?\n/)) {
-        const m = /^[ \t]*#([a-z][a-z0-9-]*)[ \t]+(?:"((?:[^"\\]|\\.)*)"|(\S+))[ \t]*$/.exec(line)
+        const m = /^[ \t]*#config[ \t]+([a-z][a-z0-9-]*)[ \t]+(?:"((?:[^"\\]|\\.)*)"|(\S+))[ \t]*$/.exec(line)
         if (m === null || !Object.hasOwn(configDefaults, m[1]))
             continue
         const key = m[1] as keyof Config

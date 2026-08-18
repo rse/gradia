@@ -62,7 +62,7 @@ No test target is defined.
 ## CLI Command
 
 ```
-gradia [-t graph|hub|grid] [-f <format>] [-o <file>.svg] [--<render-option> <value>] <graph>.txt
+gradia [-t graph|hub|grid] [-f <format>] [-c <name>=<value>] [-o <file>.svg] <graph>.txt
 ```
 
 The output format is `svg:standalone` (a standalone SVG/XML document,
@@ -71,10 +71,11 @@ for direct embedding into HTML), `url:xml` (a `data:image/svg+xml` URL
 with URL-encoded XML), or `url:base64` (a `data:image/svg+xml` URL with
 Base64-encoded XML).
 
-The rendering options (`--font-family`, `--font-embed`, and the
-`--color-*` family) can also be set through `#<option> <value>`
-directives inside the input, except `--font-embed` and WOFF2 file paths,
-which are command-line-only, as the input is treated as untrusted.
+The rendering options (`font-family`, `font-embed`, and the `color-*`
+family) are set through the repeatable `--config <name>=<value>`
+command-line option, or through `#config <option> <value>` directives inside
+the input, except `font-embed` and WOFF2 file paths, which are
+command-line-only, as the input is treated as untrusted.
 
 ## Code Style
 

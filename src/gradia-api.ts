@@ -86,7 +86,7 @@ export class Gradia {
     }
 
     /*  render a graph description into an SVG document or data URL
-        (combines parse and generate, with the "#<option> <value>"
+        (combines parse and generate, with the "#config <option> <value>"
         directives from the spec layered between the defaults and the
         explicit config options)  */
     static async render (spec: string, options: DiagramOptions = {}): Promise<string> {
