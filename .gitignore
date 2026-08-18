@@ -1,4 +1,5 @@
 .ase
+.DS_Store
 node_modules
 dst
 smp/*.svg
