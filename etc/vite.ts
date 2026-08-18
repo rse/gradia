@@ -11,6 +11,7 @@ import { defineConfig, Plugin } from "vite"
     the browser, as "font-embed" is a command-line-only option)  */
 const stubs: Record<string, string> = {
     "node:fs":   "export default {}",
+    "node:url":  "export default { fileURLToPath: (u) => u }",
     "node:path": "export default { basename: (p, e) => { " +
                  "const b = p.replace(/^.*\\//, \"\"); " +
                  "return e !== undefined && b.endsWith(e) ? b.slice(0, b.length - e.length) : b } }"
@@ -25,6 +26,10 @@ export default defineConfig(() => ({
     base: "",
     root: ".",
     plugins: [ nodeStubs() ],
+
+    /*  stub the ESM-only module resolution of the built-in font files,
+        too, as "import.meta" does not exist in the UMD output format  */
+    define: { "import.meta.resolve": "((spec) => spec)" },
     build: {
         outDir:       "dst",
         emptyOutDir:  false,

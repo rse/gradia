@@ -236,6 +236,17 @@ hard-coded into the SVG instead. The resulting precedence is: first
 `#config`/`--config`, then the CSS custom property `--gradia-<option>`,
 and finally the built-in default.
 
+The `font-family` option is either a built-in font family, a plain font
+family name, or the path to a WOFF2 file. The only built-in font family
+is `Source Sans 3`, shipped as a variable WOFF2 file by the NPM
+dependency [source-sans](https://github.com/adobe-fonts/source-sans),
+and hence the only font which can be embedded without an external font
+file:
+
+```sh
+$ gradia -c font-family="Source Sans 3" -c font-embed=true -o graph.svg graph.txt
+```
+
 The option `font-embed`, and a `font-family` value pointing to a WOFF2
 file, are intentionally rejected in directives, as the input is treated
 as untrusted. Both are available on the command-line only.

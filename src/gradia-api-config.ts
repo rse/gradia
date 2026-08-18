@@ -7,6 +7,7 @@
 /*  built-in dependencies  */
 import fs   from "node:fs"
 import path from "node:path"
+import url  from "node:url"
 
 /*  the rendering configuration and its default values  */
 export const configDefaults = {
@@ -96,11 +97,31 @@ export const parseDirectives = (input: string): Partial<Config> => {
     return partial as Partial<Config>
 }
 
-/*  resolve the configured font family: either a plain family name or a
-    path to a WOFF2 file (its content optionally embedded as base64)  */
-export const resolveFont = (config: Config): { family: string, embed?: string } => {
+/*  the built-in font families, shipped as WOFF2 files by NPM
+    dependencies and hence embeddable without any external font file  */
+const fontsBuiltIn: Record<string, { file: string, weight: string }> = {
+    "Source Sans 3": {
+        file:   "source-sans/WOFF2/VF/SourceSans3VF-Upright.ttf.woff2",
+        weight: "200 900"
+    }
+}
+
+/*  resolve the configured font family: either a built-in font family, a
+    plain font family name, or a path to a WOFF2 file (the content of
+    the two former optionally embedded as base64, together with the
+    weight range of the embedded, potentially variable, font)  */
+export const resolveFont = (config: Config): { family: string, embed?: string, weight?: string } => {
     const spec = config["font-family"]
-    if (spec.endsWith(".woff2")) {
+    if (Object.hasOwn(fontsBuiltIn, spec)) {
+        const builtIn = fontsBuiltIn[spec]
+        if (config["font-embed"]) {
+            const file = url.fileURLToPath(import.meta.resolve(builtIn.file))
+            return { family: spec, embed: fs.readFileSync(file).toString("base64"), weight: builtIn.weight }
+        }
+        else
+            return { family: spec }
+    }
+    else if (spec.endsWith(".woff2")) {
         const family = path.basename(spec, ".woff2")
         if (config["font-embed"])
             return { family, embed: fs.readFileSync(spec).toString("base64") }
@@ -108,7 +129,9 @@ export const resolveFont = (config: Config): { family: string, embed?: string } 
             return { family }
     }
     else if (config["font-embed"])
-        throw new Error("option \"font-embed\" requires option \"font-family\" to be the path to a WOFF2 file")
+        throw new Error("option \"font-embed\" requires option \"font-family\" to be a built-in font " +
+            `family (${Object.keys(fontsBuiltIn).map((name) => `"${name}"`).join(", ")}) ` +
+            "or the path to a WOFF2 file")
     else
         return { family: spec }
 }

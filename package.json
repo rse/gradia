@@ -27,6 +27,7 @@
         "commander":                 "15.0.0",
         "@antv/layout":              "2.0.0",
         "nanoid":                    "6.0.1",
+        "source-sans":               "3.52.0",
         "@modelcontextprotocol/sdk": "1.30.0",
         "zod":                       "4.4.3"
     },

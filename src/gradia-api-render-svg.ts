@@ -176,7 +176,7 @@ export const renderSVG = (layout: Layout, config: Config, explicit: Partial<Conf
     const idArrow = `${prefix}-arrow`
 
     /*  resolve the configured font into the rendered font family stack  */
-    const { family, embed } = resolveFont(config)
+    const { family, embed, weight } = resolveFont(config)
     const stack = Object.hasOwn(explicit, "font-family") ?
         `'${escapeCSS(family)}'` :
         `var(--gradia-font-family, '${escapeCSS(family)}')`
@@ -264,6 +264,7 @@ export const renderSVG = (layout: Layout, config: Config, explicit: Partial<Conf
         ...(embed !== undefined ? [
             "<style>",
             `@font-face { font-family: "${escapeXML(escapeCSS(family))}"; ` +
+                (weight !== undefined ? `font-weight: ${escapeXML(escapeCSS(weight))}; ` : "") +
                 `src: url(data:font/woff2;base64,${embed}) format("woff2"); }`,
             "</style>"
         ] : []),

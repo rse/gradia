@@ -107,6 +107,13 @@ others become `var(--gradia-<option>, <default>)` CSS custom property
 lookups resolvable by the embedding document (precedence: explicit
 config, then CSS `--gradia-<option>`, then the built-in default).
 
+The `font-family` option is either a built-in font family, a plain font
+family name, or the path to a WOFF2 file. The only built-in font family
+is `Source Sans 3`, the variable upright WOFF2 file of the NPM
+dependency `source-sans`, which under `font-embed` is base64-embedded
+into the SVG (with a `font-weight: 200 900` descriptor for its weight
+axis) and hence requires no external font file at all.
+
 ## Code Style
 
 Strict TypeScript conventions are enforced in `src/`: no semicolons
