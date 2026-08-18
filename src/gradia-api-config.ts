@@ -28,6 +28,7 @@ export const configDefaults = {
     "color-edge-line":           "#999999",
     "color-edge-name":           "#333333",
     "color-edge-arity":          "#333333",
+    "color-edge-halo":           "#ffffff",
     "size-canvas-margin":        40,    /*  outer margin of the canvas             */
     "size-node-width-min":       220,   /*  minimum node box width                 */
     "size-node-height-scale":    2.25,  /*  height scale of node boxes             */

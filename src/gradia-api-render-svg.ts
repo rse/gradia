@@ -192,8 +192,10 @@ export const renderSVG = (layout: Layout, config: Config, explicit: Partial<Conf
     const svgEdges:  string[] = []
     const svgLabels: string[] = []
 
-    /*  the white halo rendered behind the edge labels for readability  */
-    const halo = "stroke=\"#ffffff\" stroke-width=\"4.5\" paint-order=\"stroke\" stroke-linejoin=\"round\""
+    /*  the halo rendered behind the edge labels for readability
+        (its color is emitted into the style attribute below, as only
+        there the CSS custom property lookup can be resolved)  */
+    const halo = "stroke-width=\"4.5\" paint-order=\"stroke\" stroke-linejoin=\"round\""
     edges.forEach((edge, i) => {
         svgEdges.push(`<path d="${pathOf(polys[i], hops[i],
             config["size-edge-corner-radius"], config["size-edge-hop-radius"])}" fill="none" ` +
@@ -215,7 +217,8 @@ export const renderSVG = (layout: Layout, config: Config, explicit: Partial<Conf
             const box = claim(candidates)
             svgLabels.push(`<text x="${(box[0] + box[2]) / 2}" y="${box[3] - 3}" text-anchor="middle" ` +
                 `font-size="${FS_EDGE}" ` +
-                `style="font-family: ${font}; fill: ${color("color-edge-name")}" ` +
+                `style="font-family: ${font}; fill: ${color("color-edge-name")}; ` +
+                `stroke: ${color("color-edge-halo")}" ` +
                 `${halo}>${escapeXML(edge.name)}</text>`)
         }
         if (edge.arity !== undefined) {
@@ -231,7 +234,8 @@ export const renderSVG = (layout: Layout, config: Config, explicit: Partial<Conf
             ])
             svgLabels.push(`<text x="${(box[0] + box[2]) / 2}" y="${box[3] - 3}" text-anchor="middle" ` +
                 `font-size="${FS_ARITY}" ` +
-                `style="font-family: ${font}; fill: ${color("color-edge-arity")}" ` +
+                `style="font-family: ${font}; fill: ${color("color-edge-arity")}; ` +
+                `stroke: ${color("color-edge-halo")}" ` +
                 `${halo}>${escapeXML(edge.arity)}</text>`)
         }
     })
