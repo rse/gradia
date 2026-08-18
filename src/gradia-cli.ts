@@ -17,21 +17,23 @@ import { Command, Option } from "commander"
 import { Config, configDefaults }                                       from "./gradia-api-config.js"
 import { Gradia, DiagramType, diagramTypes, diagramTypeDefault,
     DiagramFormat, diagramFormats, diagramFormatDefault }               from "./gradia-api.js"
+import { serve as serveMCP }                                           from "./gradia-mcp.js"
 
 /*  internal package meta-information  */
 const pkg = JSON.parse(fs.readFileSync(
     fileURLToPath(new URL("../package.json", import.meta.url)), "utf8")) as
     { version: string, description: string }
 
-/*  the parsed command-line options ("output" is required and "format"
-    and "config" are defaulted, while "type" is intentionally left
-    undefined if not given, to let a "#type" directive of the input take
-    effect)  */
+/*  the parsed command-line options ("format" and "config" are
+    defaulted, while "type" is intentionally left undefined if not
+    given, to let a "#type" directive of the input take effect, and
+    "output" is required in the regular rendering mode only)  */
 interface CLIOptions {
-    output: string
-    type?:  DiagramType
-    format: DiagramFormat
-    config: string[]
+    output?: string
+    type?:   DiagramType
+    format:  DiagramFormat
+    config:  string[]
+    mcp:     boolean
 }
 
 /*  establish the command-line interface  */
@@ -39,7 +41,8 @@ const program = new Command()
 program.name("gradia")
     .description(pkg.description)
     .version(pkg.version)
-    .requiredOption("-o, --output <file>",         "output SVG file")
+    .option("-o, --output <file>",                 "output SVG file")
+    .option("-m, --mcp",                           "run as an MCP (Model Context Protocol) service on stdio", false)
     .addOption(new Option("-t, --type <type>",
         `diagram type (default: "#type" directive of input, else "${diagramTypeDefault}")`)
         .choices(diagramTypes))
@@ -47,8 +50,8 @@ program.name("gradia")
         .choices(diagramFormats).default(diagramFormatDefault))
     .option("-c, --config <name>=<value>",         "rendering configuration option (repeatable)",
         (nv: string, prev: string[]) => prev.concat(nv), [] as string[])
-    .argument("<input>", "input graph description file")
-    .action(async (input: string, options: CLIOptions) => {
+    .argument("[input]", "input graph description file (omitted in MCP service mode)")
+    .action(async (input: string | undefined, options: CLIOptions) => {
         /*  parse and validate the rendering configuration options  */
         const config: Partial<Config> = {}
         const store = config as Record<string, string | boolean | number>
@@ -74,7 +77,24 @@ program.name("gradia")
                 store[key] = m[2]
         }
 
+        /*  optionally run as an MCP service instead of rendering once,
+            with the command-line options acting as the defaults of the
+            tool calls (and hence being the only trusted source of the
+            "font-embed" option and WOFF2 font file paths)  */
+        if (options.mcp) {
+            if (input !== undefined)
+                throw new Error("option \"--mcp\" cannot be combined with an input graph description file")
+            if (options.output !== undefined)
+                throw new Error("option \"--mcp\" cannot be combined with option \"--output\"")
+            await serveMCP(pkg, { type: options.type, format: options.format, config })
+            return
+        }
+
         /*  read the input, render the diagram, and write the output  */
+        if (input === undefined)
+            throw new Error("required input graph description file argument missing")
+        if (options.output === undefined)
+            throw new Error("required option \"--output\" missing")
         const text = fs.readFileSync(input, "utf8")
         const out  = await Gradia.render(text, { type: options.type, format: options.format, config })
         fs.writeFileSync(options.output, out, "utf8")

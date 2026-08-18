@@ -13,6 +13,8 @@ tiles for an edge-less graph).
 
 -   `src/`: the TypeScript sources
     -   `src/gradia-cli.ts`: the Commander-based CLI (thin wrapper over the API)
+    -   `src/gradia-mcp.ts`: the MCP service on stdio (the
+        `gradia_render` tool, wrapping the API `render` method)
     -   `src/gradia-api.ts`: the API facade class `Gradia` (static
         methods `parse`, `generate`, and the combined `render`), wiring
         parser, configuration, group partitioning, the per-type
@@ -77,6 +79,16 @@ Base64-encoded XML).
 The diagram type is either given through the `--type` command-line
 option or through a `#type <type>` directive inside the input, with the
 command-line option taking precedence (the built-in default is `graph`).
+
+With `--mcp`, the CLI instead runs as an MCP service on stdio (and then
+accepts neither the input argument nor `--output`), exposing the single
+tool `gradia_render` with the arguments `input`, `type`, `format`,
+and `config`, whose description carries the entire input language
+grammar and the recognized rendering options. The `--type`, `--format`,
+and `--config` command-line options act as the defaults underlying the
+tool call arguments. As the tool call arguments are untrusted, their
+`config` rejects `font-embed` and WOFF2 `font-family` values, exactly
+like the in-input `#config` directives do.
 
 All identifiers inside the generated SVG are namespaced with a
 `gradia-<nanoid>-` prefix, freshly generated per rendered document, so

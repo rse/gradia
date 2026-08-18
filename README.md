@@ -55,6 +55,42 @@ for direct embedding into HTML), `url:xml` (a `data:image/svg+xml` URL
 with URL-encoded XML), or `url:base64` (a `data:image/svg+xml` URL with
 Base64-encoded XML).
 
+MCP Service
+-----------
+
+```sh
+$ gradia --mcp [-t graph|hub|grid] [-f <format>] [-c <name>=<value>]
+```
+
+With the `-m`/`--mcp` option, **Gradia** instead runs as a [Model Context
+Protocol](https://modelcontextprotocol.io/) (MCP) service on stdio,
+exposing a single tool `gradia_render` which renders a graph description
+into an SVG diagram. The tool takes the arguments `input` (the graph
+description), `type`, `format`, and `config` (an object of rendering
+options), and returns the rendered SVG document or data URL as its text
+result. Its description carries the entire input language grammar, so
+an AI agent can author graph descriptions without further context. The
+command-line options `--type`, `--format`, and `--config` act as the
+defaults underlying the tool call arguments.
+
+As the tool call arguments are treated as untrusted, the `config`
+argument rejects the option `font-embed` and a `font-family` value
+pointing to a WOFF2 file. Both remain available through the
+(trusted) command-line options of the service.
+
+Configure the service in an MCP client with:
+
+```json
+{
+    "mcpServers": {
+        "gradia": {
+            "command": "npx",
+            "args": [ "-y", "@rse/gradia", "--mcp" ]
+        }
+    }
+}
+```
+
 Input Syntax
 ------------
 
