@@ -57,7 +57,7 @@ export const urlOf = (node: Node): string | undefined => {
 
 /*  node box text metrics (shared by the measuring and the text placement)  */
 export const PAD_W  = 18  /*  left/right node box text padding          */
-export const MIN_H  = 64  /*  minimum node box height                   */
+export const MIN_H  = 56  /*  minimum node box height                   */
 export const NAME_H = 34  /*  height of an additional name line         */
 export const ATTR_H = 30  /*  height of a single attribute line         */
 export const ATTR_P = 12  /*  top padding of the attribute block        */

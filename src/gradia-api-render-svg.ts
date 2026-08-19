@@ -113,7 +113,7 @@ const renderNode = (node: Node, layout: Layout, style: NodeStyle, font: string,
     const th    = lines.type.length * TYPE_H
     const nh    = (lines.name.length - 1) * NAME_H
     const nameY = lines.attrs.length > 0 ?
-        ty + th + 42 : cy(node.id) + th / 2 + FS_NAME * 0.36 - nh / 2
+        ty + th + MIN_H / 2 + FS_NAME * 0.36 : cy(node.id) + th / 2 + FS_NAME * 0.36 - nh / 2
     lines.type.forEach((line, k) => {
         parts.push(`<text x="${cx(node.id)}" ` +
             `y="${nameY - TYPE_D - (lines.type.length - 1 - k) * TYPE_H}" text-anchor="middle" ` +
