@@ -207,25 +207,25 @@ are settable through the corresponding `--config <option>=<value>`
 command-line options. The recognized options are:
 
 ```
-font-family                  color-edge-line              graph-columns-max
-color-node-regular-name      color-edge-name              graph-channel-width-max
-color-node-regular-box       color-edge-arity             graph-gutter-height-max
-color-node-regular-border    color-edge-halo              graph-node-separation
-color-node-primary-name      size-canvas-margin           graph-rank-separation
-color-node-primary-box       size-node-width-min          graph-node-degree-max
-color-node-primary-border    size-node-width-max          hub-channel-width-max
-color-node-ghost-name        size-node-height-scale       hub-channel-width-min
-color-node-ghost-box         size-edge-corner-radius      hub-node-gap
-color-node-ghost-border      size-edge-hop-radius         hub-node-degree-max
-color-group-name             size-edge-track-gap          grid-columns-max
-color-group-box              group-box-padding            grid-gap-horizontal
-color-group-border           group-box-gap                grid-gap-vertical
+font-family                  color-edge-name              graph-channel-width-max
+color-node-regular-name      color-edge-arity             graph-gutter-height-max
+color-node-regular-box       color-edge-halo              graph-node-separation
+color-node-regular-border    size-canvas-margin           graph-rank-separation
+color-node-primary-name      size-node-width-min          graph-node-degree-max
+color-node-primary-box       size-node-width-max          hub-channel-width-max
+color-node-primary-border    size-node-height-scale       hub-channel-width-min
+color-node-ghost-name        size-edge-corner-radius      hub-node-gap
+color-node-ghost-box         size-edge-hop-radius         hub-node-degree-max
+color-node-ghost-border      size-edge-track-gap          grid-columns-max
+color-group-name             group-box-padding            grid-gap-horizontal
+color-group-box              group-box-gap                grid-gap-vertical
+color-group-border           graph-columns-max            grid-node-width-equal
 ```
 
 The `size-*`, `group-*`, `graph-*`, `hub-*`, and `grid-*` options
 control the rendering geometry (canvas margin, node box sizing, edge
 routing, group box spacing, and the per-diagram-type layout) and take
-non-negative numbers.
+non-negative numbers, except the boolean `grid-node-width-equal`.
 
 The `size-node-width-max` option additionally enables the word-wrapping
 of the node box texts: given a positive value, the node name, its type,
@@ -234,6 +234,11 @@ node box stays within the given width and grows in height instead. The
 default `0` disables the wrapping entirely and hence lets a node box
 become as wide as its longest text. A single word wider than the
 maximum is never broken and still widens the box beyond the maximum.
+
+The `grid-node-width-equal` option controls the tile widths of a `grid`
+diagram: its default `true` forces all node boxes to the width of the
+widest one and hence yields a strictly regular grid, while `false` lets
+each column become only as wide as its own widest node box.
 
 The `font-family` and `color-*` options are embedded directly into the
 generated SVG. When such an option is *not* explicitly configured, the

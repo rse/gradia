@@ -20,7 +20,7 @@ import { Gradia, DiagramType, diagramTypes,
     arbitrary local WOFF2 files)  */
 const configOptions = Object.entries(configDefaults)
     .filter(([ key ]) => key !== "font-embed")
-    .map(([ key, val ]) => `  - "${key}" (${typeof val === "number" ? "number" : "string"}, default: ${JSON.stringify(val)})`)
+    .map(([ key, val ]) => `  - "${key}" (${typeof val}, default: ${JSON.stringify(val)})`)
     .join("\n")
 
 /*  the comprehensive description of the "gradia_render" tool, teaching
@@ -141,7 +141,9 @@ ${configOptions}
 
 The "size-*", "group-*", "graph-*", "hub-*", and "grid-*" options control the
 rendering geometry (canvas margin, node box sizing, edge routing, group box
-spacing, and the per-diagram-type layout) and take non-negative numbers. The
+spacing, and the per-diagram-type layout) and take non-negative numbers, except
+the boolean "grid-node-width-equal", which forces all node boxes of a "grid"
+diagram to the width of the widest one. The
 "font-family" and "color-*" options are embedded into the generated SVG: when
 such an option is not explicitly configured, the SVG instead references the CSS
 custom property "--gradia-<option>" (definable by an embedding HTML document)

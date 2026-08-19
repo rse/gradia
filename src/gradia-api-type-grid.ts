@@ -27,13 +27,17 @@ export const render = async (graph: Graph, config: Config): Promise<Layout> => {
             `(found ${graph.edges.length}, first is "${edge.source}" --> "${edge.target}")`)
     }
 
-    /*  determine node box sizes (keeping the individual widths)
-        and unify only their heights into a single tile height  */
+    /*  determine node box sizes and unify their heights into a single
+        tile height and, if configured, their widths into a single tile width  */
     const { boxW, boxH, contentH } = measureNodes(nodes, config,
         () => config["size-node-height-scale"] / 2)
     const tileH = nodes.reduce((a, node) => Math.max(a, boxH.get(node.id)!), 0)
-    for (const node of nodes)
+    const tileW = nodes.reduce((a, node) => Math.max(a, boxW.get(node.id)!), 0)
+    for (const node of nodes) {
         boxH.set(node.id, tileH)
+        if (config["grid-node-width-equal"])
+            boxW.set(node.id, tileW)
+    }
 
     /*  place the nodes in declaration order onto a roughly square,
         row-major grid (capped at the configured maximum of columns, so
