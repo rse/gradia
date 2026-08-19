@@ -9,8 +9,8 @@ import { Edge }  from "./gradia-api-model.js"
 import { Poly }  from "./gradia-api-render-base.js"
 
 /*  edge attachment port geometry  */
-const PORT_SEP = 24  /*  maximum separation of adjacent ports     */
-const PORT_PAD = 10  /*  padding of the port band inside the box  */
+export const PORT_SEP = 24  /*  maximum separation of adjacent ports     */
+const        PORT_PAD = 10  /*  padding of the port band inside the box  */
 
 /*  drop duplicate and collinear intermediate points of a polyline  */
 export const simplifyPoly = (pts: Poly): Poly => {

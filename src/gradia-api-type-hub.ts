@@ -10,7 +10,7 @@ import { Config }                                  from "./gradia-api-config.js"
 import { Poly, NodeStyle }                         from "./gradia-api-render-base.js"
 import { isPrimary, measureNodes, defaultStyleOf } from "./gradia-api-render-node.js"
 import { Layout }                                  from "./gradia-api-render-svg.js"
-import { Side, TrackUser, simplifyPoly, assignPorts, assignTracks } from "./gradia-api-render-edge.js"
+import { Side, TrackUser, PORT_SEP, simplifyPoly, assignPorts, assignTracks } from "./gradia-api-render-edge.js"
 
 /*  the separator between a node id and its placement suffix,
     distinguishing the two clones of a twice-placed node  */
@@ -94,10 +94,29 @@ export const render = async (graph: Graph, config: Config): Promise<Layout> => {
     const gap    = config["hub-node-gap"]
     const scale  = config["size-node-height-scale"]
 
-    /*  determine node box sizes from their textual content (the primary
-        box at full and all other boxes at half height scale)  */
-    const { boxW, boxH, contentH } = measureNodes(nodes, config, (node) =>
-        node.id === center.id ? scale : scale / 2)
+    /*  the fixed three-column layout assignment  */
+    const colOf = (id: string): number =>
+        id === center.id ? 1 : (inputSet.has(id) ? 0 : 2)
+
+    /*  determine node box sizes from their textual content (all boxes at
+        half height scale), then grow every box whose edge attachments
+        exceed the configured per-side maximum, step-wise by one port
+        separation per additional edge, so the edges keep enough
+        attachment room without a fixed height increase  */
+    const { boxW, boxH, contentH } = measureNodes(nodes, config, () => scale / 2)
+    const portCnt = new Map<string, number>()
+    for (const edge of edges) {
+        const sSide = colOf(edge.source) < colOf(edge.target) ? "e" : "w"
+        const tSide = sSide === "e" ? "w" : "e"
+        portCnt.set(`${sSide}:${edge.source}`, (portCnt.get(`${sSide}:${edge.source}`) ?? 0) + 1)
+        portCnt.set(`${tSide}:${edge.target}`, (portCnt.get(`${tSide}:${edge.target}`) ?? 0) + 1)
+    }
+    for (const node of nodes) {
+        const cnt = Math.max(portCnt.get(`w:${node.id}`) ?? 0, portCnt.get(`e:${node.id}`) ?? 0)
+        if (cnt > config["hub-node-degree-max"])
+            boxH.set(node.id, boxH.get(node.id)! +
+                (cnt - config["hub-node-degree-max"]) * PORT_SEP)
+    }
 
     /*  fixed three-column layout: stack the input nodes in the first
         column and the output nodes in the third column (each stack
@@ -120,8 +139,6 @@ export const render = async (graph: Graph, config: Config): Promise<Layout> => {
 
     /*  determine column widths and left edge positions, with the two
         inter-column channel widths sized by actual edge usage  */
-    const colOf    = (id: string): number =>
-        id === center.id ? 1 : (inputSet.has(id) ? 0 : 2)
     const colWidth = [
         inputs.reduce((a, node)  => Math.max(a, boxW.get(node.id)!), 0),
         boxW.get(center.id)!,

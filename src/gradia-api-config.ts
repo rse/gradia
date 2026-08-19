@@ -46,6 +46,7 @@ export const configDefaults = {
     "hub-channel-width-max":     340,   /*  hub: max width of column channels      */
     "hub-channel-width-min":     240,   /*  hub: min width of column channels      */
     "hub-node-gap":              20,    /*  hub: vertical gap of stacked nodes     */
+    "hub-node-degree-max":       3,     /*  hub: max edges per side before growth  */
     "grid-columns-max":          4,     /*  grid: max side-by-side tiles           */
     "grid-gap-horizontal":       40,    /*  grid: horizontal gap between tiles     */
     "grid-gap-vertical":         20     /*  grid: vertical gap between tiles       */
