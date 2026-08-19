@@ -25,8 +25,9 @@ tiles for an edge-less graph).
     -   `src/gradia-api-config.ts`: the rendering options (defaults,
         in-input directive parsing, font resolution)
     -   `src/gradia-api-render-base.ts`: shared rendering geometry/font
-        constants and text width measurement
-    -   `src/gradia-api-render-node.ts`: node box measurement and styling helpers
+        constants, text width measurement, and text word-wrapping
+    -   `src/gradia-api-render-node.ts`: node box text line breaking,
+        measurement, and styling helpers
     -   `src/gradia-api-render-edge.ts`: edge routing (port/track
         assignment, polyline simplification, hop computation, SVG path
         generation)

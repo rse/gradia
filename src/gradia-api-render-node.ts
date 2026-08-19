@@ -7,7 +7,7 @@
 /*  internal dependencies  */
 import { Attr, Node }                              from "./gradia-api-model.js"
 import { Config }                                  from "./gradia-api-config.js"
-import { NodeStyle, FS_NAME, FS_TYPE, FS_ATTR, textWidth }
+import { NodeStyle, FS_NAME, FS_TYPE, FS_ATTR, textWidth, textWrap }
     from "./gradia-api-render-base.js"
 
 /*  the special "primary" annotation (rendered as a distinct node coloring)  */
@@ -56,11 +56,35 @@ export const urlOf = (node: Node): string | undefined => {
 }
 
 /*  node box text metrics (shared by the measuring and the text placement)  */
+export const PAD_W  = 18  /*  left/right node box text padding          */
 export const MIN_H  = 64  /*  minimum node box height                   */
+export const NAME_H = 38  /*  height of an additional name line         */
 export const ATTR_H = 30  /*  height of a single attribute line         */
 export const ATTR_P = 8   /*  top padding of the attribute block        */
-export const TYPE_H = 26  /*  extra height of the type line             */
+export const TYPE_H = 26  /*  extra height of a single type line        */
 export const TYPE_D = 36  /*  baseline distance of the type to the name */
+
+/*  the text lines rendered inside a node box  */
+export interface NodeLines {
+    name:  string[]
+    type:  string[]
+    attrs: string[]
+}
+
+/*  break the textual content of a node into its rendered lines, word-wrapped
+    to the configured maximum box width (shared by the measuring and the text
+    placement, so both can never disagree on the resulting line count)  */
+export const linesOfNode = (node: Node, config: Config): NodeLines => {
+    const max  = config["size-node-width-max"] > 0 ?
+        config["size-node-width-max"] - PAD_W * 2 : 0
+    const type = typeOf(node)
+    return {
+        name:  textWrap(node.name, FS_NAME, max),
+        type:  type !== undefined ? textWrap(type, FS_TYPE, max) : [],
+        attrs: attrsOfNode(node).flatMap((attr) =>
+            textWrap(`${attr.key}: ${attr.val}`, FS_ATTR, max))
+    }
+}
 
 /*  determine node box sizes from their textual content
     (boxes are scaled up in height by a per-node factor to
@@ -70,8 +94,6 @@ export const measureNodes = (
     config:  Config,
     scaleOf: (node: Node) => number
 ): { boxW: Map<string, number>, boxH: Map<string, number>, contentH: Map<string, number> } => {
-    const PAD_W = 18  /*  left/right node box text padding  */
-
     /*  the resulting node box dimensions  */
     const boxW     = new Map<string, number>()
     const boxH     = new Map<string, number>()
@@ -79,15 +101,16 @@ export const measureNodes = (
 
     /*  measure the text content of every node  */
     for (const node of nodes) {
-        const attrs = attrsOfNode(node)
-        const type  = typeOf(node)
-        let w = textWidth(node.name, FS_NAME)
-        if (type !== undefined)
-            w = Math.max(w, textWidth(type, FS_TYPE))
-        for (const attr of attrs)
-            w = Math.max(w, textWidth(`${attr.key}: ${attr.val}`, FS_ATTR))
-        const h = MIN_H + (type !== undefined ? TYPE_H : 0) +
-            (attrs.length > 0 ? attrs.length * ATTR_H + ATTR_P : 0)
+        const lines = linesOfNode(node, config)
+        let w = 0
+        for (const line of lines.name)
+            w = Math.max(w, textWidth(line, FS_NAME))
+        for (const line of lines.type)
+            w = Math.max(w, textWidth(line, FS_TYPE))
+        for (const line of lines.attrs)
+            w = Math.max(w, textWidth(line, FS_ATTR))
+        const h = MIN_H + (lines.name.length - 1) * NAME_H + lines.type.length * TYPE_H +
+            (lines.attrs.length > 0 ? lines.attrs.length * ATTR_H + ATTR_P : 0)
         boxW.set(node.id, Math.max(config["size-node-width-min"], Math.ceil(w) + PAD_W * 2))
         boxH.set(node.id, Math.ceil(h * scaleOf(node)))
         contentH.set(node.id, h)

@@ -213,19 +213,27 @@ color-node-regular-box       color-edge-arity             graph-gutter-height-ma
 color-node-regular-border    color-edge-halo              graph-node-separation
 color-node-primary-name      size-canvas-margin           graph-rank-separation
 color-node-primary-box       size-node-width-min          hub-channel-width-max
-color-node-primary-border    size-node-height-scale       hub-channel-width-min
-color-node-ghost-name        size-edge-corner-radius      hub-node-gap
-color-node-ghost-box         size-edge-hop-radius         grid-columns-max
-color-node-ghost-border      size-edge-track-gap          grid-gap-horizontal
-color-group-name             group-box-padding            grid-gap-vertical
-color-group-box              group-box-gap
-color-group-border
+color-node-primary-border    size-node-width-max          hub-channel-width-min
+color-node-ghost-name        size-node-height-scale       hub-node-gap
+color-node-ghost-box         size-edge-corner-radius      grid-columns-max
+color-node-ghost-border      size-edge-hop-radius         grid-gap-horizontal
+color-group-name             size-edge-track-gap          grid-gap-vertical
+color-group-box              group-box-padding
+color-group-border           group-box-gap
 ```
 
 The `size-*`, `group-*`, `graph-*`, `hub-*`, and `grid-*` options
 control the rendering geometry (canvas margin, node box sizing, edge
 routing, group box spacing, and the per-diagram-type layout) and take
 non-negative numbers.
+
+The `size-node-width-max` option additionally enables the word-wrapping
+of the node box texts: given a positive value, the node name, its type,
+and its attribute lines are greedily broken at whitespace so that the
+node box stays within the given width and grows in height instead. The
+default `0` disables the wrapping entirely and hence lets a node box
+become as wide as its longest text. A single word wider than the
+maximum is never broken and still widens the box beyond the maximum.
 
 The `font-family` and `color-*` options are embedded directly into the
 generated SVG. When such an option is *not* explicitly configured, the

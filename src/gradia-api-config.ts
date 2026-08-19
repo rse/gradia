@@ -31,6 +31,7 @@ export const configDefaults = {
     "color-edge-halo":           "#ffffff",
     "size-canvas-margin":        40,    /*  outer margin of the canvas             */
     "size-node-width-min":       220,   /*  minimum node box width                 */
+    "size-node-width-max":       0,     /*  maximum node box width (0 = unlimited) */
     "size-node-height-scale":    2.25,  /*  height scale of node boxes             */
     "size-edge-corner-radius":   20,    /*  corner rounding radius of edges        */
     "size-edge-hop-radius":      8,     /*  radius of edge crossing hops           */

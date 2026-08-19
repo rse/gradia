@@ -15,7 +15,7 @@ import {
     FS_NAME, FS_TYPE, FS_ATTR, FS_EDGE, FS_ARITY, FS_GROUP,
     textWidth, escapeXML
 } from "./gradia-api-render-base.js"
-import { attrsOfNode, typeOf, urlOf, defaultStyleOf, MIN_H, ATTR_H, ATTR_P, TYPE_H, TYPE_D }
+import { linesOfNode, urlOf, defaultStyleOf, MIN_H, NAME_H, ATTR_H, ATTR_P, TYPE_H, TYPE_D }
     from "./gradia-api-render-node.js"
 import { computeHops, pathOf, pointAt }
     from "./gradia-api-render-edge.js"
@@ -93,14 +93,13 @@ const labelPlacer = (layout: Layout): { claim: (candidates: Box[]) => Box, occup
 /*  generate the SVG fragments for a single node box (a node with a
     "url" attribute becomes a hyperlink covering the whole box)  */
 const renderNode = (node: Node, layout: Layout, style: NodeStyle, font: string,
-    color: (key: ConfigEmbedded) => string): string[] => {
+    color: (key: ConfigEmbedded) => string, config: Config): string[] => {
     const { cx, cy, boxW, boxH, contentH } = layout
     const w     = boxW.get(node.id)!
     const h     = boxH.get(node.id)!
     const x     = cx(node.id) - w / 2
     const y     = cy(node.id) - h / 2
-    const attrs = attrsOfNode(node)
-    const type  = typeOf(node)
+    const lines = linesOfNode(node, config)
     const url   = urlOf(node)
     const parts: string[] = []
     parts.push(`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="6" ` +
@@ -108,21 +107,29 @@ const renderNode = (node: Node, layout: Layout, style: NodeStyle, font: string,
         `${style.dash !== undefined ? ` stroke-dasharray="${escapeXML(style.dash)}"` : ""}/>`)
 
     /*  vertically center the textual content block within the box, with
-        the optional type line shifting the name and attributes down  */
+        the optional type lines shifting the name and attributes down and
+        the additional wrapped name lines shifting the attributes down  */
     const ty    = cy(node.id) - contentH.get(node.id)! / 2
-    const th    = type !== undefined ? TYPE_H : 0
-    const nameY = attrs.length > 0 ? ty + th + 42 : cy(node.id) + th / 2 + FS_NAME * 0.36
-    if (type !== undefined)
-        parts.push(`<text x="${cx(node.id)}" y="${nameY - TYPE_D}" text-anchor="middle" ` +
+    const th    = lines.type.length * TYPE_H
+    const nh    = (lines.name.length - 1) * NAME_H
+    const nameY = lines.attrs.length > 0 ?
+        ty + th + 42 : cy(node.id) + th / 2 + FS_NAME * 0.36 - nh / 2
+    lines.type.forEach((line, k) => {
+        parts.push(`<text x="${cx(node.id)}" ` +
+            `y="${nameY - TYPE_D - (lines.type.length - 1 - k) * TYPE_H}" text-anchor="middle" ` +
             `font-size="${FS_TYPE}" ` +
-            `style="font-family: ${font}; fill: ${color(style.text)}">${escapeXML(type)}</text>`)
-    parts.push(`<text x="${cx(node.id)}" y="${nameY}" text-anchor="middle" ` +
-        `font-size="${FS_NAME}" font-weight="600" ` +
-        `style="font-family: ${font}; fill: ${color(style.text)}">${escapeXML(node.name)}</text>`)
-    attrs.forEach((attr, k) => {
-        parts.push(`<text x="${cx(node.id)}" y="${ty + th + MIN_H + ATTR_P + k * ATTR_H}" text-anchor="middle" ` +
+            `style="font-family: ${font}; fill: ${color(style.text)}">${escapeXML(line)}</text>`)
+    })
+    lines.name.forEach((line, k) => {
+        parts.push(`<text x="${cx(node.id)}" y="${nameY + k * NAME_H}" text-anchor="middle" ` +
+            `font-size="${FS_NAME}" font-weight="600" ` +
+            `style="font-family: ${font}; fill: ${color(style.text)}">${escapeXML(line)}</text>`)
+    })
+    lines.attrs.forEach((line, k) => {
+        parts.push(`<text x="${cx(node.id)}" ` +
+            `y="${ty + th + nh + MIN_H + ATTR_P + k * ATTR_H}" text-anchor="middle" ` +
             `font-size="${FS_ATTR}" ` +
-            `style="font-family: ${font}; fill: ${color(style.text)}">${escapeXML(`${attr.key}: ${attr.val}`)}</text>`)
+            `style="font-family: ${font}; fill: ${color(style.text)}">${escapeXML(line)}</text>`)
     })
     if (url === undefined)
         return parts
@@ -241,7 +248,7 @@ export const renderSVG = (layout: Layout, config: Config, explicit: Partial<Conf
     })
 
     /*  generate the SVG fragments for the node boxes  */
-    const svgNodes = nodes.flatMap((node) => renderNode(node, layout, styleOf(node), font, color))
+    const svgNodes = nodes.flatMap((node) => renderNode(node, layout, styleOf(node), font, color, config))
 
     /*  generate the SVG fragments for the group boxes (drawn below
         everything else) and their tags in the top-left corners  */
