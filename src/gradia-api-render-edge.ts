@@ -90,12 +90,18 @@ export interface TrackUser {
     mirror: boolean
 }
 
+/*  the minimum cross-axis distance between the track-following segments
+    of two edges sharing a track, keeping their rounded corners apart  */
+const TRACK_CLEARANCE = 24
+
 /*  assign the parallel tracks within a channel or gutter: the users are
     ordered by their entry/exit positions, so that a track-following
     segment never has to cross the entering segment of a parallel
     neighbor (back turners get near tracks entry-position-ordered,
     forward turners far tracks, reversed for mirrored users which
-    enter the channel/gutter from the far side)  */
+    enter the channel/gutter from the far side); users whose
+    track-following segments occupy disjoint cross-axis spans share a
+    track, so fewer tracks are used and they stay centered  */
 export const assignTracks = (users: TrackUser[], width: number, pad: number, gap: number): Map<number, number> => {
     const order = (list: TrackUser[], mirror: boolean): TrackUser[] => {
         const dir = mirror ? -1 : +1
@@ -109,11 +115,31 @@ export const assignTracks = (users: TrackUser[], width: number, pad: number, gap
         ...order(users.filter((u) => !u.mirror), false),
         ...order(users.filter((u) =>  u.mirror), true)
     ]
-    const step    = Math.min(gap, (width - pad) / Math.max(ordered.length - 1, 1))
-    const offsets = new Map<number, number>()
+
+    /*  pack the ordered users onto tracks: overlapping users keep their
+        relative crossing-avoiding order by always taking a farther track
+        than every earlier overlapping user, while span-disjoint users
+        share a track (their entry/exit segments lie outside each other's
+        span, so sharing can never introduce a crossing)  */
+    const overlap = (a: TrackUser, b: TrackUser): boolean =>
+        Math.min(a.posIn, a.posOut) < Math.max(b.posIn, b.posOut) + TRACK_CLEARANCE
+        && Math.min(b.posIn, b.posOut) < Math.max(a.posIn, a.posOut) + TRACK_CLEARANCE
+    const trackOf = new Map<number, number>()
+    let   tracks  = 0
     ordered.forEach((u, idx) => {
-        offsets.set(u.edge, (idx - (ordered.length - 1) / 2) * step)
+        let t = 0
+        for (let j = 0; j < idx; j++)
+            if (overlap(ordered[j], u))
+                t = Math.max(t, trackOf.get(ordered[j].edge)! + 1)
+        trackOf.set(u.edge, t)
+        tracks = Math.max(tracks, t + 1)
     })
+
+    /*  spread the used tracks centered within the channel/gutter  */
+    const step    = Math.min(gap, (width - pad) / Math.max(tracks - 1, 1))
+    const offsets = new Map<number, number>()
+    for (const [ edge, t ] of trackOf)
+        offsets.set(edge, (t - (tracks - 1) / 2) * step)
     return offsets
 }
 
