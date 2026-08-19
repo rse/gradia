@@ -57,6 +57,10 @@ export interface DiagramOptions {
 
 /*  the Gradia API facade  */
 export class Gradia {
+    /*  the rendering configuration options and their default values
+        (exposed so consumers can discover and validate the options)  */
+    static readonly config: Readonly<Config> = configDefaults
+
     /*  parse a graph description into the graph model  */
     static parse (spec: string): Graph {
         return parse(spec)
