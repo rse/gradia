@@ -43,6 +43,7 @@ export const configDefaults = {
     "graph-gutter-height-max":   90,    /*  graph: max height of row gutters       */
     "graph-node-separation":     30,    /*  graph: layered layout node separation  */
     "graph-rank-separation":     60,    /*  graph: layered layout rank separation  */
+    "graph-node-degree-max":     3,     /*  graph: max edges per side before growth  */
     "hub-channel-width-max":     340,   /*  hub: max width of column channels      */
     "hub-channel-width-min":     240,   /*  hub: min width of column channels      */
     "hub-node-gap":              20,    /*  hub: vertical gap of stacked nodes     */

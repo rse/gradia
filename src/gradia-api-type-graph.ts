@@ -13,7 +13,7 @@ import { Config }                            from "./gradia-api-config.js"
 import { Poly }                              from "./gradia-api-render-base.js"
 import { measureNodes }                      from "./gradia-api-render-node.js"
 import { Layout }                            from "./gradia-api-render-svg.js"
-import { Side, TrackUser, simplifyPoly, assignPorts, assignTracks } from "./gradia-api-render-edge.js"
+import { Side, TrackUser, PORT_SEP, simplifyPoly, assignPorts, assignTracks } from "./gradia-api-render-edge.js"
 
 /*  rendering geometry constants  */
 const CLUSTX = 26  /*  max X distance within a grid column  */
@@ -336,8 +336,10 @@ export const render = async (graph: Graph, config: Config): Promise<Layout> => {
     const nodes = Array.from(graph.nodes.values())
     const edges = graph.edges
 
-    /*  determine node box sizes from their textual content  */
-    const { boxW, boxH, contentH } = measureNodes(nodes, config, () => config["size-node-height-scale"])
+    /*  determine node box sizes from their textual content
+        (all boxes at half height scale, grown by their edge
+        attachment needs once the attachment sides are known)  */
+    const { boxW, boxH, contentH } = measureNodes(nodes, config, () => config["size-node-height-scale"] / 2)
 
     /*  determine raw node positions with the AntV Dagre layout  */
     const layout = new DagreLayout({
@@ -388,11 +390,6 @@ export const render = async (graph: Graph, config: Config): Promise<Layout> => {
     /*  plan the coarse channel/gutter route of every edge  */
     const { plans, chanCnt, gutCnt } = planRoutes(edges, col, row)
 
-    /*  determine grid cell sizes and final node center positions  */
-    const grid = computeGrid(nodes, col, row, boxW, boxH, ncols, nrows, chanCnt, gutCnt, config)
-    const cx   = (id: string) => grid.colCX[col.get(id)!]
-    const cy   = (id: string) => grid.rowCY[row.get(id)!]
-
     /*  determine the attachment sides of every edge (east/west),
         derived from the column relation of its endpoint nodes  */
     const sides: { s: Side, t: Side }[] = edges.map((edge) => {
@@ -402,6 +399,27 @@ export const render = async (graph: Graph, config: Config): Promise<Layout> => {
         else if (sc > tc) return { s: "w", t: "e" }
         else              return { s: "e", t: "e" }
     })
+
+    /*  grow every box whose edge attachments exceed the configured
+        per-side maximum, step-wise by one port separation per
+        additional edge, so the edges keep enough attachment room
+        without a fixed height increase  */
+    const portCnt = new Map<string, number>()
+    edges.forEach((edge, i) => {
+        portCnt.set(`${sides[i].s}:${edge.source}`, (portCnt.get(`${sides[i].s}:${edge.source}`) ?? 0) + 1)
+        portCnt.set(`${sides[i].t}:${edge.target}`, (portCnt.get(`${sides[i].t}:${edge.target}`) ?? 0) + 1)
+    })
+    for (const node of nodes) {
+        const cnt = Math.max(portCnt.get(`w:${node.id}`) ?? 0, portCnt.get(`e:${node.id}`) ?? 0)
+        if (cnt > config["graph-node-degree-max"])
+            boxH.set(node.id, boxH.get(node.id)! +
+                (cnt - config["graph-node-degree-max"]) * PORT_SEP)
+    }
+
+    /*  determine grid cell sizes and final node center positions  */
+    const grid = computeGrid(nodes, col, row, boxW, boxH, ncols, nrows, chanCnt, gutCnt, config)
+    const cx   = (id: string) => grid.colCX[col.get(id)!]
+    const cy   = (id: string) => grid.rowCY[row.get(id)!]
 
     /*  distribute the edge attachment ports along each node side  */
     const portPos = assignPorts(edges, sides, cx, cy, boxW, boxH)

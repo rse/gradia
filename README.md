@@ -212,14 +212,14 @@ color-node-regular-name      color-edge-name              graph-channel-width-ma
 color-node-regular-box       color-edge-arity             graph-gutter-height-max
 color-node-regular-border    color-edge-halo              graph-node-separation
 color-node-primary-name      size-canvas-margin           graph-rank-separation
-color-node-primary-box       size-node-width-min          hub-channel-width-max
-color-node-primary-border    size-node-width-max          hub-channel-width-min
-color-node-ghost-name        size-node-height-scale       hub-node-gap
-color-node-ghost-box         size-edge-corner-radius      hub-node-degree-max
-color-node-ghost-border      size-edge-hop-radius         grid-columns-max
-color-group-name             size-edge-track-gap          grid-gap-horizontal
-color-group-box              group-box-padding            grid-gap-vertical
-color-group-border           group-box-gap
+color-node-primary-box       size-node-width-min          graph-node-degree-max
+color-node-primary-border    size-node-width-max          hub-channel-width-max
+color-node-ghost-name        size-node-height-scale       hub-channel-width-min
+color-node-ghost-box         size-edge-corner-radius      hub-node-gap
+color-node-ghost-border      size-edge-hop-radius         hub-node-degree-max
+color-group-name             size-edge-track-gap          grid-columns-max
+color-group-box              group-box-padding            grid-gap-horizontal
+color-group-border           group-box-gap                grid-gap-vertical
 ```
 
 The `size-*`, `group-*`, `graph-*`, `hub-*`, and `grid-*` options
