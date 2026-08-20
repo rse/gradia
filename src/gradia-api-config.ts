@@ -49,6 +49,7 @@ export const configDefaults = {
     "hub-node-gap":              20,    /*  hub: vertical gap of stacked nodes     */
     "hub-node-degree-max":       3,     /*  hub: max edges per side before growth  */
     "grid-columns-max":          4,     /*  grid: max side-by-side tiles           */
+    "grid-columns-min":          3,     /*  grid: min side-by-side tiles           */
     "grid-gap-horizontal":       40,    /*  grid: horizontal gap between tiles     */
     "grid-gap-vertical":         20,    /*  grid: vertical gap between tiles       */
     "grid-node-width-equal":     true   /*  grid: force equal width of node boxes  */

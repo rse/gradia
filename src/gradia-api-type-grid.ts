@@ -19,6 +19,7 @@ export const render = async (graph: Graph, config: Config): Promise<Layout> => {
     const gapH    = config["grid-gap-horizontal"]
     const gapV    = config["grid-gap-vertical"]
     const maxCols = Math.max(Math.floor(config["grid-columns-max"]), 1)
+    const minCols = Math.max(Math.floor(config["grid-columns-min"]), 1)
 
     /*  ensure the graph is completely edge-less  */
     if (graph.edges.length > 0) {
@@ -40,10 +41,13 @@ export const render = async (graph: Graph, config: Config): Promise<Layout> => {
     }
 
     /*  place the nodes in declaration order onto a roughly square,
-        row-major grid (capped at the configured maximum of columns, so
-        larger graphs grow only in height), with each column as wide as
-        its widest tile and each tile left-aligned within its column  */
-    const cols     = Math.max(Math.min(Math.ceil(Math.sqrt(nodes.length)), maxCols), 1)
+        row-major grid (raised to the configured minimum of columns, so
+        few nodes still share a row, and capped at the configured maximum
+        of columns and the node count, so larger graphs grow only in
+        height), with each column as wide as its widest tile and each
+        tile left-aligned within its column  */
+    const cols     = Math.max(Math.min(Math.max(Math.ceil(Math.sqrt(nodes.length)), minCols),
+        maxCols, nodes.length), 1)
     const colWidth = Array.from({ length: cols }, () => 0)
     nodes.forEach((node, i) => {
         colWidth[i % cols] = Math.max(colWidth[i % cols], boxW.get(node.id)!)

@@ -204,19 +204,21 @@ type is silently ignored. Without both, the type defaults to `graph`.
 
 A `#config` directive sets one of the rendering options, which otherwise
 are settable through the corresponding `--config <option>=<value>`
-command-line options. The recognized options are:
+command-line options (`font-embed` being command-line only, see below).
+The recognized options are:
 
 ```
-font-family                  color-edge-name              graph-channel-width-max
-color-node-regular-name      color-edge-arity             graph-gutter-height-max
-color-node-regular-box       color-edge-halo              graph-node-separation
-color-node-regular-border    size-canvas-margin           graph-rank-separation
-color-node-primary-name      size-node-width-min          graph-node-degree-max
-color-node-primary-box       size-node-width-max          hub-channel-width-max
-color-node-primary-border    size-node-height-scale       hub-channel-width-min
-color-node-ghost-name        size-edge-corner-radius      hub-node-gap
-color-node-ghost-box         size-edge-hop-radius         hub-node-degree-max
-color-node-ghost-border      size-edge-track-gap          grid-columns-max
+font-family                  color-edge-line              graph-channel-width-max
+font-embed                   color-edge-name              graph-gutter-height-max
+color-node-regular-name      color-edge-arity             graph-node-separation
+color-node-regular-box       color-edge-halo              graph-rank-separation
+color-node-regular-border    size-canvas-margin           graph-node-degree-max
+color-node-primary-name      size-node-width-min          hub-channel-width-max
+color-node-primary-box       size-node-width-max          hub-channel-width-min
+color-node-primary-border    size-node-height-scale       hub-node-gap
+color-node-ghost-name        size-edge-corner-radius      hub-node-degree-max
+color-node-ghost-box         size-edge-hop-radius         grid-columns-max
+color-node-ghost-border      size-edge-track-gap          grid-columns-min
 color-group-name             group-box-padding            grid-gap-horizontal
 color-group-box              group-box-gap                grid-gap-vertical
 color-group-border           graph-columns-max            grid-node-width-equal
@@ -234,6 +236,14 @@ node box stays within the given width and grows in height instead. The
 default `0` disables the wrapping entirely and hence lets a node box
 become as wide as its longest text. A single word wider than the
 maximum is never broken and still widens the box beyond the maximum.
+
+The `grid-columns-min` and `grid-columns-max` options control the column
+count of a `grid` diagram, which by default is derived from the node
+count as a roughly square grid: `grid-columns-min` (default `3`) raises
+the derived count, so that a few nodes still share a single row instead
+of being stacked, while `grid-columns-max` (default `4`) caps it, so
+that larger diagrams grow in height only. The column count never
+exceeds the node count and the maximum always wins over the minimum.
 
 The `grid-node-width-equal` option controls the tile widths of a `grid`
 diagram: its default `true` forces all node boxes to the width of the
