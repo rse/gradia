@@ -38,7 +38,7 @@ export const configDefaults = {
     "size-edge-track-gap":       12,    /*  offset between parallel edge routes    */
     "group-box-padding":         30,    /*  inner padding of group boxes           */
     "group-box-gap":             40,    /*  vertical gap between group boxes       */
-    "graph-columns-max":         5,     /*  graph: max side-by-side nodes          */
+    "graph-columns-max":         4,     /*  graph: max side-by-side nodes          */
     "graph-channel-width-max":   140,   /*  graph: max width of column channels    */
     "graph-gutter-height-max":   90,    /*  graph: max height of row gutters       */
     "graph-node-separation":     30,    /*  graph: layered layout node separation  */
