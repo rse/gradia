@@ -6,7 +6,12 @@ ChangeLog
 ------------------
 
 -   FEATURE [code, othr]: support new "grid-columns-min" option to avoid tiny grids
+-   FEATURE [othr]: add a "CHANGELOG.md" file documenting the release history
 -   IMPROVEMENT [code]: reduce "graph-columns-max" default to keep diagrams narrower
+-   IMPROVEMENT [code]: harden the XML/CSS escaping and the configuration validation
+-   IMPROVEMENT [code]: load the MCP service lazily and freeze the "Gradia.config" object
+-   BUGFIX [code]: use "btoa" instead of "Buffer" for Base64 URLs in the Web bundle
+-   CLEANUP [code]: code cleanups in parser, renderers, diagram types, API, CLI and MCP
 
 0.9.9 (2026-08-20)
 ------------------
