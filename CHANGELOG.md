@@ -58,10 +58,10 @@ ChangeLog
 0.9.1 (2026-08-18)
 ------------------
 
--   FEATURE [code, infr, othr]: add MCP service exposing the "gradia_render" tool
+-   FEATURE [code, infr, othr]: add MCP service exposing the `gradia_render` tool
 -   FEATURE [code, infr, othr]: support the built-in "Source Sans 3" font as a local copy
 -   FEATURE [code, infr, othr]: make all rendering parameters configurable
--   FEATURE [code, infr, othr]: support "--gradia-*" CSS variables for config options
+-   FEATURE [code, infr, othr]: support `--gradia-*` CSS variables for config options
 -   FEATURE [code, infr]: support the "#type" directive inside the input specification
 -   FEATURE [infr, othr]: add a UMD bundle via Vite for the Web usage, plus a playground
 -   IMPROVEMENT [code, infr]: prefix all identifiers in the generated SVG with nanoids
