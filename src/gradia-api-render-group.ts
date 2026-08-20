@@ -51,7 +51,7 @@ export const partitionGroups = (graph: Graph): GroupPart[] | null => {
                 `crosses groups "${sg}" and "${tg}"`)
         parts.get(sg)!.edges.push(edge)
     }
-    return Array.from(parts.entries()).map(([ name, graph ]) => ({ name, graph }))
+    return Array.from(parts.entries()).map(([ name, subgraph ]) => ({ name, graph: subgraph }))
 }
 
 /*  determine the bounding box of a laid out group (nodes and edges)  */
@@ -91,7 +91,7 @@ export const composeGroups = (parts: GroupPart[], layouts: Layout[], config: Con
     const groups: GroupBox[] = []
     const dxs:    number[]   = []
     const dys:    number[]   = []
-    const groupIdx = new Map<string, number>()
+    const groupIdx           = new Map<string, number>()
     let y = margin
     layouts.forEach((layout, i) => {
         const b = boundsOf(layout)

@@ -28,7 +28,7 @@ export const textWrap = (text: string, size: number, maxWidth: number): string[]
     const words = text.split(/\s+/).filter((word) => word !== "")
     if (maxWidth <= 0 || words.length <= 1 || textWidth(text, size) <= maxWidth)
         return [ text ]
-    const lines = new Array<string>()
+    const lines: string[] = []
     let line = words[0]
     for (const word of words.slice(1)) {
         if (textWidth(`${line} ${word}`, size) > maxWidth) {
@@ -42,9 +42,11 @@ export const textWrap = (text: string, size: number, maxWidth: number): string[]
     return lines
 }
 
-/*  escape a string for use in XML/SVG content  */
+/*  escape a string for use in XML/SVG content (control characters are
+    stripped, as XML forbids them even in their escaped form)  */
 export const escapeXML = (text: string): string =>
-    text.replace(/&/g, "&amp;")
+    text.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, "")
+        .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")

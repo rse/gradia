@@ -143,12 +143,12 @@ The "size-*", "group-*", "graph-*", "hub-*", and "grid-*" options control the
 rendering geometry (canvas margin, node box sizing, edge routing, group box
 spacing, and the per-diagram-type layout) and take non-negative numbers, except
 the boolean "grid-node-width-equal", which forces all node boxes of a "grid"
-diagram to the width of the widest one. The
-"font-family" and "color-*" options are embedded into the generated SVG: when
-such an option is not explicitly configured, the SVG instead references the CSS
-custom property "--gradia-<option>" (definable by an embedding HTML document)
-and falls back to the built-in default. Leave them unset unless a particular
-look is explicitly requested.
+diagram to the width of the widest one. The "font-family" and "color-*" options
+are embedded into the generated SVG: when such an option is not explicitly
+configured, the SVG instead references the CSS custom property
+"--gradia-<option>" (definable by an embedding HTML document) and falls back to
+the built-in default. Leave them unset unless a particular look is explicitly
+requested.
 
 ## Result
 
@@ -185,11 +185,17 @@ const validateConfig = (raw: Record<string, string | number | boolean>): Partial
         if (!Object.hasOwn(configDefaults, key))
             throw new Error(`unknown configuration option "${key}"`)
         const k = key as keyof Config
-        if (typeof configDefaults[k] === "boolean")
+        if (k === "font-embed")
             throw new Error(`configuration option "${key}" is not available in this context`)
+        else if (typeof configDefaults[k] === "boolean") {
+            if (typeof val !== "boolean" && val !== "true" && val !== "false")
+                throw new Error(`invalid value "${String(val)}" for boolean configuration option "${key}" ` +
+                    "(expected \"true\" or \"false\")")
+            config[k] = typeof val === "boolean" ? val : val === "true"
+        }
         else if (typeof configDefaults[k] === "number") {
             const num = Number(val)
-            if (typeof val === "boolean" || !Number.isFinite(num) || num < 0)
+            if (typeof val === "boolean" || val === "" || !Number.isFinite(num) || num < 0)
                 throw new Error(`invalid value "${String(val)}" for numeric configuration option "${key}" ` +
                     "(expected a non-negative number)")
             config[k] = num
@@ -248,3 +254,4 @@ export const serve = async (meta: { version: string }, defaults: MCPDefaults = {
     /*  connect the MCP server to the stdio transport  */
     await server.connect(new StdioServerTransport())
 }
+

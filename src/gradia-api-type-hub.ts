@@ -98,6 +98,11 @@ export const render = async (graph: Graph, config: Config): Promise<Layout> => {
     const colOf = (id: string): number =>
         id === center.id ? 1 : (inputSet.has(id) ? 0 : 2)
 
+    /*  determine the attachment sides of every edge (east/west),
+        derived from the column relation of its endpoint nodes  */
+    const sides: { s: Side, t: Side }[] = edges.map((edge) =>
+        colOf(edge.source) < colOf(edge.target) ? { s: "e", t: "w" } : { s: "w", t: "e" })
+
     /*  determine node box sizes from their textual content (all boxes at
         half height scale), then grow every box whose edge attachments
         exceed the configured per-side maximum, step-wise by one port
@@ -105,12 +110,10 @@ export const render = async (graph: Graph, config: Config): Promise<Layout> => {
         attachment room without a fixed height increase  */
     const { boxW, boxH, contentH } = measureNodes(nodes, config, () => scale / 2)
     const portCnt = new Map<string, number>()
-    for (const edge of edges) {
-        const sSide = colOf(edge.source) < colOf(edge.target) ? "e" : "w"
-        const tSide = sSide === "e" ? "w" : "e"
-        portCnt.set(`${sSide}:${edge.source}`, (portCnt.get(`${sSide}:${edge.source}`) ?? 0) + 1)
-        portCnt.set(`${tSide}:${edge.target}`, (portCnt.get(`${tSide}:${edge.target}`) ?? 0) + 1)
-    }
+    edges.forEach((edge, i) => {
+        portCnt.set(`${sides[i].s}:${edge.source}`, (portCnt.get(`${sides[i].s}:${edge.source}`) ?? 0) + 1)
+        portCnt.set(`${sides[i].t}:${edge.target}`, (portCnt.get(`${sides[i].t}:${edge.target}`) ?? 0) + 1)
+    })
     for (const node of nodes) {
         const cnt = Math.max(portCnt.get(`w:${node.id}`) ?? 0, portCnt.get(`e:${node.id}`) ?? 0)
         if (cnt > config["hub-node-degree-max"])
@@ -172,11 +175,6 @@ export const render = async (graph: Graph, config: Config): Promise<Layout> => {
             return colLX[1] + colWidth[1] / 2
     }
     const cy = (id: string): number => nodeCY.get(id)!
-
-    /*  determine the attachment sides of every edge (east/west),
-        derived from the column relation of its endpoint nodes  */
-    const sides: { s: Side, t: Side }[] = edges.map((edge) =>
-        colOf(edge.source) < colOf(edge.target) ? { s: "e", t: "w" } : { s: "w", t: "e" })
 
     /*  distribute the edge attachment ports along each node side  */
     const portPos = assignPorts(edges, sides, cx, cy, boxW, boxH)

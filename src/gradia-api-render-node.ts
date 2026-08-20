@@ -30,11 +30,13 @@ export const defaultStyleOf = (node: Node): NodeStyle =>
 export const typeOf = (node: Node): string | undefined =>
     node.attrs.findLast((attr) => attr.key === "type")?.val
 
-/*  split the attributes rendered as text lines from the special
-    "url", "type", "primary", and "group" attributes consumed by the renderers  */
+/*  the special attributes consumed by the renderers instead of being
+    rendered as node box text lines  */
+const ATTRS_SPECIAL = new Set([ "url", "type", "primary", "group" ])
+
+/*  split the attributes rendered as text lines from the special ones  */
 export const attrsOfNode = (node: Node): Attr[] =>
-    node.attrs.filter((attr) => attr.key !== "url" && attr.key !== "type"
-        && attr.key !== "primary" && attr.key !== "group")
+    node.attrs.filter((attr) => !ATTRS_SPECIAL.has(attr.key))
 
 /*  the special "url" attribute (rendered as a hyperlink on the whole node
     box, restricted to relative URLs and safe schemes, as the generated

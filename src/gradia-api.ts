@@ -59,7 +59,7 @@ export interface DiagramOptions {
 export class Gradia {
     /*  the rendering configuration options and their default values
         (exposed so consumers can discover and validate the options)  */
-    static readonly config: Readonly<Config> = configDefaults
+    static readonly config: Readonly<Config> = Object.freeze({ ...configDefaults })
 
     /*  parse a graph description into the graph model  */
     static parse (spec: string): Graph {
@@ -96,13 +96,16 @@ export class Gradia {
         /*  render the laid out graph into an SVG document  */
         const svg = renderSVG(layout, config, explicit)
 
-        /*  convert the SVG document into the requested output format  */
+        /*  convert the SVG document into the requested output format
+            (the Base64 encoding uses the platform-neutral "btoa", as the
+            API is also shipped as a browser bundle without "Buffer")  */
         if (format === "svg:embedded")
             return svg.replace(/^<\?xml[^?]*\?>\n/, "")
         else if (format === "url:xml")
             return `data:image/svg+xml,${encodeURIComponent(svg)}`
         else if (format === "url:base64")
-            return `data:image/svg+xml;base64,${Buffer.from(svg, "utf8").toString("base64")}`
+            return `data:image/svg+xml;base64,${btoa(Array.from(new TextEncoder().encode(svg),
+                (byte) => String.fromCharCode(byte)).join(""))}`
         else
             return svg
     }

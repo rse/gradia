@@ -17,7 +17,6 @@ import { Command, Option } from "commander"
 import { Config, configDefaults }                                       from "./gradia-api-config.js"
 import { Gradia, DiagramType, diagramTypes, diagramTypeDefault,
     DiagramFormat, diagramFormats, diagramFormatDefault }               from "./gradia-api.js"
-import { serve as serveMCP }                                           from "./gradia-mcp.js"
 
 /*  internal package meta-information  */
 const pkg = JSON.parse(fs.readFileSync(
@@ -59,9 +58,9 @@ program.name("gradia")
             const m = /^([a-z][a-z0-9-]*)=(.*)$/.exec(nv)
             if (m === null)
                 throw new Error(`invalid configuration option "${nv}" (expected "<name>=<value>")`)
-            const key = m[1] as keyof Config
-            if (!Object.hasOwn(configDefaults, key))
+            if (!Object.hasOwn(configDefaults, m[1]))
                 throw new Error(`unknown configuration option "${m[1]}"`)
+            const key = m[1] as keyof Config
             if (typeof configDefaults[key] === "boolean") {
                 if (m[2] !== "true" && m[2] !== "false")
                     throw new Error(`invalid value "${m[2]}" for boolean configuration option "${key}" (expected "true" or "false")`)
@@ -73,6 +72,8 @@ program.name("gradia")
                     throw new Error(`invalid value "${m[2]}" for numeric configuration option "${key}" (expected a non-negative number)`)
                 store[key] = num
             }
+            else if (m[2] === "")
+                throw new Error(`invalid empty value for string configuration option "${key}"`)
             else
                 store[key] = m[2]
         }
@@ -86,6 +87,7 @@ program.name("gradia")
                 throw new Error("option \"--mcp\" cannot be combined with an input graph description file")
             if (options.output !== undefined)
                 throw new Error("option \"--mcp\" cannot be combined with option \"--output\"")
+            const { serve: serveMCP } = await import("./gradia-mcp.js")
             await serveMCP(pkg, { type: options.type, format: options.format, config })
             return
         }

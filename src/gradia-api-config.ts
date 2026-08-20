@@ -43,11 +43,11 @@ export const configDefaults = {
     "graph-gutter-height-max":   90,    /*  graph: max height of row gutters       */
     "graph-node-separation":     30,    /*  graph: layered layout node separation  */
     "graph-rank-separation":     60,    /*  graph: layered layout rank separation  */
-    "graph-node-degree-max":     3,     /*  graph: max edges per side before growth  */
+    "graph-node-degree-max":     3,     /*  graph: max edges/side before growth    */
     "hub-channel-width-max":     340,   /*  hub: max width of column channels      */
     "hub-channel-width-min":     240,   /*  hub: min width of column channels      */
     "hub-node-gap":              20,    /*  hub: vertical gap of stacked nodes     */
-    "hub-node-degree-max":       3,     /*  hub: max edges per side before growth  */
+    "hub-node-degree-max":       3,     /*  hub: max edges/side before growth      */
     "grid-columns-max":          4,     /*  grid: max side-by-side tiles           */
     "grid-columns-min":          3,     /*  grid: min side-by-side tiles           */
     "grid-gap-horizontal":       40,    /*  grid: horizontal gap between tiles     */
@@ -87,8 +87,13 @@ export const parseDirectives = (input: string): Partial<Config> => {
             description, as they would let it read arbitrary local WOFF2 files  */
         if (key === "font-embed" || (key === "font-family" && val.endsWith(".woff2")))
             continue
-        if (typeof configDefaults[key] === "boolean")
+        if (typeof configDefaults[key] === "boolean") {
+            /*  silently skip invalid boolean values, as directives are
+                lines of an untrusted input and never abort the rendering  */
+            if (val !== "true" && val !== "false")
+                continue
             partial[key] = val === "true"
+        }
         else if (typeof configDefaults[key] === "number") {
             /*  silently skip invalid numeric values, as directives are
                 lines of an untrusted input and never abort the rendering  */

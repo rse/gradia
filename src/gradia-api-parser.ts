@@ -108,7 +108,7 @@ export const parse = (input: string): Graph => {
         return true
     }
     const bail   = (what: string): never => {
-        const t = peek()
+        const t   = peek()
         const loc = t !== null ? `line ${t.line}, column ${t.col}` : "end of input"
         throw new Error(`expected ${what} at ${loc}`)
     }
@@ -154,17 +154,17 @@ export const parse = (input: string): Graph => {
         if (name !== null)
             node.name = name
         for (const attr of attrs) {
-            const k = node.attrs.findIndex((a) => a.key === attr.key)
-            if (k === -1)
+            const idx = node.attrs.findIndex((a) => a.key === attr.key)
+            if (idx === -1)
                 node.attrs.push(attr)
             else {
                 /*  a node has to stay in a single group, so reject any
                     attempt to re-assign it to a different group  */
-                if (attr.key === "group" && node.attrs[k].val !== attr.val)
+                if (attr.key === "group" && node.attrs[idx].val !== attr.val)
                     throw new Error(`node "${id}" cannot be a member of more than one group ` +
-                        `("${node.attrs[k].val}" vs "${attr.val}") ` +
+                        `("${node.attrs[idx].val}" vs "${attr.val}") ` +
                         `at line ${start.line}, column ${start.col}`)
-                node.attrs[k] = attr
+                node.attrs[idx] = attr
             }
         }
         graph.nodes.set(id, node)
@@ -173,12 +173,15 @@ export const parse = (input: string): Graph => {
 
     /*  parse the statements (one node/edge chain per line)  */
     while (pos < tokens.length) {
+        /*  skip the empty lines  */
         if (tokens[pos].type === "newline") {
             pos++
             continue
         }
+
+        /*  parse the chain of node references, connected by edge operators  */
         let source = parseNodeRef()
-        let t = peek()
+        let t      = peek()
         while (t !== null && t.type === "edge") {
             pos++
             const target = parseNodeRef()
@@ -186,6 +189,8 @@ export const parse = (input: string): Graph => {
             source = target
             t = peek()
         }
+
+        /*  ensure the statement ends at the end of the line  */
         if (t !== null && t.type !== "newline")
             bail("edge operator or end of line")
     }

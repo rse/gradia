@@ -178,11 +178,13 @@ export const computeHops = (polys: Poly[]): Map<number, number[]>[] => {
     })
 }
 
+/*  the Manhattan length of an orthogonal polyline segment  */
+const len = (a: [ number, number ], b: [ number, number ]): number =>
+    Math.abs(b[0] - a[0]) + Math.abs(b[1] - a[1])
+
 /*  convert an edge polyline into an SVG path with rounded corners
     at the bends and semi-circular hops at the crossing points  */
 export const pathOf = (poly: Poly, hop: Map<number, number[]>, rounding: number, hopRadius: number): string => {
-    const len = (a: [ number, number ], b: [ number, number ]) =>
-        Math.abs(b[0] - a[0]) + Math.abs(b[1] - a[1])
     const radius = (k: number): number => {
         if (k <= 0 || k >= poly.length - 1)
             return 0
@@ -256,8 +258,7 @@ export const pathOf = (poly: Poly, hop: Map<number, number[]>, rounding: number,
 
 /*  determine a point on a polyline at a given fraction of its length  */
 export const pointAt = (poly: Poly, fraction: number): { x: number, y: number, horizontal: boolean } => {
-    const lens  = poly.slice(0, -1).map((p, k) =>
-        Math.abs(poly[k + 1][0] - p[0]) + Math.abs(poly[k + 1][1] - p[1]))
+    const lens  = poly.slice(0, -1).map((p, k) => len(p, poly[k + 1]))
     const total = lens.reduce((a, b) => a + b, 0)
     let want    = total * fraction
     for (let k = 0; k < lens.length; k++) {

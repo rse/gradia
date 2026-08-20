@@ -16,8 +16,15 @@ import { Layout }                            from "./gradia-api-render-svg.js"
 import { Side, TrackUser, PORT_SEP, simplifyPoly, assignPorts, assignTracks } from "./gradia-api-render-edge.js"
 
 /*  rendering geometry constants  */
-const CLUSTX = 26  /*  max X distance within a grid column  */
-const CLUSTY = 72  /*  max Y distance within a grid row     */
+const CLUSTX   = 26  /*  max X distance within a grid column         */
+const CLUSTY   = 72  /*  max Y distance within a grid row            */
+const CHAN_W0  = 24  /*  width of an edge-less inter-column channel  */
+const CHAN_W1  = 28  /*  width of a one-edge inter-column channel    */
+const CHAN_PAD = 16  /*  cross-axis padding inside a channel         */
+const GUT_H0   = 20  /*  height of an edge-less inter-row gutter     */
+const GUT_H1   = 24  /*  height of a one-edge inter-row gutter       */
+const GUT_PAD  = 12  /*  cross-axis padding inside a gutter          */
+const LOOP_GAP = 24  /*  detour of a self-loop right of its node box */
 
 /*  snap raw node positions onto a discrete grid by clustering the
     distinct X coordinates into columns and Y coordinates into rows  */
@@ -36,18 +43,20 @@ const snapToGrid = (
     }
     const colReps = cluster(nodes.map((node) => rawX.get(node.id)!), CLUSTX)
     const rowReps = cluster(nodes.map((node) => rawY.get(node.id)!), CLUSTY)
-    const indexOf = (reps: number[], v: number): number => {
+    const nearestIndexOf = (reps: number[], v: number): number => {
         let best = 0
         for (let i = 1; i < reps.length; i++)
             if (Math.abs(reps[i] - v) < Math.abs(reps[best] - v))
                 best = i
         return best
     }
+
+    /*  assign every node to its nearest column and row  */
     const col = new Map<string, number>()
     const row = new Map<string, number>()
     for (const node of nodes) {
-        col.set(node.id, indexOf(colReps, rawX.get(node.id)!))
-        row.set(node.id, indexOf(rowReps, rawY.get(node.id)!))
+        col.set(node.id, nearestIndexOf(colReps, rawX.get(node.id)!))
+        row.set(node.id, nearestIndexOf(rowReps, rawY.get(node.id)!))
     }
     return { col, row, ncols: colReps.length, nrows: rowReps.length }
 }
@@ -153,11 +162,15 @@ const planRoutes = (
         }
         return { chans, guts }
     })
+
+    /*  count the edges occupying each channel and gutter  */
     const chanCnt = new Map<number, number>()
     const gutCnt  = new Map<number, number>()
     for (const plan of plans) {
-        for (const c of plan.chans) chanCnt.set(c, (chanCnt.get(c) ?? 0) + 1)
-        for (const g of plan.guts)  gutCnt.set(g,  (gutCnt.get(g)  ?? 0) + 1)
+        for (const c of plan.chans)
+            chanCnt.set(c, (chanCnt.get(c) ?? 0) + 1)
+        for (const g of plan.guts)
+            gutCnt.set(g, (gutCnt.get(g) ?? 0) + 1)
     }
     return { plans, chanCnt, gutCnt }
 }
@@ -199,13 +212,13 @@ const computeGrid = (
     /*  size the channels and gutters by their actual edge usage  */
     const chanW = Array.from({ length: ncols }, (_, c) => {
         const cnt = chanCnt.get(c) ?? 0
-        return cnt === 0 ? 24 : Math.min(config["graph-channel-width-max"],
-            28 + (cnt - 1) * config["size-edge-track-gap"])
+        return cnt === 0 ? CHAN_W0 : Math.min(config["graph-channel-width-max"],
+            CHAN_W1 + (cnt - 1) * config["size-edge-track-gap"])
     })
     const gutH = Array.from({ length: nrows }, (_, g) => {
         const cnt = gutCnt.get(g) ?? 0
-        return cnt === 0 ? 20 : Math.min(config["graph-gutter-height-max"],
-            24 + (cnt - 1) * config["size-edge-track-gap"])
+        return cnt === 0 ? GUT_H0 : Math.min(config["graph-gutter-height-max"],
+            GUT_H1 + (cnt - 1) * config["size-edge-track-gap"])
     })
 
     /*  derive the column and row center positions  */
@@ -260,7 +273,7 @@ const assignTrackCoords = (
     })
     const chanOff = new Map<string, number>()
     for (const [ c, users ] of chanUsers)
-        for (const [ edge, off ] of assignTracks(users, chanW[c], 16, config["size-edge-track-gap"]))
+        for (const [ edge, off ] of assignTracks(users, chanW[c], CHAN_PAD, config["size-edge-track-gap"]))
             chanOff.set(`${c}:${edge}`, off)
     const chanX = (c: number, edge: number) => colCX[c] + colWidth[c] / 2 + chanW[c] / 2 +
         chanOff.get(`${c}:${edge}`)!
@@ -281,7 +294,7 @@ const assignTrackCoords = (
     })
     const gutOff = new Map<string, number>()
     for (const [ g, users ] of gutUsers)
-        for (const [ edge, off ] of assignTracks(users, gutH[g], 12, config["size-edge-track-gap"]))
+        for (const [ edge, off ] of assignTracks(users, gutH[g], GUT_PAD, config["size-edge-track-gap"]))
             gutOff.set(`${g}:${edge}`, off)
     const gutY = (g: number, edge: number) => gutBase(g) + gutOff.get(`${g}:${edge}`)!
     return { chanX, gutY }
@@ -311,7 +324,8 @@ const routePolys = (
         if (edge.source === edge.target) {
             const k  = loopUse.get(edge.source) ?? 0
             loopUse.set(edge.source, k + 1)
-            const ox = cx(edge.source) + boxW.get(edge.source)! / 2 + 24 + k * config["size-edge-track-gap"]
+            const ox = cx(edge.source) + boxW.get(edge.source)! / 2 + LOOP_GAP +
+                k * config["size-edge-track-gap"]
             pts = [ [ sp.x, sp.y ], [ ox, sp.y ], [ ox, tp.y ], [ tp.x, tp.y ] ]
         }
         else if (chans.length === 1) {

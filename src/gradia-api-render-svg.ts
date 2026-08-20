@@ -22,9 +22,11 @@ import { computeHops, pathOf, pointAt }
 
 /*  escape a string for use inside a CSS string literal (the XML escaping
     is resolved by the parser before the CSS is parsed, so quotes and
-    backslashes have to be neutralized to prevent a CSS injection)  */
+    backslashes have to be neutralized to prevent a CSS injection, and
+    the CSS newline characters LF, CR and FF have to be replaced, as
+    they would end the string literal as an invalid "bad string")  */
 const escapeCSS = (text: string): string =>
-    text.replace(/[\\"']/g, "\\$&").replace(/[\r\n]/g, " ")
+    text.replace(/[\\"']/g, "\\$&").replace(/[\r\n\f]/g, " ")
 
 /*  generate a per-document identifier prefix, as the SVG identifiers
     are DOM-global and would collide once multiple diagrams are embedded
@@ -166,6 +168,58 @@ const viewBoxOf = (layout: Layout, boxes: Box[], margin: number): { x: number, y
     }
 }
 
+/*  generate the SVG fragments for the labels of a single edge: its
+    optional name, placed near the middle of the route, and its optional
+    arity, placed near the arrow head (both dodging into a collision-free
+    position through the "claim" of the label placer)  */
+const renderEdgeLabels = (edge: Edge, poly: Poly, claim: (candidates: Box[]) => Box,
+    font: string, color: (key: ConfigEmbedded) => string): string[] => {
+    /*  the halo rendered behind the edge labels for readability
+        (its color is emitted into the style attribute below, as only
+        there the CSS custom property lookup can be resolved)  */
+    const halo = "stroke-width=\"4.5\" paint-order=\"stroke\" stroke-linejoin=\"round\""
+    const parts: string[] = []
+    if (edge.name !== undefined) {
+        const w = textWidth(edge.name, FS_EDGE)
+        const candidates: Box[] = []
+        for (const f of [ 0.50, 0.40, 0.60, 0.30, 0.70, 0.20, 0.80 ]) {
+            const p = pointAt(poly, f)
+            if (p.horizontal) {
+                candidates.push([ p.x - w / 2, p.y - 23, p.x + w / 2, p.y - 3 ])
+                candidates.push([ p.x - w / 2, p.y + 3,  p.x + w / 2, p.y + 23 ])
+            }
+            else {
+                candidates.push([ p.x + 5,     p.y - 10, p.x + 5 + w, p.y + 10 ])
+                candidates.push([ p.x - 5 - w, p.y - 10, p.x - 5,     p.y + 10 ])
+            }
+        }
+        const box = claim(candidates)
+        parts.push(`<text x="${(box[0] + box[2]) / 2}" y="${box[3] - 3}" text-anchor="middle" ` +
+            `font-size="${FS_EDGE}" ` +
+            `style="font-family: ${font}; fill: ${color("color-edge-name")}; ` +
+            `stroke: ${color("color-edge-halo")}" ` +
+            `${halo}>${escapeXML(edge.name)}</text>`)
+    }
+    if (edge.arity !== undefined) {
+        const w    = textWidth(edge.arity, FS_ARITY)
+        const p    = pointAt(poly, 1.0)
+        const prev = pointAt(poly, 0.999)
+        const dx   = Math.sign(p.x - prev.x) || 1
+        const ax   = p.x - dx * (24 + w / 2)
+        const box  = claim([
+            [ ax - w / 2,           p.y - 17, ax + w / 2,           p.y - 4  ],
+            [ ax - w / 2,           p.y + 4,  ax + w / 2,           p.y + 17 ],
+            [ ax - w / 2 - dx * 14, p.y - 17, ax + w / 2 - dx * 14, p.y - 4  ]
+        ])
+        parts.push(`<text x="${(box[0] + box[2]) / 2}" y="${box[3] - 3}" text-anchor="middle" ` +
+            `font-size="${FS_ARITY}" ` +
+            `style="font-family: ${font}; fill: ${color("color-edge-arity")}; ` +
+            `stroke: ${color("color-edge-halo")}" ` +
+            `${halo}>${escapeXML(edge.arity)}</text>`)
+    }
+    return parts
+}
+
 /*  render a laid out graph into an SVG document  */
 export const renderSVG = (layout: Layout, config: Config, explicit: Partial<Config>): string => {
     const { nodes, edges, polys } = layout
@@ -198,53 +252,11 @@ export const renderSVG = (layout: Layout, config: Config, explicit: Partial<Conf
     /*  generate the SVG fragments for the edges (paths below, labels above)  */
     const svgEdges:  string[] = []
     const svgLabels: string[] = []
-
-    /*  the halo rendered behind the edge labels for readability
-        (its color is emitted into the style attribute below, as only
-        there the CSS custom property lookup can be resolved)  */
-    const halo = "stroke-width=\"4.5\" paint-order=\"stroke\" stroke-linejoin=\"round\""
     edges.forEach((edge, i) => {
         svgEdges.push(`<path d="${pathOf(polys[i], hops[i],
             config["size-edge-corner-radius"], config["size-edge-hop-radius"])}" fill="none" ` +
             `style="stroke: ${color("color-edge-line")}" stroke-width="3.0" marker-end="url(#${idArrow})"/>`)
-        if (edge.name !== undefined) {
-            const w = textWidth(edge.name, FS_EDGE)
-            const candidates: Box[] = []
-            for (const f of [ 0.50, 0.40, 0.60, 0.30, 0.70, 0.20, 0.80 ]) {
-                const p = pointAt(polys[i], f)
-                if (p.horizontal) {
-                    candidates.push([ p.x - w / 2, p.y - 23, p.x + w / 2, p.y - 3 ])
-                    candidates.push([ p.x - w / 2, p.y + 3,  p.x + w / 2, p.y + 23 ])
-                }
-                else {
-                    candidates.push([ p.x + 5,     p.y - 10, p.x + 5 + w, p.y + 10 ])
-                    candidates.push([ p.x - 5 - w, p.y - 10, p.x - 5,     p.y + 10 ])
-                }
-            }
-            const box = claim(candidates)
-            svgLabels.push(`<text x="${(box[0] + box[2]) / 2}" y="${box[3] - 3}" text-anchor="middle" ` +
-                `font-size="${FS_EDGE}" ` +
-                `style="font-family: ${font}; fill: ${color("color-edge-name")}; ` +
-                `stroke: ${color("color-edge-halo")}" ` +
-                `${halo}>${escapeXML(edge.name)}</text>`)
-        }
-        if (edge.arity !== undefined) {
-            const w    = textWidth(edge.arity, FS_ARITY)
-            const p    = pointAt(polys[i], 1.0)
-            const prev = pointAt(polys[i], 0.999)
-            const dx   = Math.sign(p.x - prev.x) || 1
-            const ax   = p.x - dx * (24 + w / 2)
-            const box  = claim([
-                [ ax - w / 2,           p.y - 17, ax + w / 2,           p.y - 4  ],
-                [ ax - w / 2,           p.y + 4,  ax + w / 2,           p.y + 17 ],
-                [ ax - w / 2 - dx * 14, p.y - 17, ax + w / 2 - dx * 14, p.y - 4  ]
-            ])
-            svgLabels.push(`<text x="${(box[0] + box[2]) / 2}" y="${box[3] - 3}" text-anchor="middle" ` +
-                `font-size="${FS_ARITY}" ` +
-                `style="font-family: ${font}; fill: ${color("color-edge-arity")}; ` +
-                `stroke: ${color("color-edge-halo")}" ` +
-                `${halo}>${escapeXML(edge.arity)}</text>`)
-        }
+        svgLabels.push(...renderEdgeLabels(edge, polys[i], claim, font, color))
     })
 
     /*  generate the SVG fragments for the node boxes  */
