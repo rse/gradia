@@ -33,11 +33,37 @@ component relationships, data flows, dependency graphs, and similar structures.
 ## Diagram Types
 
 - "graph": a loosely grid-snapped layered layout of the whole graph. This is
-  the general-purpose type and the built-in default.
+  the general-purpose type and the built-in default. It accepts any topology,
+  including self-loops and free-standing nodes.
 - "hub": a hub graph, placing the single primary node (the node carrying the
   attribute "primary: true") in the center, its input nodes to the left and
-  its output nodes to the right.
-- "grid": a compact grid of tiles for an edge-less graph.
+  its output nodes to the right. It accepts only the constrained topology
+  described below.
+- "grid": a compact grid of tiles for an edge-less graph. The nodes are placed
+  in declaration order onto a roughly square, row-major grid.
+
+### Diagram Type Constraints
+
+The "hub" type rejects the input with an error unless all of the following
+conditions hold:
+
+- Exactly one node carries the attribute "primary: true".
+- Every edge either points to or originates from that primary node. An edge
+  between two non-primary nodes is rejected.
+- The primary node carries no self-loop.
+- Every non-primary node is an input or an output of the primary node, i.e.,
+  no node is free-standing.
+
+A node which is both an input and an output of the primary node is placed
+twice, once in the input column and once in the output column. The second
+placement is rendered as a dashed "ghost" box, colored by the
+"color-node-ghost-*" options.
+
+The "grid" type rejects the input with an error as soon as the graph contains
+at least one edge.
+
+The "graph" type imposes no such constraints and hence is the safe choice
+whenever the topology is not known to fit "hub" or "grid".
 
 ## Input Language
 
@@ -90,6 +116,10 @@ as <name>, terminals as "...", optional parts as [ ... ], repeatable parts as
 - A <string> cannot span lines. Inside it, "\\" escapes the following character.
 - A <directive> is a <comment> which occupies its entire line and starts with
   the keyword "#config" or "#type". All other comments are ignored.
+- Of multiple "#type" directives the last one wins, and a directive naming an
+  invalid type is silently ignored. A "#config" directive naming an unknown
+  option or carrying an invalid value is silently ignored, too, whereas the
+  same mistake in the "config" tool argument is rejected with an error.
 
 ### Semantic Rules
 
@@ -105,14 +135,20 @@ as <name>, terminals as "...", optional parts as [ ... ], repeatable parts as
   its cardinality label.
 - Four attribute keys are reserved and consumed by the renderer instead of being
   displayed as a regular "<key>: <val>" line:
-  - "url: <url>" renders the node box as a hyperlink,
+  - "url: <url>" renders the node box as a hyperlink. Only relative URLs and
+    the schemes "http", "https", and "mailto" are honored; any other URL is
+    silently dropped and the node box then simply stays unlinked,
   - "type: <name>" renders <name> as a smaller text above the node label,
   - "primary: true" renders the node in the primary node colors (and, for the
-    diagram type "hub", marks the single central hub node),
+    diagram type "hub", marks the single central hub node). The value has to
+    be the literal string "true",
   - "group: <name>" places the node into the surrounding group box <name>.
 - A node cannot be a member of more than one group. As soon as at least one node
   carries a "group" attribute, all nodes without one implicitly belong to the
   group "default", and every edge has to stay within a single group.
+- The groups are laid out individually with the selected diagram type and then
+  stacked vertically as decorated group boxes. For the type "hub" this means
+  that every single group needs its own primary node.
 - All remaining attributes are displayed as "<key>: <val>" lines inside the node
   box.
 
@@ -143,12 +179,35 @@ The "size-*", "group-*", "graph-*", "hub-*", and "grid-*" options control the
 rendering geometry (canvas margin, node box sizing, edge routing, group box
 spacing, and the per-diagram-type layout) and take non-negative numbers, except
 the boolean "grid-node-width-equal", which forces all node boxes of a "grid"
-diagram to the width of the widest one. The "font-family" and "color-*" options
-are embedded into the generated SVG: when such an option is not explicitly
-configured, the SVG instead references the CSS custom property
-"--gradia-<option>" (definable by an embedding HTML document) and falls back to
-the built-in default. Leave them unset unless a particular look is explicitly
-requested.
+diagram to the width of the widest one.
+
+The "size-node-width-max" option additionally enables the word-wrapping of the
+node box texts: given a positive value, the node name, its type, and its
+attribute lines are greedily broken at whitespace, so that the node box stays
+within the given width and grows in height instead. This is the only way to
+produce multi-line node boxes. The default "0" disables the wrapping entirely
+and hence lets a node box become as wide as its longest text. A single word
+wider than the maximum is never broken and still widens the box beyond it.
+
+The "grid-columns-min" and "grid-columns-max" options control the column count
+of a "grid" diagram, which by default is derived from the node count as a
+roughly square grid: "grid-columns-min" (default 3) raises the derived count,
+so that a few nodes still share a single row instead of being stacked, while
+"grid-columns-max" (default 4) caps it, so that larger diagrams grow in height
+only. The column count never exceeds the node count and the maximum always
+wins over the minimum.
+
+The "font-family" and "color-*" options are embedded into the generated SVG:
+when such an option is not explicitly configured, the SVG instead references
+the CSS custom property "--gradia-<option>" (definable by an embedding HTML
+document) and falls back to the built-in default. Leave them unset unless a
+particular look is explicitly requested.
+
+The "font-family" option is either the built-in font family "Source Sans 3" or
+a plain font family name resolved by the displaying document. A path to a
+WOFF2 file is rejected in this context, exactly like the option "font-embed":
+both are available only through the (trusted) command-line options of the
+service.
 
 ## Result
 
@@ -156,6 +215,10 @@ The tool returns the rendered diagram as a single text result, in the requested
 output format. For the "svg:*" formats this is the SVG/XML document, which is
 usually written to a "*.svg" file; for the "url:*" formats it is a
 "data:image/svg+xml" URL, usable as the "src" of an HTML "<img>" element.
+
+On a malformed input, a violated diagram type constraint, or an invalid "config"
+argument, the tool instead returns an error result whose text starts with
+"gradia: ERROR: ", followed by the reason.
 `.trim()
 
 /*  the arguments of the "gradia_render" tool  */
