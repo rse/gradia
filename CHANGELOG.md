@@ -5,6 +5,7 @@ ChangeLog
 1.0.0 (2026-08-20)
 ------------------
 
+-   FEATURE [code]: switch the ids in SVG from a PRNG-based NanoID to a SHA1-based UUIDv5 for stable rendering
 -   FEATURE [code, othr]: support new "grid-columns-min" option to avoid tiny grids
 -   FEATURE [othr]: add a "CHANGELOG.md" file documenting the release history
 -   IMPROVEMENT [code]: reduce "graph-columns-max" default to keep diagrams narrower

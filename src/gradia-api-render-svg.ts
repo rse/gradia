@@ -5,7 +5,7 @@
 */
 
 /*  external dependencies  */
-import { customAlphabet }                                   from "nanoid"
+import UUID                                                 from "pure-uuid"
 
 /*  internal dependencies  */
 import { Node, Edge }                                       from "./gradia-api-model.js"
@@ -28,12 +28,18 @@ import { computeHops, pathOf, pointAt }
 const escapeCSS = (text: string): string =>
     text.replace(/[\\"']/g, "\\$&").replace(/[\r\n\f]/g, " ")
 
-/*  generate a per-document identifier prefix, as the SVG identifiers
-    are DOM-global and would collide once multiple diagrams are embedded
-    into the very same document (the alphabet is restricted to
-    alphanumerics to stay a valid XML name and CSS/URL fragment)  */
-const nanoid = customAlphabet("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", 12)
-const idPrefix = (): string => `gradia-${nanoid()}`
+/*  the UUID namespace of Gradia, under which the per-document
+    identifier prefixes are derived  */
+const NS_GRADIA = new UUID(5, "ns:URL", "https://github.com/rse/gradia").format()
+
+/*  derive a per-document identifier prefix from a seed, as the SVG
+    identifiers are DOM-global and would collide once multiple diagrams
+    are embedded into the very same document. The prefix is a UUID v5 of
+    the seed and hence stays stable across regenerations of an unchanged
+    diagram (the Base16 format keeps it alphanumeric and thus a valid XML
+    name and CSS/URL fragment)  */
+const idPrefix = (seed: string): string =>
+    `gradia-${new UUID(5, NS_GRADIA, seed).format("b16").toLowerCase()}`
 
 /*  a decorated group box surrounding the nodes of a named group  */
 export interface GroupBox {
@@ -220,8 +226,10 @@ const renderEdgeLabels = (edge: Edge, poly: Poly, claim: (candidates: Box[]) => 
     return parts
 }
 
-/*  render a laid out graph into an SVG document  */
-export const renderSVG = (layout: Layout, config: Config, explicit: Partial<Config>): string => {
+/*  render a laid out graph into an SVG document (the seed determines the
+    identifier prefix of the document, see "idPrefix" above)  */
+export const renderSVG = (layout: Layout, config: Config, explicit: Partial<Config>,
+    seed: string): string => {
     const { nodes, edges, polys } = layout
     const groups  = layout.groups  ?? []
     const styleOf = layout.styleOf ?? defaultStyleOf
@@ -233,7 +241,7 @@ export const renderSVG = (layout: Layout, config: Config, explicit: Partial<Conf
     const color = (key: ConfigEmbedded): string => escapeXML(cssValueOf(explicit, key))
 
     /*  derive the collision-free identifiers of this SVG document  */
-    const prefix  = idPrefix()
+    const prefix  = idPrefix(seed)
     const idArrow = `${prefix}-arrow`
 
     /*  resolve the configured font into the rendered font family stack  */

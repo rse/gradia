@@ -93,8 +93,23 @@ export class Gradia {
             composeGroups(parts, await Promise.all(
                 parts.map((part) => renderers[type](part.graph, config))), config)
 
+        /*  derive the identifier seed of the SVG document from everything
+            which determines the rendered output, so that regenerating an
+            unchanged diagram yields a byte-identical SVG (the explicitly
+            configured options enter as their sorted key list only, as
+            their values are already part of the layered configuration and
+            merely their presence decides between a hard-coded CSS value
+            and a CSS custom property lookup)  */
+        const seed = JSON.stringify({
+            type,
+            config,
+            explicit: Object.keys(explicit).sort(),
+            nodes:    Array.from(graph.nodes.values()),
+            edges:    graph.edges
+        })
+
         /*  render the laid out graph into an SVG document  */
-        const svg = renderSVG(layout, config, explicit)
+        const svg = renderSVG(layout, config, explicit, seed)
 
         /*  convert the SVG document into the requested output format
             (the Base64 encoding uses the platform-neutral "btoa", as the

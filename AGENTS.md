@@ -92,9 +92,13 @@ tool call arguments. As the tool call arguments are untrusted, their
 like the in-input `#config` directives do.
 
 All identifiers inside the generated SVG are namespaced with a
-`gradia-<nanoid>-` prefix, freshly generated per rendered document, so
-that multiple diagrams can be embedded into one and the same document
-without colliding in the DOM-global identifier namespace.
+`gradia-<uuid>-` prefix, derived per rendered document, so that multiple
+diagrams can be embedded into one and the same document without
+colliding in the DOM-global identifier namespace. The `<uuid>` is the
+Base16 form of a UUID v5 (via `pure-uuid`) over everything which
+determines the rendered output -- the diagram type, the layered
+configuration, and the graph model -- so regenerating an unchanged
+diagram yields a byte-identical SVG.
 
 The rendering options (`font-family`, `font-embed`, the `color-*`
 family, and the numeric geometry families `size-*`, `group-*`,
