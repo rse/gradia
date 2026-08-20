@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="20 20 1616 352" width="1616" height="352">
+<defs>
+<marker id="gradia-19X9Ik4atO7E-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="21" markerHeight="21" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+<path d="M 0 1 L 9 5 L 0 9 z" style="fill: #999999"/>
+</marker>
+</defs>
+<a href="#event" xlink:href="#event">
+<rect x="40" y="40" width="364" height="63" rx="6" style="fill: #336699; stroke: #003366" stroke-width="4.0"/>
+<text x="222" y="82.3" text-anchor="middle" font-size="30" font-weight="600" style="font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; fill: #ffffff">Event</text>
+</a>
+<a href="#agendapoint" xlink:href="#agendapoint">
+<rect x="444" y="40" width="364" height="63" rx="6" style="fill: #e0f0ff; stroke: #c0d0e0" stroke-width="4.0"/>
+<text x="626" y="82.3" text-anchor="middle" font-size="30" font-weight="600" style="font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; fill: #336699">AgendaPoint</text>
+</a>
+<a href="#channel" xlink:href="#channel">
+<rect x="848" y="40" width="364" height="63" rx="6" style="fill: #e0f0ff; stroke: #c0d0e0" stroke-width="4.0"/>
+<text x="1030" y="82.3" text-anchor="middle" font-size="30" font-weight="600" style="font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; fill: #336699">Channel</text>
+</a>
+<a href="#resource" xlink:href="#resource">
+<rect x="1252" y="40" width="364" height="63" rx="6" style="fill: #e0f0ff; stroke: #c0d0e0" stroke-width="4.0"/>
+<text x="1434" y="82.3" text-anchor="middle" font-size="30" font-weight="600" style="font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; fill: #336699">Resource</text>
+</a>
+<a href="#resourceproviderparam" xlink:href="#resourceproviderparam">
+<rect x="40" y="123" width="364" height="63" rx="6" style="fill: #e0f0ff; stroke: #c0d0e0" stroke-width="4.0"/>
+<text x="222" y="165.3" text-anchor="middle" font-size="30" font-weight="600" style="font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; fill: #336699">ResourceProviderParam</text>
+</a>
+<a href="#role" xlink:href="#role">
+<rect x="444" y="123" width="364" height="63" rx="6" style="fill: #e0f0ff; stroke: #c0d0e0" stroke-width="4.0"/>
+<text x="626" y="165.3" text-anchor="middle" font-size="30" font-weight="600" style="font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; fill: #336699">Role</text>
+</a>
+<a href="#user" xlink:href="#user">
+<rect x="848" y="123" width="364" height="63" rx="6" style="fill: #e0f0ff; stroke: #c0d0e0" stroke-width="4.0"/>
+<text x="1030" y="165.3" text-anchor="middle" font-size="30" font-weight="600" style="font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; fill: #336699">User</text>
+</a>
+<a href="#message" xlink:href="#message">
+<rect x="1252" y="123" width="364" height="63" rx="6" style="fill: #e0f0ff; stroke: #c0d0e0" stroke-width="4.0"/>
+<text x="1434" y="165.3" text-anchor="middle" font-size="30" font-weight="600" style="font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; fill: #336699">Message</text>
+</a>
+<a href="#messagetext" xlink:href="#messagetext">
+<rect x="40" y="206" width="364" height="63" rx="6" style="fill: #e0f0ff; stroke: #c0d0e0" stroke-width="4.0"/>
+<text x="222" y="248.3" text-anchor="middle" font-size="30" font-weight="600" style="font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; fill: #336699">MessageText</text>
+</a>
+<a href="#questiontag" xlink:href="#questiontag">
+<rect x="444" y="206" width="364" height="63" rx="6" style="fill: #e0f0ff; stroke: #c0d0e0" stroke-width="4.0"/>
+<text x="626" y="248.3" text-anchor="middle" font-size="30" font-weight="600" style="font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; fill: #336699">QuestionTag</text>
+</a>
+<a href="#authorizationtoken" xlink:href="#authorizationtoken">
+<rect x="848" y="206" width="364" height="63" rx="6" style="fill: #e0f0ff; stroke: #c0d0e0" stroke-width="4.0"/>
+<text x="1030" y="248.3" text-anchor="middle" font-size="30" font-weight="600" style="font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; fill: #336699">AuthorizationToken</text>
+</a>
+<a href="#sessiontoken" xlink:href="#sessiontoken">
+<rect x="1252" y="206" width="364" height="63" rx="6" style="fill: #e0f0ff; stroke: #c0d0e0" stroke-width="4.0"/>
+<text x="1434" y="248.3" text-anchor="middle" font-size="30" font-weight="600" style="font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; fill: #336699">SessionToken</text>
+</a>
+<a href="#eventstatistic" xlink:href="#eventstatistic">
+<rect x="40" y="289" width="364" height="63" rx="6" style="fill: #e0f0ff; stroke: #c0d0e0" stroke-width="4.0"/>
+<text x="222" y="331.3" text-anchor="middle" font-size="30" font-weight="600" style="font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; fill: #336699">EventStatistic</text>
+</a>
+<a href="#channelstatistic" xlink:href="#channelstatistic">
+<rect x="444" y="289" width="364" height="63" rx="6" style="fill: #e0f0ff; stroke: #c0d0e0" stroke-width="4.0"/>
+<text x="626" y="331.3" text-anchor="middle" font-size="30" font-weight="600" style="font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; fill: #336699">ChannelStatistic</text>
+</a>
+<a href="#userstatistic" xlink:href="#userstatistic">
+<rect x="848" y="289" width="364" height="63" rx="6" style="fill: #e0f0ff; stroke: #c0d0e0" stroke-width="4.0"/>
+<text x="1030" y="331.3" text-anchor="middle" font-size="30" font-weight="600" style="font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; fill: #336699">UserStatistic</text>
+</a>
+</svg>

@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="20 20 1312 601" width="1312" height="601">
+<defs>
+<marker id="gradia-wPewTQWlvjkl-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="21" markerHeight="21" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+<path d="M 0 1 L 9 5 L 0 9 z" style="fill: #999999"/>
+</marker>
+</defs>
+<path d="M 817 288.0625 L 911 288.0625 Q 931 288.0625 931 268.0625 L 931 174.5 Q 931 154.5 951 154.5 L 1057 154.5" fill="none" style="stroke: #999999" stroke-width="3.0" marker-end="url(#gradia-wPewTQWlvjkl-arrow)"/>
+<path d="M 817 309.6875 L 923 309.6875 Q 943 309.6875 943 289.6875 L 943 257.5 Q 943 237.5 963 237.5 L 1057 237.5" fill="none" style="stroke: #999999" stroke-width="3.0" marker-end="url(#gradia-wPewTQWlvjkl-arrow)"/>
+<path d="M 817 331.3125 L 949.59375 331.3125 Q 955 331.3125 955 325.90625 L 955 325.90625 Q 955 320.5 960.40625 320.5 L 1057 320.5" fill="none" style="stroke: #999999" stroke-width="3.0" marker-end="url(#gradia-wPewTQWlvjkl-arrow)"/>
+<path d="M 817 352.9375 L 947 352.9375 Q 967 352.9375 967 372.9375 L 967 383.5 Q 967 403.5 987 403.5 L 1057 403.5" fill="none" style="stroke: #999999" stroke-width="3.0" marker-end="url(#gradia-wPewTQWlvjkl-arrow)"/>
+<path d="M 817 396.1875 L 887 396.1875 Q 907 396.1875 907 416.1875 L 907 549.5 Q 907 569.5 927 569.5 L 1057 569.5" fill="none" style="stroke: #999999" stroke-width="3.0" marker-end="url(#gradia-wPewTQWlvjkl-arrow)"/>
+<path d="M 817 374.5625 L 899 374.5625 Q 919 374.5625 919 394.5625 L 919 466.5 Q 919 486.5 939 486.5 L 1057 486.5" fill="none" style="stroke: #999999" stroke-width="3.0" marker-end="url(#gradia-wPewTQWlvjkl-arrow)"/>
+<path d="M 817 244.8125 L 887 244.8125 Q 907 244.8125 907 224.8125 L 907 79.5 Q 907 59.5 927 59.5 L 1057 59.5" fill="none" style="stroke: #999999" stroke-width="3.0" marker-end="url(#gradia-wPewTQWlvjkl-arrow)"/>
+<path d="M 817 266.4375 L 899 266.4375 Q 919 266.4375 919 246.4375 L 919 103.5 Q 919 83.5 939 83.5 L 1057 83.5" fill="none" style="stroke: #999999" stroke-width="3.0" marker-end="url(#gradia-wPewTQWlvjkl-arrow)"/>
+<path d="M 357 237.5 L 457 237.5 Q 477 237.5 477 257.5 L 477 276.5 Q 477 296.5 497 296.5 L 597 296.5" fill="none" style="stroke: #999999" stroke-width="3.0" marker-end="url(#gradia-wPewTQWlvjkl-arrow)"/>
+<path d="M 357 320.5 L 597 320.5" fill="none" style="stroke: #999999" stroke-width="3.0" marker-end="url(#gradia-wPewTQWlvjkl-arrow)"/>
+<path d="M 357 403.5 L 457 403.5 Q 477 403.5 477 383.5 L 477 364.5 Q 477 344.5 497 344.5 L 597 344.5" fill="none" style="stroke: #999999" stroke-width="3.0" marker-end="url(#gradia-wPewTQWlvjkl-arrow)"/>
+<a href="#event" xlink:href="#event">
+<rect x="597" y="229" width="220" height="183" rx="6" style="fill: #336699; stroke: #003366" stroke-width="4.0"/>
+<text x="707" y="331.3" text-anchor="middle" font-size="30" font-weight="600" style="font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; fill: #ffffff">Event</text>
+</a>
+<a href="#message" xlink:href="#message">
+<rect x="137" y="206" width="220" height="63" rx="6" style="fill: #e0f0ff; stroke: #c0d0e0" stroke-width="4.0"/>
+<text x="247" y="248.3" text-anchor="middle" font-size="30" font-weight="600" style="font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; fill: #336699">Message</text>
+</a>
+<a href="#authorizationtoken" xlink:href="#authorizationtoken">
+<rect x="40" y="289" width="317" height="63" rx="6" style="fill: #e0f0ff; stroke: #c0d0e0" stroke-width="4.0"/>
+<text x="198.5" y="331.3" text-anchor="middle" font-size="30" font-weight="600" style="font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; fill: #336699">AuthorizationToken</text>
+</a>
+<a href="#sessiontoken" xlink:href="#sessiontoken">
+<rect x="133" y="372" width="224" height="63" rx="6" style="fill: #e0f0ff; stroke: #c0d0e0" stroke-width="4.0"/>
+<text x="245" y="414.3" text-anchor="middle" font-size="30" font-weight="600" style="font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; fill: #336699">SessionToken</text>
+</a>
+<a href="#agendapoint" xlink:href="#agendapoint">
+<rect x="1057" y="40" width="220" height="63" rx="6" style="fill: #e0f0ff; stroke: #c0d0e0" stroke-width="4.0"/>
+<text x="1167" y="82.3" text-anchor="middle" font-size="30" font-weight="600" style="font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; fill: #336699">AgendaPoint</text>
+</a>
+<a href="#channel" xlink:href="#channel">
+<rect x="1057" y="123" width="220" height="63" rx="6" style="fill: #e0f0ff; stroke: #c0d0e0" stroke-width="4.0"/>
+<text x="1167" y="165.3" text-anchor="middle" font-size="30" font-weight="600" style="font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; fill: #336699">Channel</text>
+</a>
+<a href="#role" xlink:href="#role">
+<rect x="1057" y="206" width="220" height="63" rx="6" style="fill: #e0f0ff; stroke: #c0d0e0" stroke-width="4.0"/>
+<text x="1167" y="248.3" text-anchor="middle" font-size="30" font-weight="600" style="font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; fill: #336699">Role</text>
+</a>
+<a href="#user" xlink:href="#user">
+<rect x="1057" y="289" width="220" height="63" rx="6" style="fill: #e0f0ff; stroke: #c0d0e0" stroke-width="4.0"/>
+<text x="1167" y="331.3" text-anchor="middle" font-size="30" font-weight="600" style="font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; fill: #336699">User</text>
+</a>
+<a href="#message" xlink:href="#message">
+<rect x="1057" y="372" width="220" height="63" rx="6" style="fill: var(--gradia-color-node-ghost-box, #f0f0f0); stroke: var(--gradia-color-node-ghost-border, #a0a0a0)" stroke-width="4.0" stroke-dasharray="10 6"/>
+<text x="1167" y="414.3" text-anchor="middle" font-size="30" font-weight="600" style="font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; fill: var(--gradia-color-node-ghost-name, #666666)">Message</text>
+</a>
+<a href="#questiontag" xlink:href="#questiontag">
+<rect x="1057" y="455" width="220" height="63" rx="6" style="fill: #e0f0ff; stroke: #c0d0e0" stroke-width="4.0"/>
+<text x="1167" y="497.3" text-anchor="middle" font-size="30" font-weight="600" style="font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; fill: #336699">QuestionTag</text>
+</a>
+<a href="#eventstatistic" xlink:href="#eventstatistic">
+<rect x="1057" y="538" width="255" height="63" rx="6" style="fill: #e0f0ff; stroke: #c0d0e0" stroke-width="4.0"/>
+<text x="1184.5" y="580.3" text-anchor="middle" font-size="30" font-weight="600" style="font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; fill: #336699">EventStatistic</text>
+</a>
+<text x="969.28" y="222.28125" text-anchor="middle" font-size="16" style="font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; fill: #333333; stroke: var(--gradia-color-edge-halo, #ffffff)" stroke-width="4.5" paint-order="stroke" stroke-linejoin="round">channels</text>
+<text x="1016.36" y="147.5" text-anchor="middle" font-size="16" style="font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; fill: #333333; stroke: var(--gradia-color-edge-halo, #ffffff)" stroke-width="4.5" paint-order="stroke" stroke-linejoin="round">0..n</text>
+<text x="968.8" y="286.59375" text-anchor="middle" font-size="16" style="font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; fill: #333333; stroke: var(--gradia-color-edge-halo, #ffffff)" stroke-width="4.5" paint-order="stroke" stroke-linejoin="round">roles</text>
+<text x="1016.36" y="251.5" text-anchor="middle" font-size="16" style="font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; fill: #333333; stroke: var(--gradia-color-edge-halo, #ffffff)" stroke-width="4.5" paint-order="stroke" stroke-linejoin="round">0..n</text>
+<text x="942.40625" y="325.3125" text-anchor="middle" font-size="16" style="font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; fill: #333333; stroke: var(--gradia-color-edge-halo, #ffffff)" stroke-width="4.5" paint-order="stroke" stroke-linejoin="round">accessList</text>
+<text x="1016.36" y="313.5" text-anchor="middle" font-size="16" style="font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; fill: #333333; stroke: var(--gradia-color-edge-halo, #ffffff)" stroke-width="4.5" paint-order="stroke" stroke-linejoin="round">0..n</text>
+<text x="962.28125" y="346.9375" text-anchor="middle" font-size="16" style="font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; fill: #333333; stroke: var(--gradia-color-edge-halo, #ffffff)" stroke-width="4.5" paint-order="stroke" stroke-linejoin="round">messages</text>
+<text x="1016.36" y="396.5" text-anchor="middle" font-size="16" style="font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; fill: #333333; stroke: var(--gradia-color-edge-halo, #ffffff)" stroke-width="4.5" paint-order="stroke" stroke-linejoin="round">0..n</text>
+<text x="953.6" y="519.84375" text-anchor="middle" font-size="16" style="font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; fill: #333333; stroke: var(--gradia-color-edge-halo, #ffffff)" stroke-width="4.5" paint-order="stroke" stroke-linejoin="round">statistics</text>
+<text x="1016.36" y="562.5" text-anchor="middle" font-size="16" style="font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; fill: #333333; stroke: var(--gradia-color-edge-halo, #ffffff)" stroke-width="4.5" paint-order="stroke" stroke-linejoin="round">0..n</text>
+<text x="826.64" y="455.53125" text-anchor="middle" font-size="16" style="font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; fill: #333333; stroke: var(--gradia-color-edge-halo, #ffffff)" stroke-width="4.5" paint-order="stroke" stroke-linejoin="round">availableQuestionTags</text>
+<text x="1016.36" y="479.5" text-anchor="middle" font-size="16" style="font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; fill: #333333; stroke: var(--gradia-color-edge-halo, #ffffff)" stroke-width="4.5" paint-order="stroke" stroke-linejoin="round">0..n</text>
+<text x="982.72" y="129.15625" text-anchor="middle" font-size="16" style="font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; fill: #333333; stroke: var(--gradia-color-edge-halo, #ffffff)" stroke-width="4.5" paint-order="stroke" stroke-linejoin="round">activeAgendaPoint</text>
+<text x="1016.36" y="52.5" text-anchor="middle" font-size="16" style="font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; fill: #333333; stroke: var(--gradia-color-edge-halo, #ffffff)" stroke-width="4.5" paint-order="stroke" stroke-linejoin="round">0..1</text>
+<text x="864.0799999999999" y="163.96875" text-anchor="middle" font-size="16" style="font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; fill: #333333; stroke: var(--gradia-color-edge-halo, #ffffff)" stroke-width="4.5" paint-order="stroke" stroke-linejoin="round">agendaPoints</text>
+<text x="1016.36" y="76.5" text-anchor="middle" font-size="16" style="font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; fill: #333333; stroke: var(--gradia-color-edge-halo, #ffffff)" stroke-width="4.5" paint-order="stroke" stroke-linejoin="round">0..n</text>
+<text x="502.8" y="274" text-anchor="middle" font-size="16" style="font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; fill: #333333; stroke: var(--gradia-color-edge-halo, #ffffff)" stroke-width="4.5" paint-order="stroke" stroke-linejoin="round">event</text>
+<text x="568.84" y="289.5" text-anchor="middle" font-size="16" style="font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; fill: #333333; stroke: var(--gradia-color-edge-halo, #ffffff)" stroke-width="4.5" paint-order="stroke" stroke-linejoin="round">1</text>
+<text x="477" y="314.5" text-anchor="middle" font-size="16" style="font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; fill: #333333; stroke: var(--gradia-color-edge-halo, #ffffff)" stroke-width="4.5" paint-order="stroke" stroke-linejoin="round">event</text>
+<text x="568.84" y="313.5" text-anchor="middle" font-size="16" style="font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; fill: #333333; stroke: var(--gradia-color-edge-halo, #ffffff)" stroke-width="4.5" paint-order="stroke" stroke-linejoin="round">1</text>
+<text x="502.8" y="381" text-anchor="middle" font-size="16" style="font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; fill: #333333; stroke: var(--gradia-color-edge-halo, #ffffff)" stroke-width="4.5" paint-order="stroke" stroke-linejoin="round">event</text>
+<text x="568.84" y="337.5" text-anchor="middle" font-size="16" style="font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; fill: #333333; stroke: var(--gradia-color-edge-halo, #ffffff)" stroke-width="4.5" paint-order="stroke" stroke-linejoin="round">1</text>
+</svg>
