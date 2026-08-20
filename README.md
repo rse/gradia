@@ -196,7 +196,9 @@ separated by `|`.
 - Four attribute keys are reserved and consumed by the renderer instead
   of being displayed as a regular `<key>: <val>` line:
 
-    - `url: <url>` renders the node box as a hyperlink,
+    - `url: <url>` renders the node box as a hyperlink. Only relative URLs
+      and the schemes `http`, `https`, and `mailto` are honored; any other
+      URL is silently dropped and the node box then simply stays unlinked,
     - `type: <name>` renders `<name>` as a smaller text above the node
       label inside the node box,
     - `primary: true` renders the node in the primary node colors
@@ -211,6 +213,38 @@ separated by `|`.
 
 - All remaining attributes are displayed as `<key>: <val>` lines inside
   the node box.
+
+### Diagram Type Constraints
+
+The diagram type `graph` imposes no constraints on the topology: it
+accepts self-loops and free-standing nodes alike, and hence is the safe
+choice whenever the topology is not known to fit `hub` or `grid`.
+
+The diagram type `hub` rejects the input with an error unless all of the
+following conditions hold:
+
+- Exactly one node carries the attribute `primary: true`.
+
+- Every edge either points to or originates from that primary node. An
+  edge between two non-primary nodes is rejected.
+
+- The primary node carries no self-loop.
+
+- Every non-primary node is an input or an output of the primary node,
+  i.e., no node is free-standing.
+
+A node which is both an input and an output of the primary node is placed
+twice, once in the input column and once in the output column. The second
+placement is rendered as a dashed "ghost" box, colored by the
+`color-node-ghost-*` options.
+
+The diagram type `grid` rejects the input with an error as soon as the
+graph contains at least one edge.
+
+As the groups of a grouped graph are laid out individually with the
+selected diagram type, these constraints apply to every single group. For
+the type `hub` this especially means that every group needs its own
+primary node.
 
 ### Directives
 
