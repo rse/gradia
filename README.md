@@ -24,6 +24,23 @@ graphs:
   output nodes.
 - `grid`: a compact grid of tiles for an edge-less graph.
 
+Examples
+--------
+
+Here are examples of the three graph diagram renderings:
+
+- [broadcast-graph](smp/broadcast-graph.txt):
+
+  ![broadcast-graph](smp/broadcast-graph.svg)
+
+- [broadcast-hub](smp/broadcast-hub.txt):
+
+  ![broadcast-hub](smp/broadcast-hub.svg)
+
+- [broadcast-grid](smp/broadcast-grid.txt):
+
+  ![broadcast-grid](smp/broadcast-grid.svg)
+
 Playground
 ----------
 
