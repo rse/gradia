@@ -4,17 +4,18 @@
 **  Distributed under MIT license <https://spdx.org/licenses/MIT.html>
 */
 
-import pluginJs      from "@eslint/js"
-import pluginStd     from "neostandard"
-import pluginTS      from "typescript-eslint"
-import globals       from "globals"
+import pluginJs        from "@eslint/js"
+import * as pluginStd  from "neostandard"
+import pluginTS        from "typescript-eslint"
+import globals         from "globals"
 
 export default [
     { ignores: [ "etc/eslint.mjs", "dst" ] },
     pluginJs.configs.recommended,
     ...pluginTS.configs.strict,
     ...pluginTS.configs.stylistic,
-    ...pluginStd({
+    ...pluginStd.neostandard({
+        ts:      true,
         ignores: pluginStd.resolveIgnoresFromGitignore()
     }),
     {
