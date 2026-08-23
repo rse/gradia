@@ -10,7 +10,8 @@ import { DagreLayout } from "@antv/layout"
 /*  internal dependencies  */
 import { Graph, Node, Edge }                 from "./gradia-api-model.js"
 import { Config }                            from "./gradia-api-config.js"
-import { Poly }                              from "./gradia-api-render-base.js"
+import { Poly, FS_EDGE, FS_ARITY, ARITY_OFF, textWidth }
+    from "./gradia-api-render-base.js"
 import { measureNodes }                      from "./gradia-api-render-node.js"
 import { Layout }                            from "./gradia-api-render-svg.js"
 import { Side, TrackUser, PORT_SEP, simplifyPoly, assignPorts, assignTracks } from "./gradia-api-render-edge.js"
@@ -21,9 +22,11 @@ const CLUSTY   = 72  /*  max Y distance within a grid row            */
 const CHAN_W0  = 24  /*  width of an edge-less inter-column channel  */
 const CHAN_W1  = 28  /*  width of a one-edge inter-column channel    */
 const CHAN_PAD = 16  /*  cross-axis padding inside a channel         */
+const CHAN_LBL = 8   /*  padding beside an edge label in a channel   */
 const GUT_H0   = 20  /*  height of an edge-less inter-row gutter     */
 const GUT_H1   = 24  /*  height of a one-edge inter-row gutter       */
 const GUT_PAD  = 12  /*  cross-axis padding inside a gutter          */
+const GUT_LBL  = 22  /*  clearance above/below a label in a gutter   */
 const LOOP_GAP = 24  /*  detour of a self-loop right of its node box */
 
 /*  snap raw node positions onto a discrete grid by clustering the
@@ -141,7 +144,8 @@ const planRoutes = (
     edges: Edge[],
     col:   Map<string, number>,
     row:   Map<string, number>
-): { plans: RoutePlan[], chanCnt: Map<number, number>, gutCnt: Map<number, number> } => {
+): { plans: RoutePlan[], chanCnt: Map<number, number>, gutCnt: Map<number, number>,
+    chanLbl: Map<number, number>, gutLbl: Map<number, number> } => {
     const plans = edges.map((edge): RoutePlan => {
         /*  a self-loop is routed around its own node box and uses no channel  */
         if (edge.source === edge.target)
@@ -163,16 +167,33 @@ const planRoutes = (
         return { chans, guts }
     })
 
-    /*  count the edges occupying each channel and gutter  */
-    const chanCnt = new Map<number, number>()
-    const gutCnt  = new Map<number, number>()
-    for (const plan of plans) {
+    /*  count the edges occupying each channel and gutter and determine
+        the room the edge labels need there: a name is placed in the
+        single channel of its edge, or, for a two-channel edge, along
+        its gutter run, costing one label line there; an arity is always
+        placed in the channel through which its edge finally approaches
+        the target node, set back from the arrow head  */
+    const chanCnt  = new Map<number, number>()
+    const gutCnt   = new Map<number, number>()
+    const chanLbl  = new Map<number, number>()
+    const gutLbl   = new Map<number, number>()
+    const chanNeed = (c: number, width: number) =>
+        chanLbl.set(c, Math.max(chanLbl.get(c) ?? 0, width))
+    plans.forEach((plan, i) => {
         for (const c of plan.chans)
             chanCnt.set(c, (chanCnt.get(c) ?? 0) + 1)
         for (const g of plan.guts)
             gutCnt.set(g, (gutCnt.get(g) ?? 0) + 1)
-    }
-    return { plans, chanCnt, gutCnt }
+        const { name, arity } = edges[i]
+        if (name !== undefined && plan.chans.length === 1)
+            chanNeed(plan.chans[0], textWidth(name, FS_EDGE) + 2 * CHAN_LBL)
+        else if (name !== undefined && plan.guts.length > 0)
+            gutLbl.set(plan.guts[0], (gutLbl.get(plan.guts[0]) ?? 0) + 1)
+        if (arity !== undefined && plan.chans.length > 0)
+            chanNeed(plan.chans[plan.chans.length - 1],
+                ARITY_OFF + textWidth(arity, FS_ARITY) + CHAN_LBL)
+    })
+    return { plans, chanCnt, gutCnt, chanLbl, gutLbl }
 }
 
 /*  the computed grid geometry: the sizes of the columns and rows, the
@@ -200,6 +221,8 @@ const computeGrid = (
     nrows:   number,
     chanCnt: Map<number, number>,
     gutCnt:  Map<number, number>,
+    chanLbl: Map<number, number>,
+    gutLbl:  Map<number, number>,
     config:  Config
 ): Grid => {
     const colWidth  = Array.from({ length: ncols }, () => 0)
@@ -209,16 +232,24 @@ const computeGrid = (
         rowHeight[row.get(node.id)!]  = Math.max(rowHeight[row.get(node.id)!],  boxH.get(node.id)!)
     }
 
-    /*  size the channels and gutters by their actual edge usage  */
+    /*  size the channels and gutters by their actual edge usage, each
+        additionally grown to hold the edge labels landing inside it (a
+        channel by its widest label demand, a gutter by one line per
+        label) and floored by the configured minimum width/height  */
     const chanW = Array.from({ length: ncols }, (_, c) => {
         const cnt = chanCnt.get(c) ?? 0
-        return cnt === 0 ? CHAN_W0 : Math.min(config["graph-channel-width-max"],
-            CHAN_W1 + (cnt - 1) * config["size-edge-track-gap"])
+        return Math.min(config["graph-channel-width-max"],
+            Math.max(config["graph-channel-width-min"],
+                cnt === 0 ? CHAN_W0 : CHAN_W1 + (cnt - 1) * config["size-edge-track-gap"],
+                chanLbl.get(c) ?? 0))
     })
     const gutH = Array.from({ length: nrows }, (_, g) => {
         const cnt = gutCnt.get(g) ?? 0
-        return cnt === 0 ? GUT_H0 : Math.min(config["graph-gutter-height-max"],
-            GUT_H1 + (cnt - 1) * config["size-edge-track-gap"])
+        const lbl = gutLbl.get(g) ?? 0
+        return Math.min(config["graph-gutter-height-max"],
+            Math.max(config["graph-gutter-height-min"],
+                cnt === 0 ? GUT_H0 : GUT_H1 + (cnt - 1) * config["size-edge-track-gap"],
+                lbl > 0 ? GUT_H1 + lbl * GUT_LBL : 0))
     })
 
     /*  derive the column and row center positions  */
@@ -402,7 +433,7 @@ export const render = async (graph: Graph, config: Config): Promise<Layout> => {
     const nrows = usedRows.length
 
     /*  plan the coarse channel/gutter route of every edge  */
-    const { plans, chanCnt, gutCnt } = planRoutes(edges, col, row)
+    const { plans, chanCnt, gutCnt, chanLbl, gutLbl } = planRoutes(edges, col, row)
 
     /*  determine the attachment sides of every edge (east/west),
         derived from the column relation of its endpoint nodes  */
@@ -431,7 +462,8 @@ export const render = async (graph: Graph, config: Config): Promise<Layout> => {
     }
 
     /*  determine grid cell sizes and final node center positions  */
-    const grid = computeGrid(nodes, col, row, boxW, boxH, ncols, nrows, chanCnt, gutCnt, config)
+    const grid = computeGrid(nodes, col, row, boxW, boxH, ncols, nrows,
+        chanCnt, gutCnt, chanLbl, gutLbl, config)
     const cx   = (id: string) => grid.colCX[col.get(id)!]
     const cy   = (id: string) => grid.rowCY[row.get(id)!]
 

@@ -12,7 +12,7 @@ import { Node, Edge }                                       from "./gradia-api-m
 import { Config, ConfigEmbedded, resolveFont, cssValueOf }  from "./gradia-api-config.js"
 import {
     Poly, NodeStyle,
-    FS_NAME, FS_TYPE, FS_ATTR, FS_EDGE, FS_ARITY, FS_GROUP,
+    FS_NAME, FS_TYPE, FS_ATTR, FS_EDGE, FS_ARITY, FS_GROUP, ARITY_OFF,
     textWidth, escapeXML
 } from "./gradia-api-render-base.js"
 import { linesOfNode, urlOf, defaultStyleOf, MIN_H, NAME_H, ATTR_H, ATTR_P, TYPE_H, TYPE_D }
@@ -211,7 +211,7 @@ const renderEdgeLabels = (edge: Edge, poly: Poly, claim: (candidates: Box[]) => 
         const p    = pointAt(poly, 1.0)
         const prev = pointAt(poly, 0.999)
         const dx   = Math.sign(p.x - prev.x) || 1
-        const ax   = p.x - dx * (24 + w / 2)
+        const ax   = p.x - dx * (ARITY_OFF + w / 2)
         const box  = claim([
             [ ax - w / 2,           p.y - 17, ax + w / 2,           p.y - 4  ],
             [ ax - w / 2,           p.y + 4,  ax + w / 2,           p.y + 17 ],

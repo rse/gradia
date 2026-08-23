@@ -259,20 +259,21 @@ command-line options (`font-embed` being command-line only, see below).
 The recognized options are:
 
 ```
-font-family                  color-edge-line              graph-channel-width-max
-font-embed                   color-edge-name              graph-gutter-height-max
-color-node-regular-name      color-edge-arity             graph-node-separation
-color-node-regular-box       color-edge-halo              graph-rank-separation
-color-node-regular-border    size-canvas-margin           graph-node-degree-max
-color-node-primary-name      size-node-width-min          hub-channel-width-max
-color-node-primary-box       size-node-width-max          hub-channel-width-min
-color-node-primary-border    size-node-height-scale       hub-node-gap
-color-node-ghost-name        size-edge-corner-radius      hub-node-degree-max
-color-node-ghost-box         size-edge-hop-radius         grid-columns-max
-color-node-ghost-border      size-edge-track-gap          grid-columns-min
-color-group-name             group-box-padding            grid-gap-horizontal
-color-group-box              group-box-gap                grid-gap-vertical
-color-group-border           graph-columns-max            grid-node-width-equal
+font-family                  color-edge-name             graph-gutter-height-max
+font-embed                   color-edge-arity            graph-gutter-height-min
+color-node-regular-name      color-edge-halo             graph-node-separation
+color-node-regular-box       size-canvas-margin          graph-rank-separation
+color-node-regular-border    size-node-width-min         graph-node-degree-max
+color-node-primary-name      size-node-width-max         hub-channel-width-max
+color-node-primary-box       size-node-height-scale      hub-channel-width-min
+color-node-primary-border    size-edge-corner-radius     hub-node-gap
+color-node-ghost-name        size-edge-hop-radius        hub-node-degree-max
+color-node-ghost-box         size-edge-track-gap         grid-columns-max
+color-node-ghost-border      group-box-padding           grid-columns-min
+color-group-name             group-box-gap               grid-gap-horizontal
+color-group-box              graph-columns-max           grid-gap-vertical
+color-group-border           graph-channel-width-max     grid-node-width-equal
+color-edge-line              graph-channel-width-min
 ```
 
 The `size-*`, `group-*`, `graph-*`, `hub-*`, and `grid-*` options
@@ -287,6 +288,17 @@ node box stays within the given width and grows in height instead. The
 default `0` disables the wrapping entirely and hence lets a node box
 become as wide as its longest text. A single word wider than the
 maximum is never broken and still widens the box beyond the maximum.
+
+The `graph-channel-width-*` and `graph-gutter-height-*` options control
+the spacing of a `graph` diagram: its inter-column channels and
+inter-row gutters are sized by the edges routed through them and by the
+edge labels landing inside them -- a channel by the widest label demand
+it has to hold (an edge name placed along it, or an edge arity set back
+from its arrow head), a gutter by one text line per edge name placed
+along its run. The `-min` options (defaults `24` and `20`) raise the
+result, so that even an unlabeled diagram can be spaced out, while the
+`-max` options (defaults `140` and `90`) cap it, so that neither many
+parallel edges nor a long label can push the nodes apart without bound.
 
 The `grid-columns-min` and `grid-columns-max` options control the column
 count of a `grid` diagram, which by default is derived from the node

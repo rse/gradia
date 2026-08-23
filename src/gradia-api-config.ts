@@ -40,7 +40,9 @@ export const configDefaults = {
     "group-box-gap":             40,    /*  vertical gap between group boxes       */
     "graph-columns-max":         4,     /*  graph: max side-by-side nodes          */
     "graph-channel-width-max":   140,   /*  graph: max width of column channels    */
+    "graph-channel-width-min":   24,    /*  graph: min width of column channels    */
     "graph-gutter-height-max":   90,    /*  graph: max height of row gutters       */
+    "graph-gutter-height-min":   20,    /*  graph: min height of row gutters       */
     "graph-node-separation":     30,    /*  graph: layered layout node separation  */
     "graph-rank-separation":     60,    /*  graph: layered layout rank separation  */
     "graph-node-degree-max":     3,     /*  graph: max edges/side before growth    */

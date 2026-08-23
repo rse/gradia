@@ -2,6 +2,16 @@
 ChangeLog
 =========
 
+1.1.0 (2026-08-23)
+------------------
+
+-   FEATURE [code, othr]: support new "graph-channel-width-min" option to space out column channels
+-   FEATURE [code, othr]: support new "graph-gutter-height-min" option to space out row gutters
+-   IMPROVEMENT [code]: size the "graph" column channels by the widest edge name landing inside them
+-   IMPROVEMENT [code]: size the "graph" column channels by the edge arity set back from the arrow head
+-   IMPROVEMENT [code]: size the "graph" row gutters by the number of edge names placed along their run
+-   CLEANUP [code]: share the edge arity setback constant between SVG rendering and graph layout
+
 1.0.1 (2026-08-21)
 ------------------
 

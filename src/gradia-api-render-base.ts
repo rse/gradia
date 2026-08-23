@@ -16,6 +16,10 @@ export const FS_EDGE  = 16   /*  font size of edge labels      */
 export const FS_ARITY = 16   /*  font size of edge arities     */
 export const FS_GROUP = 24   /*  font size of group tags       */
 
+/*  the setback of an edge arity label from the arrow head it annotates
+    (shared by the SVG rendering and the graph channel sizing)  */
+export const ARITY_OFF = 24
+
 /*  estimate rendered text width (no canvas available under Node,
     factor tuned for the average glyph advance of Source Sans 3)  */
 export const textWidth = (text: string, size: number): number =>
