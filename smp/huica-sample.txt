@@ -1,0 +1,18 @@
+
+#type graph
+
+#config size-node-height-scale  6
+#config size-edge-port-gap      60
+#config graph-channel-width-max 300
+#config graph-channel-width-min 300
+
+unit:   Unit
+person: Person
+
+unit   --(parentUnit)-->[0..1] unit
+unit   --(members)-->[*]       person
+unit   --(director)-->[0..1]   person
+
+person --(belongsTo)-->[0..1]  unit
+person --(supervisor)-->[0..1] person
+
