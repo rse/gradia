@@ -2,6 +2,14 @@
 ChangeLog
 =========
 
+1.1.3 (2026-08-23)
+------------------
+
+-   IMPROVEMENT [code]: route the "graph" self-loops around the top-right box corner for intuition
+-   IMPROVEMENT [code]: place the edge arity beside the line for vertically approaching edges
+-   IMPROVEMENT [infr, othr]: add the "huica-sample" sample graph and render it in the "sample" target
+-   IMPROVEMENT [othr]: re-render the sample SVG diagrams
+
 1.1.2 (2026-08-23)
 ------------------
 
