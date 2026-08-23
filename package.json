@@ -52,6 +52,7 @@
         "fsevents":                  true
     },
     "scripts": {
+        "prepublishOnly":            "npm start build",
         "start":                     "stx -v4 -l warning -c etc/stx.conf"
     }
 }

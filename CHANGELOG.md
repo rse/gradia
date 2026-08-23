@@ -2,6 +2,11 @@
 ChangeLog
 =========
 
+1.1.2 (2026-08-23)
+------------------
+
+-   BUGFIX [infr]: add a NPM "prepublishOnly" script which ensures that "npm start build" runs before release
+
 1.1.1 (2026-08-23)
 ------------------
 
