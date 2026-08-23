@@ -210,13 +210,30 @@ const renderEdgeLabels = (edge: Edge, poly: Poly, claim: (candidates: Box[]) => 
         const w    = textWidth(edge.arity, FS_ARITY)
         const p    = pointAt(poly, 1.0)
         const prev = pointAt(poly, 0.999)
-        const dx   = Math.sign(p.x - prev.x) || 1
-        const ax   = p.x - dx * (ARITY_OFF + w / 2)
-        const box  = claim([
-            [ ax - w / 2,           p.y - 17, ax + w / 2,           p.y - 4  ],
-            [ ax - w / 2,           p.y + 4,  ax + w / 2,           p.y + 17 ],
-            [ ax - w / 2 - dx * 14, p.y - 17, ax + w / 2 - dx * 14, p.y - 4  ]
-        ])
+
+        /*  set the arity back from the arrow head along the final
+            segment and place it beside the line, so an edge approaching
+            vertically keeps its arity next to its own arrow  */
+        let candidates: Box[]
+        if (p.horizontal) {
+            const dx = Math.sign(p.x - prev.x) || 1
+            const ax = p.x - dx * (ARITY_OFF + w / 2)
+            candidates = [
+                [ ax - w / 2,           p.y - 17, ax + w / 2,           p.y - 4  ],
+                [ ax - w / 2,           p.y + 4,  ax + w / 2,           p.y + 17 ],
+                [ ax - w / 2 - dx * 14, p.y - 17, ax + w / 2 - dx * 14, p.y - 4  ]
+            ]
+        }
+        else {
+            const dy = Math.sign(p.y - prev.y) || 1
+            const ay = p.y - dy * ARITY_OFF
+            candidates = [
+                [ p.x + 6,     ay - 7,           p.x + 6 + w, ay + 6           ],
+                [ p.x - 6 - w, ay - 7,           p.x - 6,     ay + 6           ],
+                [ p.x + 6,     ay - 7 - dy * 14, p.x + 6 + w, ay + 6 - dy * 14 ]
+            ]
+        }
+        const box = claim(candidates)
         parts.push(`<text x="${(box[0] + box[2]) / 2}" y="${box[3] - 3}" text-anchor="middle" ` +
             `font-size="${FS_ARITY}" ` +
             `style="font-family: ${font}; fill: ${color("color-edge-arity")}; ` +

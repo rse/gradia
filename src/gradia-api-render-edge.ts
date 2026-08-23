@@ -32,8 +32,9 @@ export const simplifyPoly = (pts: Poly): Poly => {
     return out
 }
 
-/*  the horizontal node side an edge attaches to (east or west)  */
-export type Side = "e" | "w"
+/*  the node side an edge attaches to (east, west, or north, the
+    latter carrying the incoming ends of the self-loops only)  */
+export type Side = "e" | "w" | "n"
 
 /*  distribute the edge attachment ports along each node side, ordered by
     the vertical position of the opposite endpoint and separated by at
@@ -67,6 +68,21 @@ export const assignPorts = (
         const sep     = key.lastIndexOf(":")  /*  ids may contain a colon themselves  */
         const id      = key.slice(0, sep)
         const side    = key.slice(sep + 1)
+
+        /*  spread the north side ports along the top side, in reverse
+            edge order, so the innermost of the nested self-loops
+            attaches closest to the top-right box corner  */
+        if (side === "n") {
+            group.sort((a, b) => b.edge - a.edge)
+            const spacing = Math.min(portGap, (boxW.get(id)! - PORT_PAD) / group.length)
+            group.forEach((p, idx) => {
+                portPos.set(`${p.edge}:${p.role}`, {
+                    x: cx(id) + (idx - (group.length - 1) / 2) * spacing,
+                    y: cy(id) - boxH.get(id)! / 2
+                })
+            })
+            continue
+        }
         const otherOf = (p: { edge: number, role: "s" | "t" }) =>
             p.role === "s" ? edges[p.edge].target : edges[p.edge].source
         group.sort((a, b) => (cy(otherOf(a)) - cy(otherOf(b))) || (a.edge - b.edge))

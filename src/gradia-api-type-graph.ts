@@ -27,7 +27,8 @@ const GUT_H0   = 20  /*  height of an edge-less inter-row gutter     */
 const GUT_H1   = 24  /*  height of a one-edge inter-row gutter       */
 const GUT_PAD  = 12  /*  cross-axis padding inside a gutter          */
 const GUT_LBL  = 22  /*  clearance above/below a label in a gutter   */
-const LOOP_GAP = 24  /*  detour of a self-loop right of its node box */
+const LOOP_GAP = 24  /*  detour of a self-loop beside its node box   */
+const LOOP_TOP = 52  /*  detour of a self-loop above its node box    */
 
 /*  snap raw node positions onto a discrete grid by clustering the
     distinct X coordinates into columns and Y coordinates into rows  */
@@ -339,7 +340,9 @@ const routePolys = (
     col:     Map<string, number>,
     portPos: Map<string, { x: number, y: number }>,
     boxW:    Map<string, number>,
+    boxH:    Map<string, number>,
     cx:      (id: string) => number,
+    cy:      (id: string) => number,
     chanX:   (c: number, edge: number) => number,
     gutY:    (g: number, edge: number) => number,
     config:  Config
@@ -353,11 +356,17 @@ const routePolys = (
         const { chans, guts } = plans[i]
         let pts: Poly
         if (edge.source === edge.target) {
-            const k  = loopUse.get(edge.source) ?? 0
+            /*  route the self-loop counter-clockwise around the top-right
+                box corner: out on the east side, up beside the box, back
+                left above it, and down into the north side again (the
+                detour above the box is the wider one, as its final
+                descent has to stay readable behind the arrow head)  */
+            const k   = loopUse.get(edge.source) ?? 0
             loopUse.set(edge.source, k + 1)
-            const ox = cx(edge.source) + boxW.get(edge.source)! / 2 + LOOP_GAP +
-                k * config["size-edge-track-gap"]
-            pts = [ [ sp.x, sp.y ], [ ox, sp.y ], [ ox, tp.y ], [ tp.x, tp.y ] ]
+            const off = k * config["size-edge-track-gap"]
+            const ox  = cx(edge.source) + boxW.get(edge.source)! / 2 + LOOP_GAP + off
+            const oy  = cy(edge.source) - boxH.get(edge.source)! / 2 - LOOP_TOP - off
+            pts = [ [ sp.x, sp.y ], [ ox, sp.y ], [ ox, oy ], [ tp.x, oy ], [ tp.x, tp.y ] ]
         }
         else if (chans.length === 1) {
             const ch = chanX(chans[0], i)
@@ -435,14 +444,16 @@ export const render = async (graph: Graph, config: Config): Promise<Layout> => {
     /*  plan the coarse channel/gutter route of every edge  */
     const { plans, chanCnt, gutCnt, chanLbl, gutLbl } = planRoutes(edges, col, row)
 
-    /*  determine the attachment sides of every edge (east/west),
-        derived from the column relation of its endpoint nodes  */
+    /*  determine the attachment sides of every edge, derived from the
+        column relation of its endpoint nodes (a self-loop leaves on the
+        east side and re-enters on the north side of its own box)  */
     const sides: { s: Side, t: Side }[] = edges.map((edge) => {
         const sc = col.get(edge.source)!
         const tc = col.get(edge.target)!
-        if      (sc < tc) return { s: "e", t: "w" }
-        else if (sc > tc) return { s: "w", t: "e" }
-        else              return { s: "e", t: "e" }
+        if      (edge.source === edge.target) return { s: "e", t: "n" }
+        else if (sc < tc)                     return { s: "e", t: "w" }
+        else if (sc > tc)                     return { s: "w", t: "e" }
+        else                                  return { s: "e", t: "e" }
     })
 
     /*  grow every box whose edge attachments exceed the configured
@@ -475,7 +486,7 @@ export const render = async (graph: Graph, config: Config): Promise<Layout> => {
 
     /*  route every edge as an orthogonal polyline through the channels
         between columns and the gutters between rows  */
-    const polys = routePolys(edges, plans, col, portPos, boxW, cx, chanX, gutY, config)
+    const polys = routePolys(edges, plans, col, portPos, boxW, boxH, cx, cy, chanX, gutY, config)
 
     /*  hand over the laid out graph for SVG rendering  */
     return { nodes, edges, cx, cy, boxW, boxH, contentH, polys }
