@@ -1,8 +1,9 @@
 
 #type graph
 
-#config size-node-height-scale  6
+#config size-node-height-scale  8
 #config size-edge-port-gap      60
+#config graph-node-degree-max   4
 #config graph-channel-width-max 300
 #config graph-channel-width-min 300
 
