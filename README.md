@@ -256,24 +256,32 @@ type is silently ignored. Without both, the type defaults to `graph`.
 A `#config` directive sets one of the rendering options, which otherwise
 are settable through the corresponding `--config <option>=<value>`
 command-line options (`font-embed` being command-line only, see below).
-The recognized options are:
+The recognized options, and their default values, are:
 
 ```
-font-family                  color-edge-name             graph-channel-width-min
-font-embed                   color-edge-arity            graph-gutter-height-max
-color-node-regular-name      color-edge-halo             graph-gutter-height-min
-color-node-regular-box       size-canvas-margin          graph-node-separation
-color-node-regular-border    size-node-width-min         graph-rank-separation
-color-node-primary-name      size-node-width-max         graph-node-degree-max
-color-node-primary-box       size-node-height-scale      hub-channel-width-max
-color-node-primary-border    size-edge-corner-radius     hub-channel-width-min
-color-node-ghost-name        size-edge-hop-radius        hub-node-gap
-color-node-ghost-box         size-edge-track-gap         hub-node-degree-max
-color-node-ghost-border      size-edge-port-gap          grid-columns-max
-color-group-name             group-box-padding           grid-columns-min
-color-group-box              group-box-gap               grid-gap-horizontal
-color-group-border           graph-columns-max           grid-gap-vertical
-color-edge-line              graph-channel-width-max     grid-node-width-equal
+font-family                Helvetica    size-edge-hop-radius       8
+font-embed                 false        size-edge-track-gap        12
+color-node-regular-name    #336699      size-edge-port-gap         24
+color-node-regular-box     #e0f0ff      group-box-padding          30
+color-node-regular-border  #c0d0e0      group-box-gap              40
+color-node-primary-name    #ffffff      graph-columns-max          4
+color-node-primary-box     #336699      graph-channel-width-max    140
+color-node-primary-border  #003366      graph-channel-width-min    24
+color-node-ghost-name      #666666      graph-gutter-height-max    90
+color-node-ghost-box       #f0f0f0      graph-gutter-height-min    20
+color-node-ghost-border    #a0a0a0      graph-node-separation      30
+color-group-name           #6699cc      graph-rank-separation      60
+color-group-box            #f4f8fc      graph-node-degree-max      3
+color-group-border         #c0d0e0      hub-channel-width-max      340
+color-edge-line            #999999      hub-channel-width-min      240
+color-edge-name            #333333      hub-node-gap               20
+color-edge-arity           #333333      hub-node-degree-max        3
+color-edge-halo            #ffffff      grid-columns-max           4
+size-canvas-margin         40           grid-columns-min           3
+size-node-width-min        220          grid-gap-horizontal        40
+size-node-width-max        0            grid-gap-vertical          20
+size-node-height-scale     2.25         grid-node-width-equal      true
+size-edge-corner-radius    20
 ```
 
 The `size-*`, `group-*`, `graph-*`, `hub-*`, and `grid-*` options
@@ -285,17 +293,17 @@ The `size-node-width-max` option additionally enables the word-wrapping
 of the node box texts: given a positive value, the node name, its type,
 and its attribute lines are greedily broken at whitespace so that the
 node box stays within the given width and grows in height instead. The
-default `0` disables the wrapping entirely and hence lets a node box
+value `0` disables the wrapping entirely and hence lets a node box
 become as wide as its longest text. A single word wider than the
 maximum is never broken and still widens the box beyond the maximum.
 
-The `size-edge-port-gap` option (default `24`) controls the distance of
-the edge attachment ports along a node side, and hence the vertical
-distance of the parallel edges and their labels. It is a *maximum*: a
-node box too small to hold all its ports at that distance packs them
-closer together instead. A node side carrying more edges than
-`graph-node-degree-max` respectively `hub-node-degree-max` grows its box
-height by this very distance per additional edge.
+The `size-edge-port-gap` option controls the distance of the edge
+attachment ports along a node side, and hence the vertical distance of
+the parallel edges and their labels. It is a *maximum*: a node box too
+small to hold all its ports at that distance packs them closer together
+instead. A node side carrying more edges than `graph-node-degree-max`
+respectively `hub-node-degree-max` grows its box height by this very
+distance per additional edge.
 
 The `graph-channel-width-*` and `graph-gutter-height-*` options control
 the spacing of a `graph` diagram: its inter-column channels and
@@ -303,21 +311,21 @@ inter-row gutters are sized by the edges routed through them and by the
 edge labels landing inside them -- a channel by the widest label demand
 it has to hold (an edge name placed along it, or an edge arity set back
 from its arrow head), a gutter by one text line per edge name placed
-along its run. The `-min` options (defaults `24` and `20`) raise the
-result, so that even an unlabeled diagram can be spaced out, while the
-`-max` options (defaults `140` and `90`) cap it, so that neither many
-parallel edges nor a long label can push the nodes apart without bound.
+along its run. The `-min` options raise the result, so that even an
+unlabeled diagram can be spaced out, while the `-max` options cap it, so
+that neither many parallel edges nor a long label can push the nodes
+apart without bound.
 
 The `grid-columns-min` and `grid-columns-max` options control the column
 count of a `grid` diagram, which by default is derived from the node
-count as a roughly square grid: `grid-columns-min` (default `3`) raises
-the derived count, so that a few nodes still share a single row instead
-of being stacked, while `grid-columns-max` (default `4`) caps it, so
-that larger diagrams grow in height only. The column count never
-exceeds the node count and the maximum always wins over the minimum.
+count as a roughly square grid: `grid-columns-min` raises the derived
+count, so that a few nodes still share a single row instead of being
+stacked, while `grid-columns-max` caps it, so that larger diagrams grow
+in height only. The column count never exceeds the node count and the
+maximum always wins over the minimum.
 
 The `grid-node-width-equal` option controls the tile widths of a `grid`
-diagram: its default `true` forces all node boxes to the width of the
+diagram: the value `true` forces all node boxes to the width of the
 widest one and hence yields a strictly regular grid, while `false` lets
 each column become only as wide as its own widest node box.
 
