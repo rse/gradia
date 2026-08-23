@@ -2,6 +2,11 @@
 ChangeLog
 =========
 
+1.1.1 (2026-08-23)
+------------------
+
+-   FEATURE [code, othr]: support new "size-edge-port-gap" option to space out the edge attachment ports of a node side
+
 1.1.0 (2026-08-23)
 ------------------
 

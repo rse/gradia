@@ -9,7 +9,6 @@ import { Edge }  from "./gradia-api-model.js"
 import { Poly }  from "./gradia-api-render-base.js"
 
 /*  edge attachment port geometry  */
-export const PORT_SEP = 24  /*  maximum separation of adjacent ports     */
 const        PORT_PAD = 10  /*  padding of the port band inside the box  */
 
 /*  drop duplicate and collinear intermediate points of a polyline  */
@@ -36,15 +35,17 @@ export const simplifyPoly = (pts: Poly): Poly => {
 /*  the horizontal node side an edge attaches to (east or west)  */
 export type Side = "e" | "w"
 
-/*  distribute the edge attachment ports along each node side,
-    ordered by the vertical position of the opposite endpoint  */
+/*  distribute the edge attachment ports along each node side, ordered by
+    the vertical position of the opposite endpoint and separated by at
+    most portGap (less, if the node box is too small to hold them all)  */
 export const assignPorts = (
-    edges: Edge[],
-    sides: { s: Side, t: Side }[],
-    cx:    (id: string) => number,
-    cy:    (id: string) => number,
-    boxW:  Map<string, number>,
-    boxH:  Map<string, number>
+    edges:   Edge[],
+    sides:   { s: Side, t: Side }[],
+    cx:      (id: string) => number,
+    cy:      (id: string) => number,
+    boxW:    Map<string, number>,
+    boxH:    Map<string, number>,
+    portGap: number
 ): Map<string, { x: number, y: number }> => {
     /*  group the edge endpoints by the node side they attach to  */
     const portGroups = new Map<string, { edge: number, role: "s" | "t" }[]>()
@@ -69,7 +70,7 @@ export const assignPorts = (
         const otherOf = (p: { edge: number, role: "s" | "t" }) =>
             p.role === "s" ? edges[p.edge].target : edges[p.edge].source
         group.sort((a, b) => (cy(otherOf(a)) - cy(otherOf(b))) || (a.edge - b.edge))
-        const spacing = Math.min(PORT_SEP, (boxH.get(id)! - PORT_PAD) / group.length)
+        const spacing = Math.min(portGap, (boxH.get(id)! - PORT_PAD) / group.length)
         group.forEach((p, idx) => {
             portPos.set(`${p.edge}:${p.role}`, {
                 x: cx(id) + (side === "e" ? +1 : -1) * boxW.get(id)! / 2,

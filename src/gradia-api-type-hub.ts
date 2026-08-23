@@ -10,7 +10,7 @@ import { Config }                                  from "./gradia-api-config.js"
 import { Poly, NodeStyle }                         from "./gradia-api-render-base.js"
 import { isPrimary, measureNodes, defaultStyleOf } from "./gradia-api-render-node.js"
 import { Layout }                                  from "./gradia-api-render-svg.js"
-import { Side, TrackUser, PORT_SEP, simplifyPoly, assignPorts, assignTracks } from "./gradia-api-render-edge.js"
+import { Side, TrackUser, simplifyPoly, assignPorts, assignTracks } from "./gradia-api-render-edge.js"
 
 /*  the separator between a node id and its placement suffix,
     distinguishing the two clones of a twice-placed node  */
@@ -118,7 +118,7 @@ export const render = async (graph: Graph, config: Config): Promise<Layout> => {
         const cnt = Math.max(portCnt.get(`w:${node.id}`) ?? 0, portCnt.get(`e:${node.id}`) ?? 0)
         if (cnt > config["hub-node-degree-max"])
             boxH.set(node.id, boxH.get(node.id)! +
-                (cnt - config["hub-node-degree-max"]) * PORT_SEP)
+                (cnt - config["hub-node-degree-max"]) * config["size-edge-port-gap"])
     }
 
     /*  fixed three-column layout: stack the input nodes in the first
@@ -177,7 +177,7 @@ export const render = async (graph: Graph, config: Config): Promise<Layout> => {
     const cy = (id: string): number => nodeCY.get(id)!
 
     /*  distribute the edge attachment ports along each node side  */
-    const portPos = assignPorts(edges, sides, cx, cy, boxW, boxH)
+    const portPos = assignPorts(edges, sides, cx, cy, boxW, boxH, config["size-edge-port-gap"])
 
     /*  assign the vertical tracks within each channel (see assignTracks
         for the crossing-avoiding ordering scheme; a hub graph has no backward

@@ -36,6 +36,7 @@ export const configDefaults = {
     "size-edge-corner-radius":   20,    /*  corner rounding radius of edges        */
     "size-edge-hop-radius":      8,     /*  radius of edge crossing hops           */
     "size-edge-track-gap":       12,    /*  offset between parallel edge routes    */
+    "size-edge-port-gap":        24,    /*  max separation of adjacent edge ports  */
     "group-box-padding":         30,    /*  inner padding of group boxes           */
     "group-box-gap":             40,    /*  vertical gap between group boxes       */
     "graph-columns-max":         4,     /*  graph: max side-by-side nodes          */

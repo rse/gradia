@@ -14,7 +14,7 @@ import { Poly, FS_EDGE, FS_ARITY, ARITY_OFF, textWidth }
     from "./gradia-api-render-base.js"
 import { measureNodes }                      from "./gradia-api-render-node.js"
 import { Layout }                            from "./gradia-api-render-svg.js"
-import { Side, TrackUser, PORT_SEP, simplifyPoly, assignPorts, assignTracks } from "./gradia-api-render-edge.js"
+import { Side, TrackUser, simplifyPoly, assignPorts, assignTracks } from "./gradia-api-render-edge.js"
 
 /*  rendering geometry constants  */
 const CLUSTX   = 26  /*  max X distance within a grid column         */
@@ -458,7 +458,7 @@ export const render = async (graph: Graph, config: Config): Promise<Layout> => {
         const cnt = Math.max(portCnt.get(`w:${node.id}`) ?? 0, portCnt.get(`e:${node.id}`) ?? 0)
         if (cnt > config["graph-node-degree-max"])
             boxH.set(node.id, boxH.get(node.id)! +
-                (cnt - config["graph-node-degree-max"]) * PORT_SEP)
+                (cnt - config["graph-node-degree-max"]) * config["size-edge-port-gap"])
     }
 
     /*  determine grid cell sizes and final node center positions  */
@@ -468,7 +468,7 @@ export const render = async (graph: Graph, config: Config): Promise<Layout> => {
     const cy   = (id: string) => grid.rowCY[row.get(id)!]
 
     /*  distribute the edge attachment ports along each node side  */
-    const portPos = assignPorts(edges, sides, cx, cy, boxW, boxH)
+    const portPos = assignPorts(edges, sides, cx, cy, boxW, boxH, config["size-edge-port-gap"])
 
     /*  assign the parallel tracks within the channels and gutters  */
     const { chanX, gutY } = assignTrackCoords(edges, plans, col, portPos, grid, config)
