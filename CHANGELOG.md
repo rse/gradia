@@ -2,6 +2,13 @@
 ChangeLog
 =========
 
+1.1.5 (2026-09-02)
+------------------
+
+-   IMPROVEMENT [othr]: document the default values of the rendering options in the README
+-   IMPROVEMENT [othr]: improve the "huica-sample" sample graph and its rendered SVG
+-   BUGFIX [code, othr]: order the "graph" edge ports by their gutter track approach to avoid crossings
+
 1.1.3 (2026-08-23)
 ------------------
 

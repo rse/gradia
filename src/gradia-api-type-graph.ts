@@ -478,10 +478,20 @@ export const render = async (graph: Graph, config: Config): Promise<Layout> => {
     const cx   = (id: string) => grid.colCX[col.get(id)!]
     const cy   = (id: string) => grid.rowCY[row.get(id)!]
 
-    /*  distribute the edge attachment ports along each node side  */
-    const portPos = assignPorts(edges, sides, cx, cy, boxW, boxH, config["size-edge-port-gap"])
+    /*  distribute the edge attachment ports along each node side and
+        assign the parallel tracks within the channels and gutters,
+        provisionally, to learn the gutter track every edge follows  */
+    const portPre  = assignPorts(edges, sides, cx, cy, boxW, boxH, config["size-edge-port-gap"])
+    const trackPre = assignTrackCoords(edges, plans, col, portPre, grid, config)
 
-    /*  assign the parallel tracks within the channels and gutters  */
+    /*  re-distribute the ports with every gutter-routed edge ordered by
+        its actual gutter track approach instead of the opposite node
+        position (which can disagree and would cross the edges right in
+        front of their attachments), then re-assign the tracks on top
+        of the moved ports  */
+    const portPos = assignPorts(edges, sides, cx, cy, boxW, boxH, config["size-edge-port-gap"],
+        (edge) => plans[edge].guts.length > 0 ?
+            trackPre.gutY(plans[edge].guts[0], edge) : undefined)
     const { chanX, gutY } = assignTrackCoords(edges, plans, col, portPos, grid, config)
 
     /*  route every edge as an orthogonal polyline through the channels

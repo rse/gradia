@@ -36,17 +36,20 @@ export const simplifyPoly = (pts: Poly): Poly => {
     latter carrying the incoming ends of the self-loops only)  */
 export type Side = "e" | "w" | "n"
 
-/*  distribute the edge attachment ports along each node side, ordered by
-    the vertical position of the opposite endpoint and separated by at
-    most portGap (less, if the node box is too small to hold them all)  */
+/*  distribute the edge attachment ports along each node side, ordered
+    by the vertical position the edge approaches from (the approachY
+    override where given, the opposite endpoint center otherwise) and
+    separated by at most portGap (less, if the node box is too small
+    to hold them all)  */
 export const assignPorts = (
-    edges:   Edge[],
-    sides:   { s: Side, t: Side }[],
-    cx:      (id: string) => number,
-    cy:      (id: string) => number,
-    boxW:    Map<string, number>,
-    boxH:    Map<string, number>,
-    portGap: number
+    edges:      Edge[],
+    sides:      { s: Side, t: Side }[],
+    cx:         (id: string) => number,
+    cy:         (id: string) => number,
+    boxW:       Map<string, number>,
+    boxH:       Map<string, number>,
+    portGap:    number,
+    approachY?: (edge: number) => number | undefined
 ): Map<string, { x: number, y: number }> => {
     /*  group the edge endpoints by the node side they attach to  */
     const portGroups = new Map<string, { edge: number, role: "s" | "t" }[]>()
@@ -85,7 +88,9 @@ export const assignPorts = (
         }
         const otherOf = (p: { edge: number, role: "s" | "t" }) =>
             p.role === "s" ? edges[p.edge].target : edges[p.edge].source
-        group.sort((a, b) => (cy(otherOf(a)) - cy(otherOf(b))) || (a.edge - b.edge))
+        const keyOf   = (p: { edge: number, role: "s" | "t" }) =>
+            approachY?.(p.edge) ?? cy(otherOf(p))
+        group.sort((a, b) => (keyOf(a) - keyOf(b)) || (a.edge - b.edge))
         const spacing = Math.min(portGap, (boxH.get(id)! - PORT_PAD) / group.length)
         group.forEach((p, idx) => {
             portPos.set(`${p.edge}:${p.role}`, {
