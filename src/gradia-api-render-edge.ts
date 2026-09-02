@@ -104,26 +104,118 @@ export const assignPorts = (
 
 /*  a channel/gutter track user: an edge entering the channel/gutter at
     cross-axis position posIn and leaving it at posOut (mirrored users
-    enter from the far instead of the near side)  */
+    enter from the far instead of the near side, hairpin users leave
+    on the very side they entered from)  */
 export interface TrackUser {
-    edge:   number
-    posIn:  number
-    posOut: number
-    mirror: boolean
+    edge:     number
+    posIn:    number
+    posOut:   number
+    mirror:   boolean
+    hairpin?: boolean
 }
 
 /*  the minimum cross-axis distance between the track-following segments
     of two edges sharing a track, keeping their rounded corners apart  */
 const TRACK_CLEARANCE = 24
 
+/*  the number of crossings caused by placing user a on a nearer track
+    than user b: the far-side stubs of a (its exiting segment, or its
+    entering one if mirrored) cross the track-following segment of b,
+    and the near-side stubs of b cross the one of a (a stub touching
+    the end of a segment counts too, as it would overlap a corner)  */
+const trackCrossings = (a: TrackUser, b: TrackUser): number => {
+    const within = (u: TrackUser, pos: number): boolean =>
+        pos >= Math.min(u.posIn, u.posOut) && pos <= Math.max(u.posIn, u.posOut)
+    const nears = (u: TrackUser): number[] =>
+        u.hairpin ? [ u.posIn, u.posOut ] : [ u.mirror ? u.posOut : u.posIn ]
+    const fars  = (u: TrackUser): number[] =>
+        u.hairpin ? [] : [ u.mirror ? u.posIn : u.posOut ]
+    return fars(a).filter((pos) => within(b, pos)).length +
+        nears(b).filter((pos) => within(a, pos)).length
+}
+
+/*  the maximum number of users for which the crossing-minimal track
+    order is determined exactly (the effort doubles with every user)  */
+const TRACK_EXACT_MAX = 14
+
+/*  reorder the seeded track users to the order causing the fewest
+    crossings, with ties broken toward the seed order: for small user
+    sets exactly, by a dynamic programming over the user subsets (the
+    linear ordering problem), for larger ones by a local search moving
+    single users while this reduces the crossings  */
+const minimizeCrossings = (seed: TrackUser[]): TrackUser[] => {
+    const n = seed.length
+    if (n < 2)
+        return seed
+
+    /*  the weighted cost of placing seed user i before seed user j:
+        the crossings dominate, a seed order inversion breaks ties  */
+    const cost = seed.map((a, i) => seed.map((b, j) =>
+        trackCrossings(a, b) * n * n + (i > j ? 1 : 0)))
+    let order: number[]
+    if (n <= TRACK_EXACT_MAX) {
+        const best = new Float64Array(1 << n).fill(Infinity)
+        const last = new Int8Array(1 << n)
+        best[0] = 0
+        for (let s = 1; s < (1 << n); s++) {
+            for (let u = 0; u < n; u++) {
+                if ((s & (1 << u)) === 0)
+                    continue
+                const rest = s & ~(1 << u)
+                let total = best[rest]
+                for (let v = 0; v < n; v++)
+                    if ((rest & (1 << v)) !== 0)
+                        total += cost[v][u]
+                if (total < best[s]) {
+                    best[s] = total
+                    last[s] = u
+                }
+            }
+        }
+        order = []
+        for (let s = (1 << n) - 1; s !== 0; s &= ~(1 << last[s]))
+            order.unshift(last[s])
+    }
+    else {
+        const totalOf = (list: number[]): number => {
+            let total = 0
+            for (let i = 0; i < list.length; i++)
+                for (let j = i + 1; j < list.length; j++)
+                    total += cost[list[i]][list[j]]
+            return total
+        }
+        order = seed.map((_, i) => i)
+        let total = totalOf(order)
+        for (let improved = true; improved;) {
+            improved = false
+            for (let i = 0; i < n && !improved; i++) {
+                for (let j = 0; j < n && !improved; j++) {
+                    if (i === j)
+                        continue
+                    const moved = [ ...order ]
+                    moved.splice(j, 0, ...moved.splice(i, 1))
+                    const t = totalOf(moved)
+                    if (t < total) {
+                        order    = moved
+                        total    = t
+                        improved = true
+                    }
+                }
+            }
+        }
+    }
+    return order.map((i) => seed[i])
+}
+
 /*  assign the parallel tracks within a channel or gutter: the users are
     ordered by their entry/exit positions, so that a track-following
     segment never has to cross the entering segment of a parallel
     neighbor (back turners get near tracks entry-position-ordered,
     forward turners far tracks, reversed for mirrored users which
-    enter the channel/gutter from the far side); users whose
-    track-following segments occupy disjoint cross-axis spans share a
-    track, so fewer tracks are used and they stay centered  */
+    enter the channel/gutter from the far side), and this seed order
+    is then refined to the one causing the fewest crossings; users
+    whose track-following segments occupy disjoint cross-axis spans
+    share a track, so fewer tracks are used and they stay centered  */
 export const assignTracks = (users: TrackUser[], width: number, pad: number, gap: number): Map<number, number> => {
     const order = (list: TrackUser[], mirror: boolean): TrackUser[] => {
         const dir = mirror ? -1 : +1
@@ -133,10 +225,10 @@ export const assignTracks = (users: TrackUser[], width: number, pad: number, gap
             .sort((a, b) => dir * ((b.posIn - a.posIn) || (b.posOut - a.posOut)))
         return [ ...backs, ...fores ]
     }
-    const ordered = [
+    const ordered = minimizeCrossings([
         ...order(users.filter((u) => !u.mirror), false),
         ...order(users.filter((u) =>  u.mirror), true)
-    ]
+    ])
 
     /*  pack the ordered users onto tracks: overlapping users keep their
         relative crossing-avoiding order by always taking a farther track

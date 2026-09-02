@@ -14,7 +14,8 @@ import { Poly, FS_EDGE, FS_ARITY, ARITY_OFF, textWidth }
     from "./gradia-api-render-base.js"
 import { measureNodes }                      from "./gradia-api-render-node.js"
 import { Layout }                            from "./gradia-api-render-svg.js"
-import { Side, TrackUser, simplifyPoly, assignPorts, assignTracks } from "./gradia-api-render-edge.js"
+import { Side, TrackUser, simplifyPoly, assignPorts, assignTracks, computeHops }
+    from "./gradia-api-render-edge.js"
 
 /*  rendering geometry constants  */
 const CLUSTX   = 26  /*  max X distance within a grid column         */
@@ -29,6 +30,8 @@ const GUT_PAD  = 12  /*  cross-axis padding inside a gutter          */
 const GUT_LBL  = 22  /*  clearance above/below a label in a gutter   */
 const LOOP_GAP = 24  /*  detour of a self-loop beside its node box   */
 const LOOP_TOP = 52  /*  detour of a self-loop above its node box    */
+const NUDGE_GAP    = 24  /*  min port distance of a nudged node from its gutter tracks  */
+const NUDGE_PASSES = 3   /*  max number of node nudging passes                          */
 
 /*  snap raw node positions onto a discrete grid by clustering the
     distinct X coordinates into columns and Y coordinates into rows  */
@@ -292,11 +295,13 @@ const assignTrackCoords = (
         const { chans, guts } = plans[i]
         if (chans.length === 0)
             return
-        const mirror = col.get(edge.target)! < col.get(edge.source)!
+        const [ sc, tc ] = [ col.get(edge.source)!, col.get(edge.target)! ]
+        const mirror  = tc < sc
+        const hairpin = tc === sc
         const sp = portPos.get(`${i}:s`)!
         const tp = portPos.get(`${i}:t`)!
         if (chans.length === 1)
-            pushTo(chanUsers, chans[0], { edge: i, posIn: sp.y, posOut: tp.y, mirror })
+            pushTo(chanUsers, chans[0], { edge: i, posIn: sp.y, posOut: tp.y, mirror, hairpin })
         else {
             const gy = gutBase(guts[0])
             pushTo(chanUsers, chans[0], { edge: i, posIn: sp.y, posOut: gy,   mirror })
@@ -383,6 +388,141 @@ const routePolys = (
         }
         return simplifyPoly(pts)
     })
+}
+
+/*  the routing of all edges: the attachment ports, the gutter track
+    positions, the polylines, and the number of crossings between them  */
+interface Routing {
+    portPos: Map<string, { x: number, y: number }>
+    gutY:    (g: number, edge: number) => number
+    polys:   Poly[]
+    hops:    number
+}
+
+/*  route every edge for the given node positions: distribute the
+    attachment ports along each node side and assign the parallel tracks
+    within the channels and gutters, provisionally, to learn the gutter
+    track every edge follows, then re-distribute the ports with every
+    gutter-routed edge ordered by its actual gutter track approach
+    instead of the opposite node position (which can disagree and would
+    cross the edges right in front of their attachments), re-assign the
+    tracks on top of the moved ports and finally route every edge as an
+    orthogonal polyline through the channels between the columns and
+    the gutters between the rows  */
+const routeEdges = (
+    edges:   Edge[],
+    plans:   RoutePlan[],
+    col:     Map<string, number>,
+    sides:   { s: Side, t: Side }[],
+    boxW:    Map<string, number>,
+    boxH:    Map<string, number>,
+    cx:      (id: string) => number,
+    cy:      (id: string) => number,
+    grid:    Grid,
+    config:  Config
+): Routing => {
+    const portPre  = assignPorts(edges, sides, cx, cy, boxW, boxH, config["size-edge-port-gap"])
+    const trackPre = assignTrackCoords(edges, plans, col, portPre, grid, config)
+    const portPos  = assignPorts(edges, sides, cx, cy, boxW, boxH, config["size-edge-port-gap"],
+        (edge) => plans[edge].guts.length > 0 ?
+            trackPre.gutY(plans[edge].guts[0], edge) : undefined)
+    const { chanX, gutY } = assignTrackCoords(edges, plans, col, portPos, grid, config)
+    const polys = routePolys(edges, plans, col, portPos, boxW, boxH, cx, cy, chanX, gutY, config)
+    const hops  = computeHops(polys).reduce((sum, segs) =>
+        sum + Array.from(segs.values()).reduce((n, xs) => n + xs.length, 0), 0)
+    return { portPos, gutY, polys, hops }
+}
+
+/*  nudge nodes vertically off their row centers to straighten the
+    direct edges to their same-row neighbors in the adjacent columns, as
+    far as this improves the overall routing (fewer crossings, or as many
+    crossings but fewer jogged direct edges): a node may leave its row
+    band into an adjacent gutter only as far as no gutter track runs
+    across its column (and it carries no self-loop, detouring above its
+    box), and only as long as its own gutter-routed edges keep
+    approaching it from their gutter side  */
+const nudgeNodes = (
+    nodes:  Node[],
+    edges:  Edge[],
+    plans:  RoutePlan[],
+    col:    Map<string, number>,
+    row:    Map<string, number>,
+    boxH:   Map<string, number>,
+    grid:   Grid,
+    nrows:  number,
+    dy:     Map<string, number>,
+    route:  () => Routing
+): Routing => {
+    const gutterFree = (g: number, c: number): boolean =>
+        !plans.some((plan) => plan.guts[0] === g
+            && Math.min(...plan.chans) < c && c <= Math.max(...plan.chans))
+    const shiftRange = (id: string): [ number, number ] => {
+        const r     = row.get(id)!
+        const c     = col.get(id)!
+        const slack = (grid.rowHeight[r] - boxH.get(id)!) / 2
+        const loop  = edges.some((edge) => edge.source === id && edge.target === id)
+        const up    = r > 0         && gutterFree(r - 1, c) && !loop ? grid.gutH[r - 1] - GUT_H0 : 0
+        const down  = r < nrows - 1 && gutterFree(r, c)               ? grid.gutH[r]     - GUT_H0 : 0
+        return [ -(slack + up), slack + down ]
+    }
+    const approachesSanely = (id: string, routing: Routing): boolean =>
+        edges.every((edge, i) => {
+            const role = edge.source === id ? "s" : edge.target === id ? "t" : null
+            if (role === null || plans[i].guts.length === 0)
+                return true
+            const g   = plans[i].guts[0]
+            const gap = routing.portPos.get(`${i}:${role}`)!.y - routing.gutY(g, i)
+            return row.get(id)! > g ? gap >= NUDGE_GAP : gap <= -NUDGE_GAP
+        })
+    const direct = edges.map((edge, i) => plans[i].guts.length === 0
+        && Math.abs(col.get(edge.source)! - col.get(edge.target)!) === 1
+        && row.get(edge.source) === row.get(edge.target))
+    const jogs = (routing: Routing): number =>
+        edges.filter((_, i) => direct[i]
+            && routing.portPos.get(`${i}:s`)!.y !== routing.portPos.get(`${i}:t`)!.y).length
+    const better = (a: Routing, b: Routing): boolean =>
+        a.hops < b.hops || (a.hops === b.hops && jogs(a) < jogs(b))
+
+    /*  try, in a few passes, for every node the shifts aligning one of
+        its direct edges, and keep the best of the shifts improving the
+        routing (all shifts are relative to the current position, which
+        already includes the shifts of the previous passes)  */
+    let current = route()
+    for (let pass = 0; pass < NUDGE_PASSES; pass++) {
+        let changed = false
+        for (const node of nodes) {
+            const [ lo, hi ] = shiftRange(node.id)
+            const shifts = new Set<number>()
+            edges.forEach((edge, i) => {
+                if (!direct[i])
+                    return
+                const sp = current.portPos.get(`${i}:s`)!
+                const tp = current.portPos.get(`${i}:t`)!
+                if (edge.source === node.id)
+                    shifts.add(tp.y - sp.y)
+                else if (edge.target === node.id)
+                    shifts.add(sp.y - tp.y)
+            })
+            const base = dy.get(node.id) ?? 0
+            let best: { shift: number, routing: Routing } | undefined
+            for (const shift of shifts) {
+                if (shift === 0 || base + shift < lo || base + shift > hi)
+                    continue
+                dy.set(node.id, base + shift)
+                const routing = route()
+                if (approachesSanely(node.id, routing) && better(routing, best?.routing ?? current))
+                    best = { shift: base + shift, routing }
+            }
+            dy.set(node.id, best?.shift ?? base)
+            if (best !== undefined) {
+                current = best.routing
+                changed = true
+            }
+        }
+        if (!changed)
+            break
+    }
+    return current
 }
 
 /*  lay out a directed graph model  */
@@ -472,33 +612,22 @@ export const render = async (graph: Graph, config: Config): Promise<Layout> => {
                 (cnt - config["graph-node-degree-max"]) * config["size-edge-port-gap"])
     }
 
-    /*  determine grid cell sizes and final node center positions  */
+    /*  determine grid cell sizes and node center positions (the nodes
+        centered in their rows, before any vertical nudging)  */
     const grid = computeGrid(nodes, col, row, boxW, boxH, ncols, nrows,
         chanCnt, gutCnt, chanLbl, gutLbl, config)
+    const dy   = new Map<string, number>()
     const cx   = (id: string) => grid.colCX[col.get(id)!]
-    const cy   = (id: string) => grid.rowCY[row.get(id)!]
+    const cy   = (id: string) => grid.rowCY[row.get(id)!] + (dy.get(id) ?? 0)
 
-    /*  distribute the edge attachment ports along each node side and
-        assign the parallel tracks within the channels and gutters,
-        provisionally, to learn the gutter track every edge follows  */
-    const portPre  = assignPorts(edges, sides, cx, cy, boxW, boxH, config["size-edge-port-gap"])
-    const trackPre = assignTrackCoords(edges, plans, col, portPre, grid, config)
+    /*  route the edges for the current node positions  */
+    const route = () => routeEdges(edges, plans, col, sides, boxW, boxH, cx, cy, grid, config)
 
-    /*  re-distribute the ports with every gutter-routed edge ordered by
-        its actual gutter track approach instead of the opposite node
-        position (which can disagree and would cross the edges right in
-        front of their attachments), then re-assign the tracks on top
-        of the moved ports  */
-    const portPos = assignPorts(edges, sides, cx, cy, boxW, boxH, config["size-edge-port-gap"],
-        (edge) => plans[edge].guts.length > 0 ?
-            trackPre.gutY(plans[edge].guts[0], edge) : undefined)
-    const { chanX, gutY } = assignTrackCoords(edges, plans, col, portPos, grid, config)
-
-    /*  route every edge as an orthogonal polyline through the channels
-        between columns and the gutters between rows  */
-    const polys = routePolys(edges, plans, col, portPos, boxW, boxH, cx, cy, chanX, gutY, config)
+    /*  nudge nodes vertically off their row centers where this
+        straightens edges and thereby simplifies the routing  */
+    const routing = nudgeNodes(nodes, edges, plans, col, row, boxH, grid, nrows, dy, route)
 
     /*  hand over the laid out graph for SVG rendering  */
-    return { nodes, edges, cx, cy, boxW, boxH, contentH, polys }
+    return { nodes, edges, cx, cy, boxW, boxH, contentH, polys: routing.polys }
 }
 

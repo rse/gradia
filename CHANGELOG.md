@@ -2,6 +2,13 @@
 ChangeLog
 =========
 
+1.1.6 (2026-09-02)
+------------------
+
+-   IMPROVEMENT [code]: order the edge tracks of a channel/gutter by exactly minimizing their crossings
+-   IMPROVEMENT [code]: nudge "graph" nodes vertically off their row center to straighten direct edges
+-   IMPROVEMENT [othr]: re-render the sample SVG diagrams
+
 1.1.5 (2026-09-02)
 ------------------
 
