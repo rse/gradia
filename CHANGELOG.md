@@ -2,6 +2,11 @@
 ChangeLog
 =========
 
+1.1.7 (2026-09-03)
+------------------
+
+-   BUGFIX [code]: balance the vertical padding of node boxes with attributes, which was larger at the bottom
+
 1.1.6 (2026-09-02)
 ------------------
 

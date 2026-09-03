@@ -63,6 +63,7 @@ export const MIN_H  = 56  /*  minimum node box height                   */
 export const NAME_H = 34  /*  height of an additional name line         */
 export const ATTR_H = 30  /*  height of a single attribute line         */
 export const ATTR_P = 12  /*  top padding of the attribute block        */
+export const ATTR_B = 20  /*  bottom padding of the attribute block     */
 export const TYPE_H = 26  /*  extra height of a single type line        */
 export const TYPE_D = 36  /*  baseline distance of the type to the name */
 
@@ -112,7 +113,7 @@ export const measureNodes = (
         for (const line of lines.attrs)
             w = Math.max(w, textWidth(line, FS_ATTR))
         const h = MIN_H + (lines.name.length - 1) * NAME_H + lines.type.length * TYPE_H +
-            (lines.attrs.length > 0 ? lines.attrs.length * ATTR_H + ATTR_P : 0)
+            (lines.attrs.length > 0 ? ATTR_P + (lines.attrs.length - 1) * ATTR_H + ATTR_B : 0)
         boxW.set(node.id, Math.max(config["size-node-width-min"], Math.ceil(w) + PAD_W * 2))
         boxH.set(node.id, Math.ceil(h * scaleOf(node)))
         contentH.set(node.id, h)
