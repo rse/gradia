@@ -2,6 +2,11 @@
 ChangeLog
 =========
 
+1.1.8 (2026-09-04)
+------------------
+
+-   BUGFIX [code]: fix positioning of node boxes to avoid overlaps
+
 1.1.7 (2026-09-03)
 ------------------
 
