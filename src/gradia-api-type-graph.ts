@@ -61,9 +61,35 @@ const snapToGrid = (
     /*  assign every node to its nearest column and row  */
     const col = new Map<string, number>()
     const row = new Map<string, number>()
-    for (const node of nodes) {
+    for (const node of nodes)
         col.set(node.id, nearestIndexOf(colReps, rawX.get(node.id)!))
-        row.set(node.id, nearestIndexOf(rowReps, rawY.get(node.id)!))
+
+    /*  split every row in which two nodes of one and the same column
+        collide (the global clustering drops the row between two
+        same-column nodes whenever both lie within the threshold of the
+        rows around them): the raw position of the colliding node off
+        its row becomes a row of its own, until all cells are unique  */
+    for (;;) {
+        for (const node of nodes)
+            row.set(node.id, nearestIndexOf(rowReps, rawY.get(node.id)!))
+        const cells = new Map<string, Node>()
+        let   split: number | undefined
+        for (const node of nodes) {
+            const cell  = `${col.get(node.id)}:${row.get(node.id)}`
+            const other = cells.get(cell)
+            if (other === undefined) {
+                cells.set(cell, node)
+                continue
+            }
+            const rep = rowReps[row.get(node.id)!]
+            split = Math.abs(rawY.get(node.id)! - rep) > Math.abs(rawY.get(other.id)! - rep) ?
+                rawY.get(node.id)! : rawY.get(other.id)!
+            break
+        }
+        if (split === undefined)
+            break
+        rowReps.push(split)
+        rowReps.sort((a, b) => a - b)
     }
     return { col, row, ncols: colReps.length, nrows: rowReps.length }
 }
