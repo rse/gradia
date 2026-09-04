@@ -161,6 +161,61 @@ const refineRows = (
     }
 }
 
+/*  compact the rows of the grid, as the layered layout and the column
+    folding leave many sparsely occupied rows behind: first lift every
+    edge-less node (bound by no ordering constraint at all) into the
+    topmost free cell of its column, then merge every row into the row
+    above it as long as no column is occupied in both (which keeps the
+    vertical order of all nodes and the row alignment of the nodes
+    sharing a row), and finally renumber the rows densely  */
+const compactRows = (
+    nodes: Node[],
+    edges: Edge[],
+    col:   Map<string, number>,
+    row:   Map<string, number>
+): number => {
+    const cells = new Set<string>()
+    for (const node of nodes)
+        cells.add(`${col.get(node.id)}:${row.get(node.id)}`)
+    const linked = new Set<string>()
+    for (const edge of edges) {
+        linked.add(edge.source)
+        linked.add(edge.target)
+    }
+    const isolated = nodes.filter((node) => !linked.has(node.id))
+        .sort((a, b) => row.get(a.id)! - row.get(b.id)!)
+    for (const node of isolated) {
+        const c = col.get(node.id)!
+        for (let r = 0; r < row.get(node.id)!; r++)
+            if (!cells.has(`${c}:${r}`)) {
+                cells.delete(`${c}:${row.get(node.id)}`)
+                cells.add(`${c}:${r}`)
+                row.set(node.id, r)
+                break
+            }
+    }
+    const byRow = new Map<number, Node[]>()
+    for (const node of nodes)
+        pushTo(byRow, row.get(node.id)!, node)
+    const rowMax   = Math.max(...byRow.keys())
+    const rowIdx   = new Map<number, number>()
+    let   idx      = -1
+    let   occupied = new Set<number>()
+    for (let r = 0; r <= rowMax; r++) {
+        const members = byRow.get(r) ?? []
+        if (idx < 0 || members.some((node) => occupied.has(col.get(node.id)!))) {
+            idx++
+            occupied = new Set<number>()
+        }
+        for (const node of members)
+            occupied.add(col.get(node.id)!)
+        rowIdx.set(r, idx)
+    }
+    for (const node of nodes)
+        row.set(node.id, rowIdx.get(row.get(node.id)!)!)
+    return idx + 1
+}
+
 /*  the coarse route of an edge: the inter-column channels and the
     inter-row gutters it occupies  */
 interface RoutePlan {
@@ -600,12 +655,8 @@ export const render = async (graph: Graph, config: Config): Promise<Layout> => {
     }
     const ncols = Math.min(gridCols, maxCols)
 
-    /*  drop the grid rows which are completely empty  */
-    const usedRows = Array.from(new Set(nodes.map((node) => row.get(node.id)!))).sort((a, b) => a - b)
-    const rowIdx   = new Map(usedRows.map((r, idx) => [ r, idx ]))
-    for (const node of nodes)
-        row.set(node.id, rowIdx.get(row.get(node.id)!)!)
-    const nrows = usedRows.length
+    /*  compact the sparsely occupied grid rows into fewer, denser ones  */
+    const nrows = compactRows(nodes, edges, col, row)
 
     /*  plan the coarse channel/gutter route of every edge  */
     const { plans, chanCnt, gutCnt, chanLbl, gutLbl } = planRoutes(edges, col, row)

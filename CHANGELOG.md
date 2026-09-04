@@ -2,6 +2,13 @@
 ChangeLog
 =========
 
+1.1.9 (2026-09-04)
+------------------
+
+-   IMPROVEMENT [code]: compact the sparsely occupied rows of "graph" diagrams by lifting
+    edge-less nodes into free cells and merging rows without a column occupied in both
+-   IMPROVEMENT [othr]: re-render the sample SVG diagrams
+
 1.1.8 (2026-09-04)
 ------------------
 
