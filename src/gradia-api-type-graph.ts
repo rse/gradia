@@ -28,7 +28,6 @@ const GUT_H0   = 20  /*  height of an edge-less inter-row gutter     */
 const GUT_H1   = 24  /*  height of a one-edge inter-row gutter       */
 const GUT_PAD  = 12  /*  cross-axis padding inside a gutter          */
 const GUT_LBL  = 22  /*  clearance above/below a label in a gutter   */
-const LOOP_GAP = 24  /*  detour of a self-loop beside its node box   */
 const LOOP_TOP = 52  /*  detour of a self-loop above its node box    */
 
 /*  node nudging constants  */
@@ -313,10 +312,11 @@ const planRoutes = (
     const flag = (from: "l" | "r", to: "l" | "r") =>
         ({ mirror: from === "r", hairpin: from === to })
     const plans = edges.map((edge, i): RoutePlan => {
-        /*  a self-loop is routed around its own node box and uses no channel  */
-        if (edge.source === edge.target)
-            return { chans: [], guts: [], flags: [] }
+        /*  a self-loop detours as a hairpin through the channel beside
+            its own node box (in from the near side and out on it again)  */
         const sc = col.get(edge.source)!
+        if (edge.source === edge.target)
+            return { chans: [ sc ], guts: [], flags: [ flag("l", "l") ] }
         const tc = col.get(edge.target)!
         const sr = row.get(edge.source)!
         const tr = row.get(edge.target)!
@@ -339,7 +339,8 @@ const planRoutes = (
         single channel of its edge, or, for a two-channel edge, along
         its gutter run, costing one label line there; an arity is always
         placed in the channel through which its edge finally approaches
-        the target node, set back from the arrow head  */
+        the target node, set back from the arrow head (the labels of a
+        self-loop land on its detour above the box and need no room)  */
     const chanCnt  = new Map<number, number>()
     const gutCnt   = new Map<number, number>()
     const chanLbl  = new Map<number, number>()
@@ -351,7 +352,9 @@ const planRoutes = (
             chanCnt.set(c, (chanCnt.get(c) ?? 0) + 1)
         for (const g of plan.guts)
             gutCnt.set(g, (gutCnt.get(g) ?? 0) + 1)
-        const { name, arity } = edges[i]
+        const { name, arity, source, target } = edges[i]
+        if (source === target)
+            return
         if (name !== undefined && plan.chans.length === 1)
             chanNeed(plan.chans[0], textWidth(name, FS_EDGE) + 2 * CHAN_LBL)
         else if (name !== undefined && plan.guts.length > 0)
@@ -451,15 +454,18 @@ const assignTrackCoords = (
     const { colWidth, rowHeight, chanW, gutH, colCX, rowCY } = grid
     const gutBase = (g: number) => rowCY[g] + rowHeight[g] / 2 + gutH[g] / 2
 
-    /*  assign the vertical tracks within the inter-column channels  */
+    /*  assign the vertical tracks within the inter-column channels (the
+        leg of a self-loop spans up to its detour above the box)  */
     const chanUsers = new Map<number, TrackUser[]>()
-    edges.forEach((_, i) => {
+    edges.forEach((edge, i) => {
         const { chans, guts, flags } = plans[i]
         if (chans.length === 0)
             return
         const sp = portPos.get(`${i}:s`)!
         const tp = portPos.get(`${i}:t`)!
-        if (chans.length === 1)
+        if (edge.source === edge.target)
+            pushTo(chanUsers, chans[0], { edge: i, posIn: sp.y, posOut: tp.y - LOOP_TOP, ...flags[0] })
+        else if (chans.length === 1)
             pushTo(chanUsers, chans[0], { edge: i, posIn: sp.y, posOut: tp.y, ...flags[0] })
         else {
             const gy = gutBase(guts[0])
@@ -502,15 +508,17 @@ const routePolys = (
     edges:   Edge[],
     plans:   RoutePlan[],
     portPos: Map<string, { x: number, y: number }>,
-    boxW:    Map<string, number>,
     boxH:    Map<string, number>,
-    cx:      (id: string) => number,
     cy:      (id: string) => number,
     chanX:   (c: number, edge: number) => number,
-    gutY:    (g: number, edge: number) => number,
-    config:  Config
+    gutY:    (g: number, edge: number) => number
 ): Poly[] => {
-    const loopUse = new Map<string, number>()
+    /*  the innermost channel track among the self-loops of each node  */
+    const loopX = new Map<string, number>()
+    edges.forEach((edge, i) => {
+        if (edge.source === edge.target)
+            loopX.set(edge.source, Math.min(loopX.get(edge.source) ?? Infinity, chanX(plans[i].chans[0], i)))
+    })
     return edges.map((edge, i) => {
         const sp = portPos.get(`${i}:s`)!
         const tp = portPos.get(`${i}:t`)!
@@ -518,15 +526,14 @@ const routePolys = (
         let pts: Poly
         if (edge.source === edge.target) {
             /*  route the self-loop counter-clockwise around the top-right
-                box corner: out on the east side, up beside the box, back
-                left above it, and down into the north side again (the
-                detour above the box is the wider one, as its final
-                descent has to stay readable behind the arrow head)  */
-            const k   = loopUse.get(edge.source) ?? 0
-            loopUse.set(edge.source, k + 1)
-            const off = k * config["size-edge-track-gap"]
-            const ox  = cx(edge.source) + boxW.get(edge.source)! / 2 + LOOP_GAP + off
-            const oy  = cy(edge.source) - boxH.get(edge.source)! / 2 - LOOP_TOP - off
+                box corner: out on the east side, up along its channel
+                track, back left above the box, and down into the north
+                side again (the detour above the box is the wider one, as
+                its final descent has to stay readable behind the arrow
+                head, and grows with the track distance from the innermost
+                loop of the node, so the nested loops stay apart)  */
+            const ox  = chanX(chans[0], i)
+            const oy  = cy(edge.source) - boxH.get(edge.source)! / 2 - LOOP_TOP - (ox - loopX.get(edge.source)!)
             pts = [ [ sp.x, sp.y ], [ ox, sp.y ], [ ox, oy ], [ tp.x, oy ], [ tp.x, tp.y ] ]
         }
         else if (chans.length === 1) {
@@ -584,7 +591,7 @@ const routeEdges = (
         (edge) => plans[edge].guts.length > 0 ?
             trackPre.gutY(plans[edge].guts[0], edge) : undefined, level.fixedPort)
     const { chanX, gutY } = assignTrackCoords(edges, plans, portPos, grid, config)
-    const polys = routePolys(edges, plans, portPos, boxW, boxH, cx, cy, chanX, gutY, config)
+    const polys = routePolys(edges, plans, portPos, boxH, cy, chanX, gutY)
     const hops  = computeHops(polys).reduce((sum, segs) =>
         sum + Array.from(segs.values()).reduce((n, xs) => n + xs.length, 0), 0)
     return { portPos, gutY, polys, hops }

@@ -28,6 +28,9 @@ ChangeLog
     overflow the box
 -   BUGFIX [code]: render a self-loop on a container node, which was silently dropped together
     with its label, by routing it at the enclosing level around the container box
+-   BUGFIX [code]: route the self-loops of a "graph" diagram on tracks of the channel beside
+    their node, which so far never accounted for their detour legs, so the legs of stacked
+    self-loops ran into the boxes of the next column and on top of the other channel edges
 -   BUGFIX [code]: keep the edge ports of a container box inside the box, where the ports of its
     own edges were spread over the full box height and then pushed below the box by the fixed
     port of an inner gate, by spacing all ports together and dealing the free ports into the
