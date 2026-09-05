@@ -91,11 +91,17 @@ export class Gradia {
         const config   = { ...configDefaults, ...explicit }
 
         /*  validate the graph model integrity: the map key and the id of
-            a node store the same identity, which the layout code relies
-            on by mixing lookups by key and comparisons by id  */
+            a node store the same identity (the layout code mixes lookups
+            by key and comparisons by id), and every edge endpoint is a
+            declared node (the layout code looks up endpoints unchecked)  */
         for (const [ key, node ] of graph.nodes)
             if (node.id !== key)
                 throw new Error(`node id "${node.id}" does not match its map key "${key}"`)
+        for (const edge of graph.edges)
+            for (const id of [ edge.source, edge.target ])
+                if (!graph.nodes.has(id))
+                    throw new Error(`endpoint "${id}" of edge ` +
+                        `"${edge.source}" --> "${edge.target}" is not a declared node`)
 
         /*  determine (and validate) the containment tree of the graph  */
         const containment = containmentOf(graph, diagramTypes)

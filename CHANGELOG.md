@@ -27,6 +27,8 @@ ChangeLog
     with its label, by routing it at the enclosing level around the container box
 -   BUGFIX [code]: reject a consumer-built graph model whose node map key and node id disagree,
     instead of rendering an inconsistent partial output
+-   BUGFIX [code]: reject a consumer-built graph model whose edge references an undeclared node,
+    instead of rendering a silently broken output with "NaN" path coordinates
 
 1.1.9 (2026-09-04)
 ------------------
