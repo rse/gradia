@@ -5,14 +5,24 @@ ChangeLog
 1.2.0 (2026-09-05)
 ------------------
 
--   BUGFIX [code]: avoid collinear overlaps of edges in channels/gutters, where the exit stub of one
-    edge and the entry stub of another at the same position ran on top of each other, by
-    letting such overlaps dominate the crossings in the edge track ordering
+-   FEATURE [code, othr]: support container nodes with sub-graphs via the new "parent" and
+    "container" attributes, nesting nodes to any depth into dashed container boxes whose
+    members are laid out as a diagram of their own ("graph", "hub", or "grid")
+-   FEATURE [code, othr]: support new "color-container-*" and "container-box-padding" options
+    for coloring and padding the container boxes
+-   IMPROVEMENT [code]: route the edges crossing a "graph" container boundary through the box
+    border to the inner node, and end those crossing a "hub" or "grid" container at the border
 -   IMPROVEMENT [code]: order the edge tracks of large channels/gutters by a local search moving
     blocks of adjacent edges, which finds orders with considerably fewer crossings
 -   IMPROVEMENT [code]: let the edge labels also dodge the edge lines and their crossing hops,
     preferring the position covering the fewest lines
+-   IMPROVEMENT [code, othr]: document the container nesting in the README and the MCP tool
+    description, and fix the grammar in the README
+-   IMPROVEMENT [infr, othr]: add the "container-sample" sample graph and render it in the "sample" target
 -   IMPROVEMENT [othr]: re-render the sample SVG diagrams
+-   BUGFIX [code]: avoid collinear overlaps of edges in channels/gutters, where the exit stub of one
+    edge and the entry stub of another at the same position ran on top of each other, by
+    letting such overlaps dominate the crossings in the edge track ordering
 
 1.1.9 (2026-09-04)
 ------------------
