@@ -25,7 +25,7 @@ export interface Edge {
     arity?: string
 }
 
-/*  the graph model of nodes and edges  */
+/*  the graph model of nodes (keyed by their id) and edges  */
 export interface Graph {
     nodes:  Map<string, Node>
     edges:  Edge[]

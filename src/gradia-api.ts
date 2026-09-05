@@ -90,6 +90,13 @@ export class Gradia {
             .filter(([ , val ]) => val !== undefined)) as Partial<Config>
         const config   = { ...configDefaults, ...explicit }
 
+        /*  validate the graph model integrity: the map key and the id of
+            a node store the same identity, which the layout code relies
+            on by mixing lookups by key and comparisons by id  */
+        for (const [ key, node ] of graph.nodes)
+            if (node.id !== key)
+                throw new Error(`node id "${node.id}" does not match its map key "${key}"`)
+
         /*  determine (and validate) the containment tree of the graph  */
         const containment = containmentOf(graph, diagramTypes)
 

@@ -23,6 +23,8 @@ ChangeLog
 -   BUGFIX [code]: avoid collinear overlaps of edges in channels/gutters, where the exit stub of one
     edge and the entry stub of another at the same position ran on top of each other, by
     letting such overlaps dominate the crossings in the edge track ordering
+-   BUGFIX [code]: reject a consumer-built graph model whose node map key and node id disagree,
+    instead of rendering an inconsistent partial output
 
 1.1.9 (2026-09-04)
 ------------------
