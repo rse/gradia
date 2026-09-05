@@ -23,6 +23,9 @@ ChangeLog
 -   BUGFIX [code]: avoid collinear overlaps of edges in channels/gutters, where the exit stub of one
     edge and the entry stub of another at the same position ran on top of each other, by
     letting such overlaps dominate the crossings in the edge track ordering
+-   BUGFIX [code]: clamp the node box height to at least its text content height, as a
+    "size-node-height-scale" below 2 let the type line and the last attribute line
+    overflow the box
 -   BUGFIX [code]: render a self-loop on a container node, which was silently dropped together
     with its label, by routing it at the enclosing level around the container box
 -   BUGFIX [code]: keep the edge ports of a container box inside the box, where the ports of its

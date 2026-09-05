@@ -106,8 +106,9 @@ export const linesOfNode = (node: Node, config: Config): NodeLines => {
 }
 
 /*  determine node box sizes from their textual content
-    (boxes are scaled up in height by a per-node factor to
-    give the edges more attachment room), except for the nodes
+    (boxes are scaled up in height by a per-node factor, but never
+    below the content height, to give the edges more attachment
+    room), except for the nodes
     of a fixed size (the container placeholders and gate nodes
     of a containment level), which are taken as given  */
 export const measureNodes = (
@@ -138,7 +139,7 @@ export const measureNodes = (
         const h = MIN_H + (lines.name.length - 1) * NAME_H + lines.type.length * TYPE_H +
             (lines.attrs.length > 0 ? ATTR_P + (lines.attrs.length - 1) * ATTR_H + ATTR_B : 0)
         boxW.set(node.id, Math.max(config["size-node-width-min"], Math.ceil(w) + PAD_W * 2))
-        boxH.set(node.id, Math.ceil(h * scaleOf(node)))
+        boxH.set(node.id, Math.max(h, Math.ceil(h * scaleOf(node))))
         contentH.set(node.id, h)
     }
     return { boxW, boxH, contentH }
