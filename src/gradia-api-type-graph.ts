@@ -12,7 +12,7 @@ import { Graph, Node, Edge }                 from "./gradia-api-model.js"
 import { Config }                            from "./gradia-api-config.js"
 import { Poly, FS_EDGE, FS_ARITY, ARITY_OFF, textWidth, Layout }
     from "./gradia-api-render-base.js"
-import { measureNodes }                      from "./gradia-api-render-node.js"
+import { measureNodes, orderOf }             from "./gradia-api-render-node.js"
 import { LevelContext, GateSide }            from "./gradia-api-render-container.js"
 import { Side, TrackUser, simplifyPoly, assignPorts, assignTracks, computeHops }
     from "./gradia-api-render-edge.js"
@@ -774,50 +774,84 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
     const { boxW, boxH, contentH } = measureNodes(nodes, config,
         () => config["size-node-height-scale"] / 2, level.fixedSize)
 
-    /*  determine raw node positions with the AntV Dagre layout  */
-    const rawX = new Map<string, number>()
-    const rawY = new Map<string, number>()
-    if (real.length > 0) {
-        const layout = new DagreLayout({
-            rankdir:  "LR",
-            nodesep:  config["graph-node-separation"],
-            ranksep:  config["graph-rank-separation"],
-            nodeSize: (node) => (node as { size: [ number, number ] }).size
-        })
-        await layout.execute({
-            nodes: real.map((node) => ({ id: node.id, size: [ boxW.get(node.id)!, boxH.get(node.id)! ] })),
-            edges: realEdges.map((edge, i) => ({ id: `e${i}`, source: edge.source, target: edge.target }))
-        })
-        layout.forEachNode((node) => {
-            rawX.set(String(node.id), node.x)
-            rawY.set(String(node.id), node.y)
-        })
-    }
-
-    /*  snap the raw positions onto the discrete column/row grid  */
-    const { col, row, ncols: gridCols, nrows: gridRows } = snapToGrid(real, rawX, rawY)
-
-    /*  refine the row assignment by pulling every node vertically
-        toward the median row of its direct neighbors  */
-    refineRows(real, realEdges, col, row)
-
-    /*  fold the grid columns: constrain the diagram width to at most
-        the configured maximum of side-by-side nodes by wrapping excess
-        columns into additional row bands below, so wide graphs grow in
-        height  */
     const maxCols = Math.max(Math.floor(config["graph-columns-max"]), 1)
-    if (gridCols > maxCols) {
-        for (const node of real) {
-            const c = col.get(node.id)!
-            col.set(node.id, c % maxCols)
-            row.set(node.id, row.get(node.id)! + Math.floor(c / maxCols) * gridRows)
+    const col     = new Map<string, number>()
+    const row     = new Map<string, number>()
+    let   ncols: number
+    let   nrows: number
+    if (real.some((node) => orderOf(node) !== undefined)) {
+        /*  an explicitly ordered graph (at least one node carrying an
+            "order" attribute) bypasses the layered layout: the distinct
+            order values become the rows, top-down in ascending order,
+            the nodes of one value fill their row left-to-right in
+            declaration order (wrapped into further rows beyond the
+            configured maximum of side-by-side nodes), and the nodes
+            without an order follow in the trailing rows  */
+        const orderOrLast = (node: Node): number => orderOf(node) ?? Infinity
+        const values      = Array.from(new Set(real.map(orderOrLast))).sort((a, b) => a - b)
+        ncols = 1
+        nrows = 0
+        for (const value of values) {
+            const members = real.filter((node) => orderOrLast(node) === value)
+            members.forEach((node, i) => {
+                col.set(node.id, i % maxCols)
+                row.set(node.id, nrows + Math.floor(i / maxCols))
+            })
+            ncols  = Math.max(ncols, Math.min(members.length, maxCols))
+            nrows += Math.ceil(members.length / maxCols)
         }
     }
+    else {
+        /*  determine raw node positions with the AntV Dagre layout  */
+        const rawX = new Map<string, number>()
+        const rawY = new Map<string, number>()
+        if (real.length > 0) {
+            const layout = new DagreLayout({
+                rankdir:  "LR",
+                nodesep:  config["graph-node-separation"],
+                ranksep:  config["graph-rank-separation"],
+                nodeSize: (node) => (node as { size: [ number, number ] }).size
+            })
+            await layout.execute({
+                nodes: real.map((node) => ({ id: node.id, size: [ boxW.get(node.id)!, boxH.get(node.id)! ] })),
+                edges: realEdges.map((edge, i) => ({ id: `e${i}`, source: edge.source, target: edge.target }))
+            })
+            layout.forEachNode((node) => {
+                rawX.set(String(node.id), node.x)
+                rawY.set(String(node.id), node.y)
+            })
+        }
 
-    /*  compact the sparsely occupied grid rows into fewer, denser ones,
-        then place the gate nodes into their own boundary columns  */
-    let { ncols, nrows } = placeGates(gates, edges, col, row,
-        Math.min(gridCols, maxCols), compactRows(real, realEdges, col, row))
+        /*  snap the raw positions onto the discrete column/row grid  */
+        const snapped = snapToGrid(real, rawX, rawY)
+        for (const [ id, c ] of snapped.col)
+            col.set(id, c)
+        for (const [ id, r ] of snapped.row)
+            row.set(id, r)
+
+        /*  refine the row assignment by pulling every node vertically
+            toward the median row of its direct neighbors  */
+        refineRows(real, realEdges, col, row)
+
+        /*  fold the grid columns: constrain the diagram width to at most
+            the configured maximum of side-by-side nodes by wrapping excess
+            columns into additional row bands below, so wide graphs grow in
+            height  */
+        if (snapped.ncols > maxCols) {
+            for (const node of real) {
+                const c = col.get(node.id)!
+                col.set(node.id, c % maxCols)
+                row.set(node.id, row.get(node.id)! + Math.floor(c / maxCols) * snapped.nrows)
+            }
+        }
+
+        /*  compact the sparsely occupied grid rows into fewer, denser ones  */
+        ncols = Math.min(snapped.ncols, maxCols)
+        nrows = compactRows(real, realEdges, col, row)
+    }
+
+    /*  place the gate nodes into their own boundary columns  */
+    ({ ncols, nrows } = placeGates(gates, edges, col, row, ncols, nrows))
 
     /*  determine the attachment sides of every edge  */
     const sides = attachSides(edges, col, level)

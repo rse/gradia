@@ -197,7 +197,7 @@ separated by `|`.
 - The `<edge-name>` is rendered as the label of the edge and the
   `<edge-arity>` as its cardinality label.
 
-- Six attribute keys are reserved and consumed by the renderer instead
+- Seven attribute keys are reserved and consumed by the renderer instead
   of being displayed as a regular `<key>: <val>` line:
 
     - `url: <url>` renders the node box as a hyperlink. Only relative URLs
@@ -213,7 +213,18 @@ separated by `|`.
       node which is implicitly declared if never referenced otherwise),
     - `container: <type>` marks the node as a container whose members
       are laid out with the diagram type `<type>` (`graph`, `hub`, or
-      `grid`), even if it has no members at all.
+      `grid`), even if it has no members at all,
+    - `order: <number>` places the node explicitly (see below).
+
+- A `graph` (a `graph` container level, too) with at least one node
+  carrying an `order` attribute is laid out in that explicit order
+  instead of by the layered algorithm: the distinct order values become
+  the rows, top-down in ascending order, the nodes of one value fill
+  their row left-to-right in declaration order (wrapped into further
+  rows beyond `graph-columns-max` nodes), and the nodes without an order
+  follow in the trailing rows. A `grid` places its tiles in the order of
+  the attribute, too, the tiles without one trailing. An invalid value
+  is ignored.
 
 - A node cannot be a member of more than one group. As soon as at least
   one node carries a `group` attribute, all nodes without one implicitly

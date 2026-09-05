@@ -46,9 +46,17 @@ export const HEAD_T = 20  /*  extra head height of a type line        */
 export const containerHead = (node: Node): number =>
     HEAD_H + (typeOf(node) !== undefined ? HEAD_T : 0)
 
+/*  the special "order" annotation (the explicit top-down placement
+    order of the node, a finite number, an invalid value being ignored)  */
+export const orderOf = (node: Node): number | undefined => {
+    const val = node.attrs.findLast((attr) => attr.key === "order")?.val
+    const num = val !== undefined && val.trim() !== "" ? Number(val) : NaN
+    return Number.isFinite(num) ? num : undefined
+}
+
 /*  the special attributes consumed by the renderers instead of being
     rendered as node box text lines  */
-const ATTRS_SPECIAL = new Set([ "url", "type", "primary", "group", "parent", "container" ])
+const ATTRS_SPECIAL = new Set([ "url", "type", "primary", "group", "parent", "container", "order" ])
 
 /*  split the attributes rendered as text lines from the special ones  */
 export const attrsOfNode = (node: Node): Attr[] =>

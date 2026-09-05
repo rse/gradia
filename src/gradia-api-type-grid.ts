@@ -7,15 +7,18 @@
 /*  internal dependencies  */
 import { Graph }        from "./gradia-api-model.js"
 import { Config }       from "./gradia-api-config.js"
-import { measureNodes } from "./gradia-api-render-node.js"
+import { measureNodes, orderOf } from "./gradia-api-render-node.js"
 import { Layout }       from "./gradia-api-render-base.js"
 import { LevelContext } from "./gradia-api-render-container.js"
 
 /*  lay out an edge-less graph model as a compact grid of tiles (for a
     containment level: with the container placeholders at their fixed
-    sizes, which take part in the tile size unification)  */
+    sizes, which take part in the tile size unification), the tiles in
+    declaration order, or in the order of their "order" attributes
+    (the tiles without one trailing)  */
 export const render = async (graph: Graph, config: Config, level: LevelContext = {}): Promise<Layout> => {
     const nodes = Array.from(graph.nodes.values())
+        .sort((a, b) => (orderOf(a) ?? Infinity) - (orderOf(b) ?? Infinity) || 0)
 
     /*  resolve the configurable rendering geometry  */
     const margin  = config["size-canvas-margin"]

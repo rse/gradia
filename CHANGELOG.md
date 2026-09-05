@@ -2,6 +2,15 @@
 ChangeLog
 =========
 
+1.2.1 (2026-09-05)
+------------------
+
+-   FEATURE [code, othr]: support the new "order" attribute, placing the nodes of a "graph"
+    explicitly instead of by the layered algorithm (the distinct order values as top-down rows,
+    the nodes of one value left-to-right, wrapped beyond "graph-columns-max") and sorting the
+    tiles of a "grid", so a reading order can be imposed which lets the references point backward
+-   IMPROVEMENT [othr]: document the "order" attribute in the README and the MCP tool description
+
 1.2.0 (2026-09-05)
 ------------------
 
