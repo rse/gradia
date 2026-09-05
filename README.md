@@ -344,7 +344,7 @@ attachment ports along a node side, and hence the vertical distance of
 the parallel edges and their labels. It is a *maximum*: a node box too
 small to hold all its ports at that distance packs them closer together
 instead. A node side carrying more edges than `graph-node-degree-max`
-respectively `hub-node-degree-max` grows its box height by this very
+or `hub-node-degree-max` grows its box height by this very
 distance per additional edge.
 
 The `graph-channel-width-*` and `graph-gutter-height-*` options control
@@ -393,7 +393,7 @@ $ gradia -c font-family="Source Sans 3" -c font-embed=true -o graph.svg graph.tx
 
 The option `font-embed`, and a `font-family` value pointing to a WOFF2
 file, are intentionally rejected in directives, as the input is treated
-as untrusted. Both are available on the command-line only.
+as untrusted. Both are available on the command line only.
 
 ### Example
 
