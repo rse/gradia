@@ -308,7 +308,7 @@ const planRoutes = (
     row:   Map<string, number>,
     sides: { s: Side, t: Side }[]
 ): { plans: RoutePlan[], chanCnt: Map<number, number>, gutCnt: Map<number, number>,
-    chanLbl: Map<number, number>, gutLbl: Map<number, number> } => {
+    chanLbl: Map<number, number>, gutLbl: Map<number, number>, gutLoop: Map<number, number> } => {
     const flag = (from: "l" | "r", to: "l" | "r") =>
         ({ mirror: from === "r", hairpin: from === to })
     const plans = edges.map((edge, i): RoutePlan => {
@@ -363,7 +363,19 @@ const planRoutes = (
             chanNeed(plan.chans[plan.chans.length - 1],
                 ARITY_OFF + textWidth(arity, FS_ARITY) + CHAN_LBL)
     })
-    return { plans, chanCnt, gutCnt, chanLbl, gutLbl }
+
+    /*  count the self-loops of every node, as their detours stack up
+        above its box and have to fit into the gutter above its row
+        (the demand of a gutter is the deepest stack of any node below it)  */
+    const loopCnt = new Map<string, number>()
+    const gutLoop = new Map<number, number>()
+    for (const edge of edges.filter((edge) => edge.source === edge.target)) {
+        const cnt = (loopCnt.get(edge.source) ?? 0) + 1
+        loopCnt.set(edge.source, cnt)
+        const g = row.get(edge.source)! - 1
+        gutLoop.set(g, Math.max(gutLoop.get(g) ?? 0, cnt))
+    }
+    return { plans, chanCnt, gutCnt, chanLbl, gutLbl, gutLoop }
 }
 
 /*  the computed grid geometry: the sizes of the columns and rows, the
@@ -393,6 +405,7 @@ const computeGrid = (
     gutCnt:  Map<number, number>,
     chanLbl: Map<number, number>,
     gutLbl:  Map<number, number>,
+    gutLoop: Map<number, number>,
     config:  Config
 ): Grid => {
     const colWidth  = Array.from({ length: ncols }, () => 0)
@@ -402,10 +415,11 @@ const computeGrid = (
         rowHeight[row.get(node.id)!]  = Math.max(rowHeight[row.get(node.id)!],  boxH.get(node.id)!)
     }
 
-    /*  size the channels and gutters by their actual edge usage, each
-        additionally grown to hold the edge labels landing inside it (a
-        channel by its widest label demand, a gutter by one line per
-        label) and floored by the configured minimum width/height  */
+    /*  size the channels and gutters by their actual edge usage, grown
+        to hold the edge labels landing inside (a channel by its widest
+        label demand, a gutter by one line per label) and the self-loop
+        detours rising into a gutter from the row below, and floored by
+        the configured minimum width/height  */
     const chanW = Array.from({ length: ncols }, (_, c) => {
         const cnt = chanCnt.get(c) ?? 0
         return Math.min(config["graph-channel-width-max"],
@@ -414,12 +428,14 @@ const computeGrid = (
                 chanLbl.get(c) ?? 0))
     })
     const gutH = Array.from({ length: nrows }, (_, g) => {
-        const cnt = gutCnt.get(g) ?? 0
-        const lbl = gutLbl.get(g) ?? 0
+        const cnt  = gutCnt.get(g)  ?? 0
+        const lbl  = gutLbl.get(g)  ?? 0
+        const loop = gutLoop.get(g) ?? 0
         return Math.min(config["graph-gutter-height-max"],
             Math.max(config["graph-gutter-height-min"],
                 cnt === 0 ? GUT_H0 : GUT_H1 + (cnt - 1) * config["size-edge-track-gap"],
-                lbl > 0 ? GUT_H1 + lbl * GUT_LBL : 0))
+                lbl  > 0 ? GUT_H1 + lbl * GUT_LBL : 0,
+                loop > 0 ? LOOP_TOP + (loop - 1) * config["size-edge-track-gap"] + GUT_PAD : 0))
     })
 
     /*  derive the column and row center positions  */
@@ -602,9 +618,9 @@ const routeEdges = (
     far as this improves the overall routing (fewer crossings, or as many
     crossings but fewer jogged direct edges): a node may leave its row
     band into an adjacent gutter only as far as no gutter track runs
-    across its column (and it carries no self-loop, detouring above its
-    box), and only as long as its own gutter-routed edges keep
-    approaching it from their gutter side  */
+    across its column and no self-loop detours through it there (a loop
+    rises above the box of its node), and only as long as its own
+    gutter-routed edges keep approaching it from their gutter side  */
 const nudgeNodes = (
     nodes:  Node[],
     edges:  Edge[],
@@ -620,13 +636,14 @@ const nudgeNodes = (
     const gutterFree = (g: number, c: number): boolean =>
         !plans.some((plan) => plan.guts[0] === g
             && Math.min(...plan.chans) < c && c <= Math.max(...plan.chans))
+        && !edges.some((edge) => edge.source === edge.target
+            && row.get(edge.source) === g + 1 && col.get(edge.source) === c)
     const shiftRange = (id: string): [ number, number ] => {
         const r     = row.get(id)!
         const c     = col.get(id)!
         const slack = (grid.rowHeight[r] - boxH.get(id)!) / 2
-        const loop  = edges.some((edge) => edge.source === id && edge.target === id)
-        const up    = r > 0         && gutterFree(r - 1, c) && !loop ? grid.gutH[r - 1] - GUT_H0 : 0
-        const down  = r < nrows - 1 && gutterFree(r, c)               ? grid.gutH[r]     - GUT_H0 : 0
+        const up    = r > 0         && gutterFree(r - 1, c) ? grid.gutH[r - 1] - GUT_H0 : 0
+        const down  = r < nrows - 1 && gutterFree(r, c)     ? grid.gutH[r]     - GUT_H0 : 0
         return [ -(slack + up), slack + down ]
     }
     const approachesSanely = (id: string, routing: Routing): boolean =>
@@ -815,7 +832,7 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
         ncols++
         routes = planRoutes(edges, col, row, sides)
     }
-    const { plans, chanCnt, gutCnt, chanLbl, gutLbl } = routes
+    const { plans, chanCnt, gutCnt, chanLbl, gutLbl, gutLoop } = routes
 
     /*  grow the boxes by their edge attachment needs  */
     growBoxes(nodes, edges, sides, boxH, config, level)
@@ -823,7 +840,7 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
     /*  determine grid cell sizes and node center positions (the nodes
         centered in their rows, before any vertical nudging)  */
     const grid = computeGrid(nodes, col, row, boxW, boxH, ncols, nrows,
-        chanCnt, gutCnt, chanLbl, gutLbl, config)
+        chanCnt, gutCnt, chanLbl, gutLbl, gutLoop, config)
     const dy   = new Map<string, number>()
     const cx   = (id: string) => grid.colCX[col.get(id)!]
     const cy   = (id: string) => grid.rowCY[row.get(id)!] + (dy.get(id) ?? 0)
