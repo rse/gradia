@@ -10,6 +10,7 @@ import { Config }                                  from "./gradia-api-config.js"
 import { Poly, NodeStyle }                         from "./gradia-api-render-base.js"
 import { isPrimary, measureNodes, defaultStyleOf } from "./gradia-api-render-node.js"
 import { Layout }                                  from "./gradia-api-render-svg.js"
+import { LevelContext }                            from "./gradia-api-render-container.js"
 import { Side, TrackUser, simplifyPoly, assignPorts, assignTracks } from "./gradia-api-render-edge.js"
 
 /*  the separator between a node id and its placement suffix,
@@ -82,8 +83,11 @@ const classifyTopology = (graph: Graph): {
     return { center, inputs, outputs, nodes: [ center, ...inputs, ...outputs ], edges }
 }
 
-/*  lay out a hub graph model (N input nodes, one central hub node, M output nodes)  */
-export const render = async (graph: Graph, config: Config): Promise<Layout> => {
+/*  lay out a hub graph model (N input nodes, one central hub node, M
+    output nodes), for a containment level with the container placeholders
+    at their fixed sizes and the edge ends attaching to them at their
+    fixed ports  */
+export const render = async (graph: Graph, config: Config, level: LevelContext = {}): Promise<Layout> => {
     /*  validate the constrained input topology and classify the
         declared nodes into the input and output columns  */
     const { center, inputs, outputs, nodes, edges } = classifyTopology(graph)
@@ -107,14 +111,17 @@ export const render = async (graph: Graph, config: Config): Promise<Layout> => {
         half height scale), then grow every box whose edge attachments
         exceed the configured per-side maximum, step-wise by one port
         separation per additional edge, so the edges keep enough
-        attachment room without a fixed height increase  */
-    const { boxW, boxH, contentH } = measureNodes(nodes, config, () => scale / 2)
+        attachment room without a fixed height increase (the fixed-size
+        boxes of a containment level are exempt)  */
+    const { boxW, boxH, contentH } = measureNodes(nodes, config, () => scale / 2, level.fixedSize)
     const portCnt = new Map<string, number>()
     edges.forEach((edge, i) => {
         portCnt.set(`${sides[i].s}:${edge.source}`, (portCnt.get(`${sides[i].s}:${edge.source}`) ?? 0) + 1)
         portCnt.set(`${sides[i].t}:${edge.target}`, (portCnt.get(`${sides[i].t}:${edge.target}`) ?? 0) + 1)
     })
     for (const node of nodes) {
+        if (level.fixedSize?.has(node.id))
+            continue
         const cnt = Math.max(portCnt.get(`w:${node.id}`) ?? 0, portCnt.get(`e:${node.id}`) ?? 0)
         if (cnt > config["hub-node-degree-max"])
             boxH.set(node.id, boxH.get(node.id)! +
@@ -177,7 +184,8 @@ export const render = async (graph: Graph, config: Config): Promise<Layout> => {
     const cy = (id: string): number => nodeCY.get(id)!
 
     /*  distribute the edge attachment ports along each node side  */
-    const portPos = assignPorts(edges, sides, cx, cy, boxW, boxH, config["size-edge-port-gap"])
+    const portPos = assignPorts(edges, sides, cx, cy, boxW, boxH, config["size-edge-port-gap"],
+        undefined, level.fixedPort)
 
     /*  assign the vertical tracks within each channel (see assignTracks
         for the crossing-avoiding ordering scheme; a hub graph has no backward

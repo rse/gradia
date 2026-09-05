@@ -9,7 +9,9 @@ import { Graph }                                   from "./gradia-api-model.js"
 import { parse }                                   from "./gradia-api-parser.js"
 import { Config, configDefaults, parseDirectives } from "./gradia-api-config.js"
 import { partitionGroups, composeGroups }          from "./gradia-api-render-group.js"
-import { Layout, renderSVG }                       from "./gradia-api-render-svg.js"
+import { DiagramTypeSpec, containmentOf, renderContained }
+    from "./gradia-api-render-container.js"
+import { renderSVG }                               from "./gradia-api-render-svg.js"
 import { render as renderGraph }                   from "./gradia-api-type-graph.js"
 import { render as renderHub }                     from "./gradia-api-type-hub.js"
 import { render as renderGrid }                    from "./gradia-api-type-grid.js"
@@ -18,12 +20,13 @@ import { render as renderGrid }                    from "./gradia-api-type-grid.
 export type { Attr, Node, Edge, Graph }            from "./gradia-api-model.js"
 export type { Config }                             from "./gradia-api-config.js"
 
-/*  the supported diagram types and their renderers  */
+/*  the supported diagram types, their renderers, and whether they let
+    the edges crossing a container boundary continue to the inner nodes  */
 const renderers = {
-    graph: renderGraph,
-    hub:   renderHub,
-    grid:  renderGrid
-} satisfies Record<string, (graph: Graph, config: Config) => Promise<Layout>>
+    graph: { render: renderGraph, gated: true  },
+    hub:   { render: renderHub,   gated: false },
+    grid:  { render: renderGrid,  gated: false }
+} satisfies Record<string, DiagramTypeSpec>
 export type DiagramType = keyof typeof renderers
 export const diagramTypes = Object.keys(renderers) as DiagramType[]
 export const diagramTypeDefault: DiagramType = "graph"
@@ -84,14 +87,18 @@ export class Gradia {
         const explicit = options.config ?? {}
         const config   = { ...configDefaults, ...explicit }
 
-        /*  lay out the graph model: either as a whole, or partitioned
-            into its named groups which are laid out individually and
-            then stacked vertically as decorated group boxes  */
-        const parts  = partitionGroups(graph)
+        /*  determine (and validate) the containment tree of the graph  */
+        const containment = containmentOf(graph, diagramTypes)
+
+        /*  lay out the graph model (with its containers as nested
+            levels): either as a whole, or partitioned into its named
+            groups which are laid out individually and then stacked
+            vertically as decorated group boxes  */
+        const render = (part: Graph) => renderContained(part, containment, type, renderers, config)
+        const parts  = partitionGroups(graph, containment)
         const layout = parts === null ?
-            await renderers[type](graph, config) :
-            composeGroups(parts, await Promise.all(
-                parts.map((part) => renderers[type](part.graph, config))), config)
+            await render(graph) :
+            composeGroups(parts, await Promise.all(parts.map((part) => render(part.graph))), config)
 
         /*  derive the identifier seed of the SVG document from everything
             which determines the rendered output, so that regenerating an

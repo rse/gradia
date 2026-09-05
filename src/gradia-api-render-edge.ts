@@ -40,7 +40,10 @@ export type Side = "e" | "w" | "n"
     by the vertical position the edge approaches from (the approachY
     override where given, the opposite endpoint center otherwise) and
     separated by at most portGap (less, if the node box is too small
-    to hold them all)  */
+    to hold them all). A port with a fixed vertical offset from the
+    box center (fixedY, the edge ends attaching to a container box at
+    the position of the inner gate node) is placed exactly there and
+    the distributed ports of the same side are pushed off it  */
 export const assignPorts = (
     edges:      Edge[],
     sides:      { s: Side, t: Side }[],
@@ -49,7 +52,8 @@ export const assignPorts = (
     boxW:       Map<string, number>,
     boxH:       Map<string, number>,
     portGap:    number,
-    approachY?: (edge: number) => number | undefined
+    approachY?: (edge: number) => number | undefined,
+    fixedY?:    (edge: number, role: "s" | "t") => number | undefined
 ): Map<string, { x: number, y: number }> => {
     /*  group the edge endpoints by the node side they attach to  */
     const portGroups = new Map<string, { edge: number, role: "s" | "t" }[]>()
@@ -86,17 +90,43 @@ export const assignPorts = (
             })
             continue
         }
+        const px = cx(id) + (side === "e" ? +1 : -1) * boxW.get(id)! / 2
+
+        /*  place the fixed ports at their given offsets  */
+        const fixedOf = (p: { edge: number, role: "s" | "t" }) =>
+            fixedY?.(p.edge, p.role)
+        const taken: number[] = []
+        for (const p of group.filter((p) => fixedOf(p) !== undefined)) {
+            const py = cy(id) + fixedOf(p)!
+            portPos.set(`${p.edge}:${p.role}`, { x: px, y: py })
+            taken.push(py)
+        }
+
+        /*  spread the remaining ports, each pushed below the fixed
+            ports it would come too close to (and the ones pushed before)  */
+        const free    = group.filter((p) => fixedOf(p) === undefined)
         const otherOf = (p: { edge: number, role: "s" | "t" }) =>
             p.role === "s" ? edges[p.edge].target : edges[p.edge].source
         const keyOf   = (p: { edge: number, role: "s" | "t" }) =>
             approachY?.(p.edge) ?? cy(otherOf(p))
-        group.sort((a, b) => (keyOf(a) - keyOf(b)) || (a.edge - b.edge))
-        const spacing = Math.min(portGap, (boxH.get(id)! - PORT_PAD) / group.length)
-        group.forEach((p, idx) => {
-            portPos.set(`${p.edge}:${p.role}`, {
-                x: cx(id) + (side === "e" ? +1 : -1) * boxW.get(id)! / 2,
-                y: cy(id) + (idx - (group.length - 1) / 2) * spacing
-            })
+        free.sort((a, b) => (keyOf(a) - keyOf(b)) || (a.edge - b.edge))
+        const spacing = Math.min(portGap, (boxH.get(id)! - PORT_PAD) / free.length)
+        let prev = -Infinity
+        free.forEach((p, idx) => {
+            let py = cy(id) + (idx - (free.length - 1) / 2) * spacing
+            if (taken.length > 0) {
+                py = Math.max(py, prev + spacing)
+                for (let moved = true; moved;) {
+                    moved = false
+                    for (const ty of taken)
+                        if (Math.abs(ty - py) < spacing) {
+                            py    = ty + spacing
+                            moved = true
+                        }
+                }
+                prev = py
+            }
+            portPos.set(`${p.edge}:${p.role}`, { x: px, y: py })
         })
     }
     return portPos
@@ -120,11 +150,12 @@ const TRACK_CLEARANCE = 24
 
 /*  the cross-axis positions of the stubs of a track user reaching the
     near side of the channel/gutter (its entering segment, or its
-    exiting one if mirrored, or both if hairpin) and the far side  */
+    exiting one if mirrored, or both if hairpin, or none if mirrored
+    hairpin) and the far side  */
 const nears = (u: TrackUser): number[] =>
-    u.hairpin ? [ u.posIn, u.posOut ] : [ u.mirror ? u.posOut : u.posIn ]
+    u.hairpin ? (u.mirror ? [] : [ u.posIn, u.posOut ]) : [ u.mirror ? u.posOut : u.posIn ]
 const fars  = (u: TrackUser): number[] =>
-    u.hairpin ? [] : [ u.mirror ? u.posIn : u.posOut ]
+    u.hairpin ? (u.mirror ? [ u.posIn, u.posOut ] : []) : [ u.mirror ? u.posIn : u.posOut ]
 
 /*  the number of crossings caused by placing user a on a nearer track
     than user b: the far-side stubs of a (its exiting segment, or its

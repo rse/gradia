@@ -158,15 +158,22 @@ export const parse = (input: string): Graph => {
             if (idx === -1)
                 node.attrs.push(attr)
             else {
-                /*  a node has to stay in a single group, so reject any
-                    attempt to re-assign it to a different group  */
-                if (attr.key === "group" && node.attrs[idx].val !== attr.val)
-                    throw new Error(`node "${id}" cannot be a member of more than one group ` +
+                /*  a node has to stay in a single group and container, so
+                    reject any attempt to re-assign it to a different one  */
+                if ((attr.key === "group" || attr.key === "parent") && node.attrs[idx].val !== attr.val)
+                    throw new Error(`node "${id}" cannot be a member of more than one ` +
+                        `${attr.key === "group" ? "group" : "container"} ` +
                         `("${node.attrs[idx].val}" vs "${attr.val}") ` +
                         `at line ${start.line}, column ${start.col}`)
                 node.attrs[idx] = attr
             }
         }
+
+        /*  implicitly declare the container node a "parent" attribute
+            refers to, so a container needs no declaration of its own  */
+        const parent = node.attrs.find((attr) => attr.key === "parent")?.val
+        if (parent !== undefined && !graph.nodes.has(parent))
+            graph.nodes.set(parent, { id: parent, name: parent, attrs: [] })
         graph.nodes.set(id, node)
         return id
     }

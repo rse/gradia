@@ -5,10 +5,11 @@
 */
 
 /*  internal dependencies  */
-import { Node, Graph }               from "./gradia-api-model.js"
-import { Config }                    from "./gradia-api-config.js"
-import { Poly, FS_GROUP, textWidth } from "./gradia-api-render-base.js"
-import { Layout, GroupBox }          from "./gradia-api-render-svg.js"
+import { Node, Graph }                         from "./gradia-api-model.js"
+import { Config }                              from "./gradia-api-config.js"
+import { Poly, FS_GROUP, textWidth }           from "./gradia-api-render-base.js"
+import { Layout, GroupBox, ContainerBox }      from "./gradia-api-render-svg.js"
+import { Containment, rootOf, boundsOf }       from "./gradia-api-render-container.js"
 
 /*  rendering geometry constants  */
 const GROUP_HEAD = 34  /*  extra top space for the group tag  */
@@ -25,16 +26,23 @@ export interface GroupPart {
 
 /*  partition the graph into its named groups (in order of first
     appearance), implying "group: default" for the nodes without one,
-    or return null when no node uses a group at all. Edges have to
-    stay within a single group, so reject any group-crossing edge  */
-export const partitionGroups = (graph: Graph): GroupPart[] | null => {
+    or return null when no node uses a group at all. A nested node
+    belongs to the group of its outermost container, so reject any
+    deviating group of its own. Edges have to stay within a single
+    group, so reject any group-crossing edge  */
+export const partitionGroups = (graph: Graph, containment: Containment): GroupPart[] | null => {
     const nodes = Array.from(graph.nodes.values())
     if (!nodes.some((node) => groupOf(node) !== undefined))
         return null
     const parts  = new Map<string, Graph>()
     const nameOf = new Map<string, string>()
     for (const node of nodes) {
-        const name = groupOf(node) ?? "default"
+        const root = rootOf(containment, node.id)
+        const name = groupOf(graph.nodes.get(root)!) ?? "default"
+        const own  = groupOf(node)
+        if (own !== undefined && own !== name)
+            throw new Error(`node "${node.id}" cannot be a member of group "${own}", ` +
+                `as its container "${root}" is a member of group "${name}"`)
         nameOf.set(node.id, name)
         let part = parts.get(name)
         if (part === undefined) {
@@ -52,27 +60,6 @@ export const partitionGroups = (graph: Graph): GroupPart[] | null => {
         parts.get(sg)!.edges.push(edge)
     }
     return Array.from(parts.entries()).map(([ name, subgraph ]) => ({ name, graph: subgraph }))
-}
-
-/*  determine the bounding box of a laid out group (nodes and edges)  */
-const boundsOf = (layout: Layout): { minX: number, minY: number, maxX: number, maxY: number } => {
-    const { nodes, cx, cy, boxW, boxH, polys } = layout
-    let [ minX, minY, maxX, maxY ] = [ Infinity, Infinity, -Infinity, -Infinity ]
-    for (const node of nodes) {
-        minX = Math.min(minX, cx(node.id) - boxW.get(node.id)! / 2)
-        minY = Math.min(minY, cy(node.id) - boxH.get(node.id)! / 2)
-        maxX = Math.max(maxX, cx(node.id) + boxW.get(node.id)! / 2)
-        maxY = Math.max(maxY, cy(node.id) + boxH.get(node.id)! / 2)
-    }
-    for (const poly of polys) {
-        for (const [ px, py ] of poly) {
-            minX = Math.min(minX, px)
-            minY = Math.min(minY, py)
-            maxX = Math.max(maxX, px)
-            maxY = Math.max(maxY, py)
-        }
-    }
-    return { minX, minY, maxX, maxY }
 }
 
 /*  compose the per-group layouts into a single layout: the groups are
@@ -122,7 +109,9 @@ export const composeGroups = (parts: GroupPart[], layouts: Layout[], config: Con
             poly.map(([ px, py ]) => [ px + dxs[i], py + dys[i] ]))),
         styleOf:  layouts.every((layout) => layout.styleOf !== undefined) ?
             (node) => layouts[groupIdxOf(node.id)].styleOf!(node) : undefined,
-        groups
+        groups,
+        containers: layouts.flatMap((layout, i) => (layout.containers ?? []).map((c): ContainerBox =>
+            ({ ...c, x: c.x + dxs[i], y: c.y + dys[i] })))
     }
 }
 

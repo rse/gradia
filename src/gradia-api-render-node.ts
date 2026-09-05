@@ -30,9 +30,25 @@ export const defaultStyleOf = (node: Node): NodeStyle =>
 export const typeOf = (node: Node): string | undefined =>
     node.attrs.findLast((attr) => attr.key === "type")?.val
 
+/*  the special "parent" annotation (nesting the node into a container node)  */
+export const parentOf = (node: Node): string | undefined =>
+    node.attrs.findLast((attr) => attr.key === "parent")?.val
+
+/*  the special "container" annotation (the diagram type laying out the
+    members of the node, marking even a member-less node as a container)  */
+export const containerTypeOf = (node: Node): string | undefined =>
+    node.attrs.findLast((attr) => attr.key === "container")?.val
+
+/*  container box head geometry (the head holds the name tag and the
+    optional type line above it)  */
+export const HEAD_H = 34  /*  height of the container box head        */
+export const HEAD_T = 20  /*  extra head height of a type line        */
+export const containerHead = (node: Node): number =>
+    HEAD_H + (typeOf(node) !== undefined ? HEAD_T : 0)
+
 /*  the special attributes consumed by the renderers instead of being
     rendered as node box text lines  */
-const ATTRS_SPECIAL = new Set([ "url", "type", "primary", "group" ])
+const ATTRS_SPECIAL = new Set([ "url", "type", "primary", "group", "parent", "container" ])
 
 /*  split the attributes rendered as text lines from the special ones  */
 export const attrsOfNode = (node: Node): Attr[] =>
@@ -91,11 +107,14 @@ export const linesOfNode = (node: Node, config: Config): NodeLines => {
 
 /*  determine node box sizes from their textual content
     (boxes are scaled up in height by a per-node factor to
-    give the edges more attachment room)  */
+    give the edges more attachment room), except for the nodes
+    of a fixed size (the container placeholders and gate nodes
+    of a containment level), which are taken as given  */
 export const measureNodes = (
     nodes:   Node[],
     config:  Config,
-    scaleOf: (node: Node) => number
+    scaleOf: (node: Node) => number,
+    fixed?:  Map<string, { w: number, h: number }>
 ): { boxW: Map<string, number>, boxH: Map<string, number>, contentH: Map<string, number> } => {
     /*  the resulting node box dimensions  */
     const boxW     = new Map<string, number>()
@@ -104,6 +123,13 @@ export const measureNodes = (
 
     /*  measure the text content of every node  */
     for (const node of nodes) {
+        const size = fixed?.get(node.id)
+        if (size !== undefined) {
+            boxW.set(node.id, size.w)
+            boxH.set(node.id, size.h)
+            contentH.set(node.id, size.h)
+            continue
+        }
         const lines = linesOfNode(node, config)
         let w = 0
         for (const line of lines.name)

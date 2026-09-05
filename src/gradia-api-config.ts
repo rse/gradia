@@ -25,6 +25,9 @@ export const configDefaults = {
     "color-group-name":          "#6699cc",
     "color-group-box":           "#f4f8fc",
     "color-group-border":        "#c0d0e0",
+    "color-container-name":      "#666666",
+    "color-container-box":       "#f6f6f6",
+    "color-container-border":    "#a0a0a0",
     "color-edge-line":           "#999999",
     "color-edge-name":           "#333333",
     "color-edge-arity":          "#333333",
@@ -39,6 +42,7 @@ export const configDefaults = {
     "size-edge-port-gap":        24,    /*  max separation of adjacent edge ports  */
     "group-box-padding":         30,    /*  inner padding of group boxes           */
     "group-box-gap":             40,    /*  vertical gap between group boxes       */
+    "container-box-padding":     30,    /*  inner padding of container boxes       */
     "graph-columns-max":         4,     /*  graph: max side-by-side nodes          */
     "graph-channel-width-max":   140,   /*  graph: max width of column channels    */
     "graph-channel-width-min":   24,    /*  graph: min width of column channels    */

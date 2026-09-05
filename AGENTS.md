@@ -17,9 +17,9 @@ tiles for an edge-less graph).
         `gradia_render` tool, wrapping the API `render` method)
     -   `src/gradia-api.ts`: the API facade class `Gradia` (static
         methods `parse`, `generate`, and the combined `render`), wiring
-        parser, configuration, group partitioning, the per-type
-        renderers, and the SVG output, plus the re-exported companion
-        types (`Graph`, `Node`, `Edge`, `Attr`, `Config`)
+        parser, configuration, group partitioning, container nesting,
+        the per-type renderers, and the SVG output, plus the re-exported
+        companion types (`Graph`, `Node`, `Edge`, `Attr`, `Config`)
     -   `src/gradia-api-model.ts`: the graph model types (`Attr`, `Node`, `Edge`, `Graph`)
     -   `src/gradia-api-parser.ts`: the input language parser, producing the graph model
     -   `src/gradia-api-config.ts`: the rendering options (defaults,
@@ -33,6 +33,11 @@ tiles for an edge-less graph).
         generation)
     -   `src/gradia-api-render-group.ts`: group partitioning of the
         graph and composition of the per-group layouts
+    -   `src/gradia-api-render-container.ts`: container nesting
+        (`parent`/`container` attributes): the containment tree, the
+        recursive per-level layout with container placeholders and
+        boundary gate nodes, and the stitching of the boundary-crossing
+        edges
     -   `src/gradia-api-render-svg.ts`: the final SVG document generation from a `Layout`
     -   `src/gradia-api-type-graph.ts`: the `graph` diagram type (layered
         layout via the Dagre algorithm of `@antv/layout`)

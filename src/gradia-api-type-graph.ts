@@ -14,6 +14,7 @@ import { Poly, FS_EDGE, FS_ARITY, ARITY_OFF, textWidth }
     from "./gradia-api-render-base.js"
 import { measureNodes }                      from "./gradia-api-render-node.js"
 import { Layout }                            from "./gradia-api-render-svg.js"
+import { LevelContext, GateSide }            from "./gradia-api-render-container.js"
 import { Side, TrackUser, simplifyPoly, assignPorts, assignTracks, computeHops }
     from "./gradia-api-render-edge.js"
 
@@ -216,40 +217,112 @@ const compactRows = (
     return idx + 1
 }
 
+/*  place the gate nodes of a containment level: the "in" gates into an
+    additional first column and the "out" gates into an additional last
+    column (both reserved for the gates, so the stubs from the container
+    border to the gates never cross a node box), each gate into the row
+    of the node its edge connects to, else into the nearest free row of
+    the gate column, else into a row newly inserted below the wanted one  */
+const placeGates = (
+    gates: Map<string, GateSide>,
+    edges: Edge[],
+    col:   Map<string, number>,
+    row:   Map<string, number>,
+    ncols: number,
+    nrows: number
+): { ncols: number, nrows: number } => {
+    const ins  = Array.from(gates).filter(([ , side ]) => side === "in").map(([ id ]) => id)
+    const outs = Array.from(gates).filter(([ , side ]) => side === "out").map(([ id ]) => id)
+    if (ins.length > 0) {
+        for (const id of col.keys())
+            col.set(id, col.get(id)! + 1)
+        ncols++
+    }
+    if (outs.length > 0)
+        ncols++
+    const place = (ids: string[], c: number): void => {
+        /*  the gates are placed in the order of their wanted rows, so
+            the ones displaced into other rows never cross each other  */
+        const wantOf = new Map<string, number>()
+        for (const id of ids) {
+            const edge = edges.find((edge) => edge.source === id || edge.target === id)!
+            wantOf.set(id, row.get(edge.source === id ? edge.target : edge.source)!)
+        }
+        ids.sort((a, b) => wantOf.get(a)! - wantOf.get(b)!)
+        const placed: string[] = []
+        for (const id of ids) {
+            const want  = wantOf.get(id)!
+            const taken = (r: number): boolean =>
+                placed.some((other) => row.get(other) === r)
+            let r: number | undefined
+            for (let d = 0; r === undefined && d < nrows; d++) {
+                if (want + d < nrows && !taken(want + d))
+                    r = want + d
+                else if (want - d >= 0 && !taken(want - d))
+                    r = want - d
+            }
+            if (r === undefined) {
+                for (const [ other, or ] of row)
+                    if (or > want)
+                        row.set(other, or + 1)
+                nrows++
+                r = want + 1
+            }
+            col.set(id, c)
+            row.set(id, r)
+            placed.push(id)
+        }
+    }
+    place(ins, 0)
+    place(outs, ncols - 1)
+    return { ncols, nrows }
+}
+
 /*  the coarse route of an edge: the inter-column channels and the
-    inter-row gutters it occupies  */
+    inter-row gutters it occupies, and per channel the way it passes
+    through it (mirrored: entering from the right side, hairpin:
+    leaving on the very side it entered from)  */
 interface RoutePlan {
     chans: number[]
     guts:  number[]
+    flags: { mirror: boolean, hairpin: boolean }[]
 }
 
 /*  plan the coarse route of every edge: which inter-column channels
-    and inter-row gutters it occupies (based on grid indices only)  */
+    and inter-row gutters it occupies (based on the grid indices and
+    the attachment sides only): the source stub reaches the channel
+    beside its attachment side, the target stub the channel beside
+    its one, and, if those differ, the gutter next to the target row
+    connects them  */
 const planRoutes = (
     edges: Edge[],
     col:   Map<string, number>,
-    row:   Map<string, number>
+    row:   Map<string, number>,
+    sides: { s: Side, t: Side }[]
 ): { plans: RoutePlan[], chanCnt: Map<number, number>, gutCnt: Map<number, number>,
     chanLbl: Map<number, number>, gutLbl: Map<number, number> } => {
-    const plans = edges.map((edge): RoutePlan => {
+    const flag = (from: "l" | "r", to: "l" | "r") =>
+        ({ mirror: from === "r", hairpin: from === to })
+    const plans = edges.map((edge, i): RoutePlan => {
         /*  a self-loop is routed around its own node box and uses no channel  */
         if (edge.source === edge.target)
-            return { chans: [], guts: [] }
+            return { chans: [], guts: [], flags: [] }
         const sc = col.get(edge.source)!
         const tc = col.get(edge.target)!
         const sr = row.get(edge.source)!
         const tr = row.get(edge.target)!
-        let chans: number[]
-        let guts:  number[] = []
-        if (sc === tc)
-            chans = [ sc ]
-        else if (Math.abs(sc - tc) === 1)
-            chans = [ Math.min(sc, tc) ]
-        else {
-            chans = [ sc < tc ? sc : sc - 1, sc < tc ? tc - 1 : tc ]
-            guts  = [ tr > sr ? tr - 1 : tr ]
+        const sChan = sides[i].s === "e" ? sc : sc - 1
+        const tChan = sides[i].t === "w" ? tc - 1 : tc
+        const sFrom = sides[i].s === "e" ? "l" : "r"
+        const tTo   = sides[i].t === "w" ? "r" : "l"
+        if (sChan === tChan)
+            return { chans: [ sChan ], guts: [], flags: [ flag(sFrom, tTo) ] }
+        const dir = tChan > sChan ? "r" : "l"
+        return {
+            chans: [ sChan, tChan ],
+            guts:  [ tr > sr ? tr - 1 : tr ],
+            flags: [ flag(sFrom, dir), flag(dir === "r" ? "l" : "r", tTo) ]
         }
-        return { chans, guts }
     })
 
     /*  count the edges occupying each channel and gutter and determine
@@ -362,7 +435,6 @@ const computeGrid = (
 const assignTrackCoords = (
     edges:   Edge[],
     plans:   RoutePlan[],
-    col:     Map<string, number>,
     portPos: Map<string, { x: number, y: number }>,
     grid:    Grid,
     config:  Config
@@ -372,21 +444,18 @@ const assignTrackCoords = (
 
     /*  assign the vertical tracks within the inter-column channels  */
     const chanUsers = new Map<number, TrackUser[]>()
-    edges.forEach((edge, i) => {
-        const { chans, guts } = plans[i]
+    edges.forEach((_, i) => {
+        const { chans, guts, flags } = plans[i]
         if (chans.length === 0)
             return
-        const [ sc, tc ] = [ col.get(edge.source)!, col.get(edge.target)! ]
-        const mirror  = tc < sc
-        const hairpin = tc === sc
         const sp = portPos.get(`${i}:s`)!
         const tp = portPos.get(`${i}:t`)!
         if (chans.length === 1)
-            pushTo(chanUsers, chans[0], { edge: i, posIn: sp.y, posOut: tp.y, mirror, hairpin })
+            pushTo(chanUsers, chans[0], { edge: i, posIn: sp.y, posOut: tp.y, ...flags[0] })
         else {
             const gy = gutBase(guts[0])
-            pushTo(chanUsers, chans[0], { edge: i, posIn: sp.y, posOut: gy,   mirror })
-            pushTo(chanUsers, chans[1], { edge: i, posIn: gy,   posOut: tp.y, mirror })
+            pushTo(chanUsers, chans[0], { edge: i, posIn: sp.y, posOut: gy,   ...flags[0] })
+            pushTo(chanUsers, chans[1], { edge: i, posIn: gy,   posOut: tp.y, ...flags[1] })
         }
     })
     const chanOff = new Map<string, number>()
@@ -423,7 +492,6 @@ const assignTrackCoords = (
 const routePolys = (
     edges:   Edge[],
     plans:   RoutePlan[],
-    col:     Map<string, number>,
     portPos: Map<string, { x: number, y: number }>,
     boxW:    Map<string, number>,
     boxH:    Map<string, number>,
@@ -435,11 +503,9 @@ const routePolys = (
 ): Poly[] => {
     const loopUse = new Map<string, number>()
     return edges.map((edge, i) => {
-        const sc = col.get(edge.source)!
-        const tc = col.get(edge.target)!
         const sp = portPos.get(`${i}:s`)!
         const tp = portPos.get(`${i}:t`)!
-        const { chans, guts } = plans[i]
+        const { chans, guts, flags } = plans[i]
         let pts: Poly
         if (edge.source === edge.target) {
             /*  route the self-loop counter-clockwise around the top-right
@@ -456,7 +522,7 @@ const routePolys = (
         }
         else if (chans.length === 1) {
             const ch = chanX(chans[0], i)
-            if (Math.abs(sc - tc) === 1 && sp.y === tp.y)
+            if (!flags[0].hairpin && sp.y === tp.y)
                 pts = [ [ sp.x, sp.y ], [ tp.x, tp.y ] ]
             else
                 pts = [ [ sp.x, sp.y ], [ ch, sp.y ], [ ch, tp.y ], [ tp.x, tp.y ] ]
@@ -493,22 +559,23 @@ interface Routing {
 const routeEdges = (
     edges:   Edge[],
     plans:   RoutePlan[],
-    col:     Map<string, number>,
     sides:   { s: Side, t: Side }[],
     boxW:    Map<string, number>,
     boxH:    Map<string, number>,
     cx:      (id: string) => number,
     cy:      (id: string) => number,
     grid:    Grid,
-    config:  Config
+    config:  Config,
+    level:   LevelContext
 ): Routing => {
-    const portPre  = assignPorts(edges, sides, cx, cy, boxW, boxH, config["size-edge-port-gap"])
-    const trackPre = assignTrackCoords(edges, plans, col, portPre, grid, config)
+    const portPre  = assignPorts(edges, sides, cx, cy, boxW, boxH, config["size-edge-port-gap"],
+        undefined, level.fixedPort)
+    const trackPre = assignTrackCoords(edges, plans, portPre, grid, config)
     const portPos  = assignPorts(edges, sides, cx, cy, boxW, boxH, config["size-edge-port-gap"],
         (edge) => plans[edge].guts.length > 0 ?
-            trackPre.gutY(plans[edge].guts[0], edge) : undefined)
-    const { chanX, gutY } = assignTrackCoords(edges, plans, col, portPos, grid, config)
-    const polys = routePolys(edges, plans, col, portPos, boxW, boxH, cx, cy, chanX, gutY, config)
+            trackPre.gutY(plans[edge].guts[0], edge) : undefined, level.fixedPort)
+    const { chanX, gutY } = assignTrackCoords(edges, plans, portPos, grid, config)
+    const polys = routePolys(edges, plans, portPos, boxW, boxH, cx, cy, chanX, gutY, config)
     const hops  = computeHops(polys).reduce((sum, segs) =>
         sum + Array.from(segs.values()).reduce((n, xs) => n + xs.length, 0), 0)
     return { portPos, gutY, polys, hops }
@@ -555,8 +622,8 @@ const nudgeNodes = (
             const gap = routing.portPos.get(`${i}:${role}`)!.y - routing.gutY(g, i)
             return row.get(id)! > g ? gap >= NUDGE_GAP : gap <= -NUDGE_GAP
         })
-    const direct = edges.map((edge, i) => plans[i].guts.length === 0
-        && Math.abs(col.get(edge.source)! - col.get(edge.target)!) === 1
+    const direct = edges.map((edge, i) => plans[i].chans.length === 1
+        && !plans[i].flags[0].hairpin
         && row.get(edge.source) === row.get(edge.target))
     const jogs = (routing: Routing): number =>
         edges.filter((_, i) => direct[i]
@@ -606,40 +673,51 @@ const nudgeNodes = (
     return current
 }
 
-/*  lay out a directed graph model  */
-export const render = async (graph: Graph, config: Config): Promise<Layout> => {
+/*  lay out a directed graph model (for a containment level: with the
+    container placeholders at their fixed sizes, the edge ends attaching
+    to them at their fixed ports, and the gate nodes on the boundary)  */
+export const render = async (graph: Graph, config: Config, level: LevelContext = {}): Promise<Layout> => {
     const nodes = Array.from(graph.nodes.values())
     const edges = graph.edges
+
+    /*  the gate nodes are kept out of the layered layout and the grid
+        refinement, as they are placed into their own columns afterwards  */
+    const gates     = level.gates ?? new Map<string, GateSide>()
+    const real      = nodes.filter((node) => !gates.has(node.id))
+    const realEdges = edges.filter((edge) => !gates.has(edge.source) && !gates.has(edge.target))
 
     /*  determine node box sizes from their textual content
         (all boxes at half height scale, grown by their edge
         attachment needs once the attachment sides are known)  */
-    const { boxW, boxH, contentH } = measureNodes(nodes, config, () => config["size-node-height-scale"] / 2)
+    const { boxW, boxH, contentH } = measureNodes(nodes, config,
+        () => config["size-node-height-scale"] / 2, level.fixedSize)
 
     /*  determine raw node positions with the AntV Dagre layout  */
-    const layout = new DagreLayout({
-        rankdir:  "LR",
-        nodesep:  config["graph-node-separation"],
-        ranksep:  config["graph-rank-separation"],
-        nodeSize: (node) => (node as { size: [ number, number ] }).size
-    })
-    await layout.execute({
-        nodes: nodes.map((node) => ({ id: node.id, size: [ boxW.get(node.id)!, boxH.get(node.id)! ] })),
-        edges: edges.map((edge, i) => ({ id: `e${i}`, source: edge.source, target: edge.target }))
-    })
     const rawX = new Map<string, number>()
     const rawY = new Map<string, number>()
-    layout.forEachNode((node) => {
-        rawX.set(String(node.id), node.x)
-        rawY.set(String(node.id), node.y)
-    })
+    if (real.length > 0) {
+        const layout = new DagreLayout({
+            rankdir:  "LR",
+            nodesep:  config["graph-node-separation"],
+            ranksep:  config["graph-rank-separation"],
+            nodeSize: (node) => (node as { size: [ number, number ] }).size
+        })
+        await layout.execute({
+            nodes: real.map((node) => ({ id: node.id, size: [ boxW.get(node.id)!, boxH.get(node.id)! ] })),
+            edges: realEdges.map((edge, i) => ({ id: `e${i}`, source: edge.source, target: edge.target }))
+        })
+        layout.forEachNode((node) => {
+            rawX.set(String(node.id), node.x)
+            rawY.set(String(node.id), node.y)
+        })
+    }
 
     /*  snap the raw positions onto the discrete column/row grid  */
-    const { col, row, ncols: gridCols, nrows: gridRows } = snapToGrid(nodes, rawX, rawY)
+    const { col, row, ncols: gridCols, nrows: gridRows } = snapToGrid(real, rawX, rawY)
 
     /*  refine the row assignment by pulling every node vertically
         toward the median row of its direct neighbors  */
-    refineRows(nodes, edges, col, row)
+    refineRows(real, realEdges, col, row)
 
     /*  fold the grid columns: constrain the diagram width to at most
         the configured maximum of side-by-side nodes by wrapping excess
@@ -647,42 +725,59 @@ export const render = async (graph: Graph, config: Config): Promise<Layout> => {
         height  */
     const maxCols = Math.max(Math.floor(config["graph-columns-max"]), 1)
     if (gridCols > maxCols) {
-        for (const node of nodes) {
+        for (const node of real) {
             const c = col.get(node.id)!
             col.set(node.id, c % maxCols)
             row.set(node.id, row.get(node.id)! + Math.floor(c / maxCols) * gridRows)
         }
     }
-    const ncols = Math.min(gridCols, maxCols)
 
-    /*  compact the sparsely occupied grid rows into fewer, denser ones  */
-    const nrows = compactRows(nodes, edges, col, row)
-
-    /*  plan the coarse channel/gutter route of every edge  */
-    const { plans, chanCnt, gutCnt, chanLbl, gutLbl } = planRoutes(edges, col, row)
+    /*  compact the sparsely occupied grid rows into fewer, denser ones,
+        then place the gate nodes into their own boundary columns  */
+    let { ncols, nrows } = placeGates(gates, edges, col, row,
+        Math.min(gridCols, maxCols), compactRows(real, realEdges, col, row))
 
     /*  determine the attachment sides of every edge, derived from the
         column relation of its endpoint nodes (a self-loop leaves on the
-        east side and re-enters on the north side of its own box)  */
-    const sides: { s: Side, t: Side }[] = edges.map((edge) => {
+        east side and re-enters on the north side of its own box), except
+        for an edge end attaching at a fixed port of a container box,
+        which always uses the side of the inner gate: the west side
+        when entering the container, the east side when leaving it  */
+    const sides: { s: Side, t: Side }[] = edges.map((edge, i) => {
         const sc = col.get(edge.source)!
         const tc = col.get(edge.target)!
-        if      (edge.source === edge.target) return { s: "e", t: "n" }
-        else if (sc < tc)                     return { s: "e", t: "w" }
-        else if (sc > tc)                     return { s: "w", t: "e" }
-        else                                  return { s: "e", t: "e" }
+        if (edge.source === edge.target)
+            return { s: "e", t: "n" }
+        const s: Side = level.fixedPort?.(i, "s") !== undefined ? "e" : sc <= tc ? "e" : "w"
+        const t: Side = level.fixedPort?.(i, "t") !== undefined ? "w" : sc <  tc ? "w" : "e"
+        return { s, t }
     })
+
+    /*  plan the coarse channel/gutter route of every edge (a west side
+        attachment in the first column needs a channel left of it, so
+        the whole grid is shifted one column to the right then)  */
+    let routes = planRoutes(edges, col, row, sides)
+    if (routes.plans.some((plan) => plan.chans.some((c) => c < 0))) {
+        for (const node of nodes)
+            col.set(node.id, col.get(node.id)! + 1)
+        ncols++
+        routes = planRoutes(edges, col, row, sides)
+    }
+    const { plans, chanCnt, gutCnt, chanLbl, gutLbl } = routes
 
     /*  grow every box whose edge attachments exceed the configured
         per-side maximum, step-wise by one port separation per
         additional edge, so the edges keep enough attachment room
-        without a fixed height increase  */
+        without a fixed height increase (the fixed-size boxes of a
+        containment level are exempt)  */
     const portCnt = new Map<string, number>()
     edges.forEach((edge, i) => {
         portCnt.set(`${sides[i].s}:${edge.source}`, (portCnt.get(`${sides[i].s}:${edge.source}`) ?? 0) + 1)
         portCnt.set(`${sides[i].t}:${edge.target}`, (portCnt.get(`${sides[i].t}:${edge.target}`) ?? 0) + 1)
     })
     for (const node of nodes) {
+        if (level.fixedSize?.has(node.id))
+            continue
         const cnt = Math.max(portCnt.get(`w:${node.id}`) ?? 0, portCnt.get(`e:${node.id}`) ?? 0)
         if (cnt > config["graph-node-degree-max"])
             boxH.set(node.id, boxH.get(node.id)! +
@@ -698,7 +793,7 @@ export const render = async (graph: Graph, config: Config): Promise<Layout> => {
     const cy   = (id: string) => grid.rowCY[row.get(id)!] + (dy.get(id) ?? 0)
 
     /*  route the edges for the current node positions  */
-    const route = () => routeEdges(edges, plans, col, sides, boxW, boxH, cx, cy, grid, config)
+    const route = () => routeEdges(edges, plans, sides, boxW, boxH, cx, cy, grid, config, level)
 
     /*  nudge nodes vertically off their row centers where this
         straightens edges and thereby simplifies the routing  */

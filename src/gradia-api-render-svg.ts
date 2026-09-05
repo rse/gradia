@@ -15,7 +15,8 @@ import {
     FS_NAME, FS_TYPE, FS_ATTR, FS_EDGE, FS_ARITY, FS_GROUP, ARITY_OFF,
     textWidth, escapeXML
 } from "./gradia-api-render-base.js"
-import { linesOfNode, urlOf, defaultStyleOf, MIN_H, NAME_H, ATTR_H, ATTR_P, TYPE_H, TYPE_D }
+import { linesOfNode, urlOf, typeOf, defaultStyleOf, containerHead,
+    MIN_H, NAME_H, ATTR_H, ATTR_P, TYPE_H, TYPE_D, HEAD_H }
     from "./gradia-api-render-node.js"
 import { computeHops, pathOf, pointAt }
     from "./gradia-api-render-edge.js"
@@ -50,18 +51,28 @@ export interface GroupBox {
     h:    number
 }
 
+/*  a decorated container box surrounding the members of a container node  */
+export interface ContainerBox {
+    node: Node
+    x:    number
+    y:    number
+    w:    number
+    h:    number
+}
+
 /*  the laid out graph handed over for SVG generation  */
 export interface Layout {
-    nodes:    Node[]
-    edges:    Edge[]
-    cx:       (id: string) => number
-    cy:       (id: string) => number
-    boxW:     Map<string, number>
-    boxH:     Map<string, number>
-    contentH: Map<string, number>
-    polys:    Poly[]
-    styleOf?: (node: Node) => NodeStyle
-    groups?:  GroupBox[]
+    nodes:       Node[]
+    edges:       Edge[]
+    cx:          (id: string) => number
+    cy:          (id: string) => number
+    boxW:        Map<string, number>
+    boxH:        Map<string, number>
+    contentH:    Map<string, number>
+    polys:       Poly[]
+    styleOf?:    (node: Node) => NodeStyle
+    groups?:     GroupBox[]
+    containers?: ContainerBox[]
 }
 
 /*  a rectangular area, given by its top-left and bottom-right corners  */
@@ -91,10 +102,13 @@ const labelPlacer = (
         cx(node.id) + boxW.get(node.id)! / 2, cy(node.id) + boxH.get(node.id)! / 2
     ])
 
-    /*  let the labels also dodge the group tags in the group box corners  */
+    /*  let the labels also dodge the group and container tags in the box corners  */
     for (const group of layout.groups ?? [])
         occupied.push([ group.x + TAG_DX, group.y + TAG_DY,
             group.x + TAG_DX + textWidth(group.name, FS_GROUP), group.y + TAG_DY + FS_GROUP * 1.2 ])
+    for (const c of layout.containers ?? [])
+        occupied.push([ c.x + TAG_DX, c.y + TAG_DY,
+            c.x + TAG_DX + textWidth(c.node.name, FS_GROUP), c.y + containerHead(c.node) ])
 
     /*  collect the edge line segments and the hops bulging above them  */
     const lines: Box[] = []
@@ -281,8 +295,9 @@ const renderEdgeLabels = (edge: Edge, poly: Poly, claim: (candidates: Box[]) => 
 export const renderSVG = (layout: Layout, config: Config, explicit: Partial<Config>,
     seed: string): string => {
     const { nodes, edges, polys } = layout
-    const groups  = layout.groups  ?? []
-    const styleOf = layout.styleOf ?? defaultStyleOf
+    const groups     = layout.groups     ?? []
+    const containers = layout.containers ?? []
+    const styleOf    = layout.styleOf    ?? defaultStyleOf
 
     /*  resolve the directly embedded configuration options into CSS
         values: explicitly configured values are hard-coded, while all
@@ -331,10 +346,38 @@ export const renderSVG = (layout: Layout, config: Config, explicit: Partial<Conf
             `style="font-family: ${font}; fill: ${color("color-group-name")}">${escapeXML(group.name)}</text>`
     ])
 
+    /*  generate the SVG fragments for the container boxes (drawn below
+        the edges and nodes, an outer box before its nested ones) and
+        their tags in the top-left corners, with the optional type line
+        above the name (a container with a "url" attribute becomes a
+        hyperlink covering the whole box)  */
+    const svgContainers = containers.flatMap((c) => {
+        const type  = typeOf(c.node)
+        const url   = urlOf(c.node)
+        const parts = [
+            `<rect x="${c.x}" y="${c.y}" width="${c.w}" height="${c.h}" rx="12" ` +
+                `style="fill: ${color("color-container-box")}; ` +
+                `stroke: ${color("color-container-border")}" stroke-width="3.0" stroke-dasharray="10 6"/>`,
+            ...(type !== undefined ? [
+                `<text x="${c.x + TAG_DX}" y="${c.y + TAG_DY + FS_TYPE}" ` +
+                    `font-size="${FS_TYPE}" ` +
+                    `style="font-family: ${font}; fill: ${color("color-container-name")}">${escapeXML(type)}</text>`
+            ] : []),
+            `<text x="${c.x + TAG_DX}" y="${c.y + containerHead(c.node) - HEAD_H + TAG_DY + FS_GROUP}" ` +
+                `font-size="${FS_GROUP}" font-weight="600" ` +
+                `style="font-family: ${font}; fill: ${color("color-container-name")}">${escapeXML(c.node.name)}</text>`
+        ]
+        if (url === undefined)
+            return parts
+        return [ `<a href="${escapeXML(url)}" xlink:href="${escapeXML(url)}">`, ...parts, "</a>" ]
+    })
+
     /*  determine the overall bounding box of all rendered elements  */
     const groupBoxes: Box[] = groups.map((group) =>
         [ group.x, group.y, group.x + group.w, group.y + group.h ])
-    const vb = viewBoxOf(layout, [ ...occupied, ...groupBoxes ], config["size-canvas-margin"])
+    const containerBoxes: Box[] = containers.map((c) =>
+        [ c.x, c.y, c.x + c.w, c.y + c.h ])
+    const vb = viewBoxOf(layout, [ ...occupied, ...groupBoxes, ...containerBoxes ], config["size-canvas-margin"])
 
     /*  assemble the final SVG document  */
     return [
@@ -356,6 +399,7 @@ export const renderSVG = (layout: Layout, config: Config, explicit: Partial<Conf
         "</marker>",
         "</defs>",
         ...svgGroups,
+        ...svgContainers,
         ...svgEdges,
         ...svgNodes,
         ...svgLabels,

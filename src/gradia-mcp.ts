@@ -133,7 +133,7 @@ as <name>, terminals as "...", optional parts as [ ... ], repeatable parts as
   following node, i.e., the chain is equivalent to "a --> b" and "b --> c".
 - The <edge-name> is rendered as the label of the edge and the <edge-arity> as
   its cardinality label.
-- Four attribute keys are reserved and consumed by the renderer instead of being
+- Six attribute keys are reserved and consumed by the renderer instead of being
   displayed as a regular "<key>: <val>" line:
   - "url: <url>" renders the node box as a hyperlink. Only relative URLs and
     the schemes "http", "https", and "mailto" are honored; any other URL is
@@ -142,13 +142,37 @@ as <name>, terminals as "...", optional parts as [ ... ], repeatable parts as
   - "primary: true" renders the node in the primary node colors (and, for the
     diagram type "hub", marks the single central hub node). The value has to
     be the literal string "true",
-  - "group: <name>" places the node into the surrounding group box <name>.
+  - "group: <name>" places the node into the surrounding group box <name>,
+  - "parent: <id>" nests the node into the container node <id> (a node which
+    is implicitly declared if never referenced otherwise),
+  - "container: <type>" marks the node as a container whose members are laid
+    out with the diagram type <type> ("graph", "hub", or "grid"), even if it
+    has no members at all.
 - A node cannot be a member of more than one group. As soon as at least one node
   carries a "group" attribute, all nodes without one implicitly belong to the
-  group "default", and every edge has to stay within a single group.
+  group "default", and every edge has to stay within a single group. A nested
+  node belongs to the group of its outermost container.
 - The groups are laid out individually with the selected diagram type and then
   stacked vertically as decorated group boxes. For the type "hub" this means
   that every single group needs its own primary node.
+- A node referenced as the "parent" of another node is a container: it is
+  rendered as a dashed grey box surrounding its members instead of as a node
+  box, with its label, "type", and "url" in the box head (its remaining
+  attributes are not rendered). Containers nest to any depth, but a node cannot
+  be a member of more than one container, and cannot be nested into itself.
+- The members of a container are laid out as a diagram of their own, with the
+  diagram type of the enclosing level unless overridden by "container: <type>",
+  and the container then takes part in the layout of the enclosing level as a
+  single box. Edges may connect any two nodes, across container boundaries and
+  to container nodes themselves, except a container with one of its own
+  members. An edge crossing the boundary of a container laid out as "graph" is
+  routed through the box border to the inner node (entering on the west and
+  leaving on the east side), while an edge crossing the boundary of a container
+  laid out as "hub" or "grid" ends at the box border instead. The diagram type
+  constraints apply to every container level (e.g., a "hub" container needs its
+  own primary node, and a "grid" container permits no edges among its members).
+- Use containers (not groups) to visualize zones, tiers, deployment units, or
+  packages whose members are connected to the outside world.
 - All remaining attributes are displayed as "<key>: <val>" lines inside the node
   box.
 
@@ -160,8 +184,9 @@ as <name>, terminals as "...", optional parts as [ ... ], repeatable parts as
     #config color-edge-line         #999999
 
     Animal: animal [ type: "abstract class", kind: base, url: "#animal", primary: true ]
-    Dog: dog
-    Cat: cat
+    Dog: dog [ parent: Pets ]
+    Cat: cat [ parent: Pets ]
+    Pets: "Domestic Pets" [ type: package ]
 
     Dog --(isa)--> Animal
     Cat --(isa)--> Animal
@@ -175,11 +200,11 @@ over them. The recognized options, with their types and built-in defaults, are:
 
 ${configOptions}
 
-The "size-*", "group-*", "graph-*", "hub-*", and "grid-*" options control the
-rendering geometry (canvas margin, node box sizing, edge routing, group box
-spacing, and the per-diagram-type layout) and take non-negative numbers, except
-the boolean "grid-node-width-equal", which forces all node boxes of a "grid"
-diagram to the width of the widest one.
+The "size-*", "group-*", "container-*", "graph-*", "hub-*", and "grid-*" options
+control the rendering geometry (canvas margin, node box sizing, edge routing,
+group and container box spacing, and the per-diagram-type layout) and take
+non-negative numbers, except the boolean "grid-node-width-equal", which forces
+all node boxes of a "grid" diagram to the width of the widest one.
 
 The "size-node-width-max" option additionally enables the word-wrapping of the
 node box texts: given a positive value, the node name, its type, and its

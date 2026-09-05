@@ -9,9 +9,12 @@ import { Graph }        from "./gradia-api-model.js"
 import { Config }       from "./gradia-api-config.js"
 import { measureNodes } from "./gradia-api-render-node.js"
 import { Layout }       from "./gradia-api-render-svg.js"
+import { LevelContext } from "./gradia-api-render-container.js"
 
-/*  lay out an edge-less graph model as a compact grid of tiles  */
-export const render = async (graph: Graph, config: Config): Promise<Layout> => {
+/*  lay out an edge-less graph model as a compact grid of tiles (for a
+    containment level: with the container placeholders at their fixed
+    sizes, which take part in the tile size unification)  */
+export const render = async (graph: Graph, config: Config, level: LevelContext = {}): Promise<Layout> => {
     const nodes = Array.from(graph.nodes.values())
 
     /*  resolve the configurable rendering geometry  */
@@ -31,7 +34,7 @@ export const render = async (graph: Graph, config: Config): Promise<Layout> => {
     /*  determine node box sizes and unify their heights into a single
         tile height and, if configured, their widths into a single tile width  */
     const { boxW, boxH, contentH } = measureNodes(nodes, config,
-        () => config["size-node-height-scale"] / 2)
+        () => config["size-node-height-scale"] / 2, level.fixedSize)
     const tileH = nodes.reduce((a, node) => Math.max(a, boxH.get(node.id)!), 0)
     const tileW = nodes.reduce((a, node) => Math.max(a, boxW.get(node.id)!), 0)
     for (const node of nodes) {

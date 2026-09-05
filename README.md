@@ -41,6 +41,10 @@ Here are examples of the three graph diagram renderings:
 
   ![broadcast-grid](smp/broadcast-grid.svg)
 
+- [container-sample](smp/container-sample.txt) (nested containers):
+
+  ![container-sample](smp/container-sample.svg)
+
 Playground
 ----------
 
@@ -193,7 +197,7 @@ separated by `|`.
 - The `<edge-name>` is rendered as the label of the edge and the
   `<edge-arity>` as its cardinality label.
 
-- Four attribute keys are reserved and consumed by the renderer instead
+- Six attribute keys are reserved and consumed by the renderer instead
   of being displayed as a regular `<key>: <val>` line:
 
     - `url: <url>` renders the node box as a hyperlink. Only relative URLs
@@ -204,12 +208,36 @@ separated by `|`.
     - `primary: true` renders the node in the primary node colors
       (and, for diagram type `hub`, marks the single central hub node),
     - `group: <name>` places the node into the surrounding group box
-      `<name>`.
+      `<name>`,
+    - `parent: <id>` nests the node into the container node `<id>` (a
+      node which is implicitly declared if never referenced otherwise),
+    - `container: <type>` marks the node as a container whose members
+      are laid out with the diagram type `<type>` (`graph`, `hub`, or
+      `grid`), even if it has no members at all.
 
 - A node cannot be a member of more than one group. As soon as at least
   one node carries a `group` attribute, all nodes without one implicitly
   belong to the group `default`, and every edge has to stay within a
-  single group.
+  single group. A nested node belongs to the group of its outermost
+  container.
+
+- A node referenced as the `parent` of another node is a container: it
+  is rendered as a dashed grey box surrounding its members instead of as
+  a node box, with its label, `type`, and `url` in the box head (its
+  remaining attributes are not rendered). Containers nest to any depth,
+  but a node cannot be a member of more than one container, and cannot
+  be nested into itself.
+
+- The members of a container are laid out as a diagram of their own,
+  with the diagram type of the enclosing level unless overridden by
+  `container: <type>`, and the container then takes part in the layout
+  of the enclosing level as a single box. Edges may connect any two
+  nodes, across container boundaries and to container nodes themselves,
+  except a container with one of its own members. An edge crossing the
+  boundary of a container laid out as `graph` is routed through the box
+  border to the inner node (entering on the west and leaving on the east
+  side), while an edge crossing the boundary of a container laid out as
+  `hub` or `grid` ends at the box border instead.
 
 - All remaining attributes are displayed as `<key>: <val>` lines inside
   the node box.
@@ -241,10 +269,14 @@ placement is rendered as a dashed "ghost" box, colored by the
 The diagram type `grid` rejects the input with an error as soon as the
 graph contains at least one edge.
 
-As the groups of a grouped graph are laid out individually with the
-selected diagram type, these constraints apply to every single group. For
-the type `hub` this especially means that every group needs its own
-primary node.
+As the groups of a grouped graph, and the members of every container,
+are laid out individually with the selected (or, for a container, the
+annotated) diagram type, these constraints apply to every single group
+and container level, with the edges crossing a container boundary
+counting at the level they are lifted to (the boundary-crossing edges of
+a `graph` container additionally count inside it, from the boundary to
+the inner node). For the type `hub` this especially means that every
+group and every `hub` container needs its own primary node.
 
 ### Directives
 
@@ -259,35 +291,38 @@ command-line options (`font-embed` being command-line only, see below).
 The recognized options, and their default values, are:
 
 ```
-font-family                Helvetica    size-edge-hop-radius       8
-font-embed                 false        size-edge-track-gap        12
-color-node-regular-name    #336699      size-edge-port-gap         24
-color-node-regular-box     #e0f0ff      group-box-padding          30
-color-node-regular-border  #c0d0e0      group-box-gap              40
-color-node-primary-name    #ffffff      graph-columns-max          4
-color-node-primary-box     #336699      graph-channel-width-max    140
-color-node-primary-border  #003366      graph-channel-width-min    24
-color-node-ghost-name      #666666      graph-gutter-height-max    90
-color-node-ghost-box       #f0f0f0      graph-gutter-height-min    20
-color-node-ghost-border    #a0a0a0      graph-node-separation      30
-color-group-name           #6699cc      graph-rank-separation      60
-color-group-box            #f4f8fc      graph-node-degree-max      3
-color-group-border         #c0d0e0      hub-channel-width-max      340
-color-edge-line            #999999      hub-channel-width-min      240
-color-edge-name            #333333      hub-node-gap               20
-color-edge-arity           #333333      hub-node-degree-max        3
-color-edge-halo            #ffffff      grid-columns-max           4
-size-canvas-margin         40           grid-columns-min           3
-size-node-width-min        220          grid-gap-horizontal        40
-size-node-width-max        0            grid-gap-vertical          20
-size-node-height-scale     2.25         grid-node-width-equal      true
-size-edge-corner-radius    20
+font-family                Helvetica    size-edge-corner-radius    20
+font-embed                 false        size-edge-hop-radius       8
+color-node-regular-name    #336699      size-edge-track-gap        12
+color-node-regular-box     #e0f0ff      size-edge-port-gap         24
+color-node-regular-border  #c0d0e0      group-box-padding          30
+color-node-primary-name    #ffffff      group-box-gap              40
+color-node-primary-box     #336699      container-box-padding      30
+color-node-primary-border  #003366      graph-columns-max          4
+color-node-ghost-name      #666666      graph-channel-width-max    140
+color-node-ghost-box       #f0f0f0      graph-channel-width-min    24
+color-node-ghost-border    #a0a0a0      graph-gutter-height-max    90
+color-group-name           #6699cc      graph-gutter-height-min    20
+color-group-box            #f4f8fc      graph-node-separation      30
+color-group-border         #c0d0e0      graph-rank-separation      60
+color-container-name       #666666      graph-node-degree-max      3
+color-container-box        #f6f6f6      hub-channel-width-max      340
+color-container-border     #a0a0a0      hub-channel-width-min      240
+color-edge-line            #999999      hub-node-gap               20
+color-edge-name            #333333      hub-node-degree-max        3
+color-edge-arity           #333333      grid-columns-max           4
+color-edge-halo            #ffffff      grid-columns-min           3
+size-canvas-margin         40           grid-gap-horizontal        40
+size-node-width-min        220          grid-gap-vertical          20
+size-node-width-max        0            grid-node-width-equal      true
+size-node-height-scale     2.25
 ```
 
-The `size-*`, `group-*`, `graph-*`, `hub-*`, and `grid-*` options
-control the rendering geometry (canvas margin, node box sizing, edge
-routing, group box spacing, and the per-diagram-type layout) and take
-non-negative numbers, except the boolean `grid-node-width-equal`.
+The `size-*`, `group-*`, `container-*`, `graph-*`, `hub-*`, and
+`grid-*` options control the rendering geometry (canvas margin, node
+box sizing, edge routing, group and container box spacing, and the
+per-diagram-type layout) and take non-negative numbers, except the
+boolean `grid-node-width-equal`.
 
 The `size-node-width-max` option additionally enables the word-wrapping
 of the node box texts: given a positive value, the node name, its type,
@@ -296,6 +331,13 @@ node box stays within the given width and grows in height instead. The
 value `0` disables the wrapping entirely and hence lets a node box
 become as wide as its longest text. A single word wider than the
 maximum is never broken and still widens the box beyond the maximum.
+
+The `group-box-padding` and `container-box-padding` options control the
+inner padding of the group and container boxes around their content.
+For a `graph` container, the content additionally includes the
+boundary channels along its west and east sides, through which the
+edges crossing the container boundary reach the inner nodes, sized
+like all channels by the edges routed through them.
 
 The `size-edge-port-gap` option controls the distance of the edge
 attachment ports along a node side, and hence the vertical distance of
