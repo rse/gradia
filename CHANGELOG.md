@@ -23,30 +23,32 @@ ChangeLog
 -   BUGFIX [code]: avoid collinear overlaps of edges in channels/gutters, where the exit stub of one
     edge and the entry stub of another at the same position ran on top of each other, by
     letting such overlaps dominate the crossings in the edge track ordering
--   BUGFIX [code]: clamp the node box height to at least its text content height, as a
-    "size-node-height-scale" below 2 let the type line and the last attribute line
-    overflow the box
+-   BUGFIX [code]: keep the self-loops of a "graph" diagram clear of the neighboring nodes: route
+    their legs on tracks of the channel beside their node, as the legs of stacked self-loops ran
+    into the boxes of the next column and on top of the other channel edges, and size the gutter
+    above the looped node to hold the detour above its box, which ran straight through the node
+    above in the same column
+-   BUGFIX [code]: keep the boundary gates of a "graph" container level in the row order of
+    their connected nodes, where a gate displaced into a newly inserted row shifted the nodes
+    below it while the later gates still targeted the old rows, letting their edges cross
 -   BUGFIX [code]: render a self-loop on a container node, which was silently dropped together
     with its label, by routing it at the enclosing level around the container box
--   BUGFIX [code]: keep the "graph" self-loop detour clear of the node above in the same column,
-    which it ran straight through, by sizing the gutter above the looped node to hold the detour
--   BUGFIX [code]: route the self-loops of a "graph" diagram on tracks of the channel beside
-    their node, which so far never accounted for their detour legs, so the legs of stacked
-    self-loops ran into the boxes of the next column and on top of the other channel edges
 -   BUGFIX [code]: keep the edge ports of a container box inside the box, where the ports of its
     own edges were spread over the full box height and then pushed below the box by the fixed
     port of an inner gate, by spacing all ports together and dealing the free ports into the
     gaps around the fixed ones
--   BUGFIX [code]: reject a consumer-built graph model whose node map key and node id disagree,
-    instead of rendering an inconsistent partial output
+-   BUGFIX [code]: clamp the node box height to at least its text content height, as a
+    "size-node-height-scale" below 2 let the type line and the last attribute line
+    overflow the box
 -   BUGFIX [code]: validate the "config" options given to the API facade, which so far reached
     the renderers unchecked (unknown options, wrong-typed or negative values), by sharing one
     validation between the API, the CLI, the MCP service, and the "#config" directives
--   BUGFIX [code]: reject a consumer-built graph model whose edge references an undeclared node,
-    instead of rendering a silently broken output with "NaN" path coordinates
--   BUGFIX [code]: keep the boundary gates of a "graph" container level in the row order of
-    their connected nodes, where a gate displaced into a newly inserted row shifted the nodes
-    below it while the later gates still targeted the old rows, letting their edges cross
+-   BUGFIX [code]: reject a consumer-built graph model whose node map key and node id disagree
+    or whose edge references an undeclared node, instead of rendering an inconsistent partial
+    or silently broken output with "NaN" path coordinates
+-   CLEANUP [code]: clean up the source code based on lint findings, moving the shared layout
+    types into the render base module, splitting the container level layout into focused
+    functions, and rejecting node ids carrying the control character reserved for the gate ids
 
 1.1.9 (2026-09-04)
 ------------------
