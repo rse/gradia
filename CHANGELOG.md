@@ -23,6 +23,8 @@ ChangeLog
 -   BUGFIX [code]: avoid collinear overlaps of edges in channels/gutters, where the exit stub of one
     edge and the entry stub of another at the same position ran on top of each other, by
     letting such overlaps dominate the crossings in the edge track ordering
+-   BUGFIX [code]: render a self-loop on a container node, which was silently dropped together
+    with its label, by routing it at the enclosing level around the container box
 -   BUGFIX [code]: reject a consumer-built graph model whose node map key and node id disagree,
     instead of rendering an inconsistent partial output
 
