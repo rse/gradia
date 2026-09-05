@@ -34,6 +34,9 @@ ChangeLog
     gaps around the fixed ones
 -   BUGFIX [code]: reject a consumer-built graph model whose node map key and node id disagree,
     instead of rendering an inconsistent partial output
+-   BUGFIX [code]: validate the "config" options given to the API facade, which so far reached
+    the renderers unchecked (unknown options, wrong-typed or negative values), by sharing one
+    validation between the API, the CLI, the MCP service, and the "#config" directives
 -   BUGFIX [code]: reject a consumer-built graph model whose edge references an undeclared node,
     instead of rendering a silently broken output with "NaN" path coordinates
 -   BUGFIX [code]: keep the boundary gates of a "graph" container level in the row order of

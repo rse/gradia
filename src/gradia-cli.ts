@@ -14,7 +14,7 @@ import { fileURLToPath }   from "node:url"
 import { Command, Option } from "commander"
 
 /*  internal dependencies  */
-import { Config, configDefaults }                                       from "./gradia-api-config.js"
+import { validateConfig }                                               from "./gradia-api-config.js"
 import { Gradia, DiagramType, diagramTypes, diagramTypeDefault,
     DiagramFormat, diagramFormats, diagramFormatDefault }               from "./gradia-api.js"
 
@@ -52,31 +52,14 @@ program.name("gradia")
     .argument("[input]", "input graph description file (omitted in MCP service mode)")
     .action(async (input: string | undefined, options: CLIOptions) => {
         /*  parse and validate the rendering configuration options  */
-        const store: Record<string, string | boolean | number> = {}
+        const store: Record<string, string> = {}
         for (const nv of options.config) {
             const m = /^([a-z][a-z0-9-]*)=(.*)$/.exec(nv)
             if (m === null)
                 throw new Error(`invalid configuration option "${nv}" (expected "<name>=<value>")`)
-            if (!Object.hasOwn(configDefaults, m[1]))
-                throw new Error(`unknown configuration option "${m[1]}"`)
-            const key = m[1] as keyof Config
-            if (typeof configDefaults[key] === "boolean") {
-                if (m[2] !== "true" && m[2] !== "false")
-                    throw new Error(`invalid value "${m[2]}" for boolean configuration option "${key}" (expected "true" or "false")`)
-                store[key] = m[2] === "true"
-            }
-            else if (typeof configDefaults[key] === "number") {
-                const num = Number(m[2])
-                if (m[2] === "" || !Number.isFinite(num) || num < 0)
-                    throw new Error(`invalid value "${m[2]}" for numeric configuration option "${key}" (expected a non-negative number)`)
-                store[key] = num
-            }
-            else if (m[2] === "")
-                throw new Error(`invalid empty value for string configuration option "${key}"`)
-            else
-                store[key] = m[2]
+            store[m[1]] = m[2]
         }
-        const config = store as Partial<Config>
+        const config = validateConfig(store, { trusted: true })
 
         /*  optionally run as an MCP service instead of rendering once,
             with the command-line options acting as the defaults of the

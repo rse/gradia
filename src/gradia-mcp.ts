@@ -10,7 +10,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { z }                    from "zod"
 
 /*  internal dependencies  */
-import { Config, configDefaults }                         from "./gradia-api-config.js"
+import { Config, configDefaults, validateConfig }         from "./gradia-api-config.js"
 import { Gradia, DiagramType, diagramTypes, diagramTypeDefault,
     DiagramFormat, diagramFormats, diagramFormatDefault } from "./gradia-api.js"
 
@@ -267,43 +267,6 @@ const toolArgumentsOf = (defaults: MCPDefaults) => ({
             "types, and defaults). Takes precedence over the \"#config\" directives inside the input.")
 })
 
-/*  validate and coerce the rendering configuration options of a tool
-    call (the arguments are treated as untrusted, so an unknown option
-    or an invalid value is rejected instead of being silently applied)  */
-const validateConfig = (raw: Record<string, string | number | boolean>): Partial<Config> => {
-    const config: Record<string, string | boolean | number> = {}
-    for (const [ key, val ] of Object.entries(raw)) {
-        if (!Object.hasOwn(configDefaults, key))
-            throw new Error(`unknown configuration option "${key}"`)
-        const k = key as keyof Config
-        if (k === "font-embed")
-            throw new Error(`configuration option "${key}" is not available in this context`)
-        else if (typeof configDefaults[k] === "boolean") {
-            if (typeof val !== "boolean" && val !== "true" && val !== "false")
-                throw new Error(`invalid value "${String(val)}" for boolean configuration option "${key}" ` +
-                    "(expected \"true\" or \"false\")")
-            config[k] = typeof val === "boolean" ? val : val === "true"
-        }
-        else if (typeof configDefaults[k] === "number") {
-            const num = Number(val)
-            if (typeof val === "boolean" || String(val).trim() === "" || !Number.isFinite(num) || num < 0)
-                throw new Error(`invalid value "${String(val)}" for numeric configuration option "${key}" ` +
-                    "(expected a non-negative number)")
-            config[k] = num
-        }
-        else {
-            if (typeof val !== "string")
-                throw new Error(`invalid value "${String(val)}" for string configuration option "${key}" (expected a string)`)
-            if (val === "")
-                throw new Error(`invalid empty value for string configuration option "${key}"`)
-            if (k === "font-family" && val.endsWith(".woff2"))
-                throw new Error("configuration option \"font-family\" must not be the path to a WOFF2 file in this context")
-            config[k] = val
-        }
-    }
-    return config as Partial<Config>
-}
-
 /*  the defaults of the MCP service, provided by the (trusted)
     command-line and underlying the arguments of every tool call  */
 export interface MCPDefaults {
@@ -327,7 +290,7 @@ export const serve = async (meta: { version: string }, defaults: MCPDefaults = {
         annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false }
     }, async (args) => {
         try {
-            const config = { ...defaults.config, ...validateConfig(args.config ?? {}) }
+            const config = { ...defaults.config, ...validateConfig(args.config ?? {}, { trusted: false }) }
             const out    = await Gradia.render(args.input, {
                 type:   args.type   ?? defaults.type,
                 format: args.format ?? defaults.format,

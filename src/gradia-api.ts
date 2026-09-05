@@ -7,7 +7,8 @@
 /*  internal dependencies  */
 import { Graph }                                   from "./gradia-api-model.js"
 import { parse }                                   from "./gradia-api-parser.js"
-import { Config, configDefaults, parseDirectives } from "./gradia-api-config.js"
+import { Config, configDefaults, parseDirectives, validateConfig }
+    from "./gradia-api-config.js"
 import { partitionGroups, composeGroups }          from "./gradia-api-render-group.js"
 import { DiagramTypeSpec, containmentOf, renderContained }
     from "./gradia-api-render-container.js"
@@ -83,11 +84,10 @@ export class Gradia {
         if (!diagramFormats.includes(format))
             throw new Error(`invalid output format "${format}"`)
 
-        /*  layer the rendering configuration (an option explicitly set
-            to "undefined" is dropped, as it would otherwise override its
-            default instead of falling back to it)  */
-        const explicit = Object.fromEntries(Object.entries(options.config ?? {})
-            .filter(([ , val ]) => val !== undefined)) as Partial<Config>
+        /*  validate and layer the rendering configuration (an option
+            explicitly set to "undefined" is dropped, as it would otherwise
+            override its default instead of falling back to it)  */
+        const explicit = validateConfig(options.config ?? {}, { trusted: true })
         const config   = { ...configDefaults, ...explicit }
 
         /*  validate the graph model integrity: the map key and the id of

@@ -79,40 +79,66 @@ export const cssValueOf = (explicit: Partial<Config>, key: ConfigEmbedded): stri
         explicit[key]!.replace(/[;{}]/g, "") :
         `var(--gradia-${key}, ${configDefaults[key]})`
 
+/*  validate and coerce rendering configuration options into their
+    types (coercing strings, as given on the command line): an unknown
+    option or an invalid value is rejected, an option set to "undefined"
+    is dropped, and an untrusted source may neither embed fonts nor name
+    a WOFF2 file, as this would let it read arbitrary local files  */
+export const validateConfig = (raw: Record<string, unknown>, options: { trusted: boolean }): Partial<Config> => {
+    const config: Record<string, string | boolean | number> = {}
+    for (const [ key, val ] of Object.entries(raw)) {
+        if (!Object.hasOwn(configDefaults, key))
+            throw new Error(`unknown configuration option "${key}"`)
+        const k = key as keyof Config
+        if (val === undefined)
+            continue
+        if (k === "font-embed" && !options.trusted)
+            throw new Error(`configuration option "${key}" is not available in this context`)
+        else if (typeof configDefaults[k] === "boolean") {
+            if (typeof val !== "boolean" && val !== "true" && val !== "false")
+                throw new Error(`invalid value "${String(val)}" for boolean configuration option "${key}" ` +
+                    "(expected \"true\" or \"false\")")
+            config[k] = typeof val === "boolean" ? val : val === "true"
+        }
+        else if (typeof configDefaults[k] === "number") {
+            const num = Number(val)
+            if ((typeof val !== "number" && typeof val !== "string") || String(val).trim() === "" || !Number.isFinite(num) || num < 0)
+                throw new Error(`invalid value "${String(val)}" for numeric configuration option "${key}" ` +
+                    "(expected a non-negative number)")
+            config[k] = num
+        }
+        else {
+            if (typeof val !== "string")
+                throw new Error(`invalid value "${String(val)}" for string configuration option "${key}" (expected a string)`)
+            if (val === "")
+                throw new Error(`invalid empty value for string configuration option "${key}"`)
+            if (k === "font-family" && val.endsWith(".woff2") && !options.trusted)
+                throw new Error("configuration option \"font-family\" must not be the path to a WOFF2 file in this context")
+            config[k] = val
+        }
+    }
+    return config as Partial<Config>
+}
+
 /*  parse "#config <option> <value>" configuration directives from a graph
-    description (lines which are otherwise treated as plain comments)  */
+    description (lines which are otherwise treated as plain comments),
+    validating them as untrusted and silently skipping an unknown option
+    or an invalid value, as directives never abort the rendering  */
 export const parseDirectives = (input: string): Partial<Config> => {
-    const partial: Record<string, string | boolean | number> = {}
+    const partial: Partial<Config> = {}
     for (const line of input.split(/\r?\n/)) {
         const m = /^[ \t]*#config[ \t]+([a-z][a-z0-9-]*)[ \t]+(?:"((?:[^"\\]|\\.)*)"|(\S+))[ \t]*$/.exec(line)
-        if (m === null || !Object.hasOwn(configDefaults, m[1]))
+        if (m === null)
             continue
-        const key = m[1] as keyof Config
         const val = m[2] !== undefined ? m[2].replace(/\\(.)/g, "$1") : m[3]
-
-        /*  reject font file paths and font embedding from the untrusted graph
-            description, as they would let it read arbitrary local WOFF2 files  */
-        if (key === "font-embed" || (key === "font-family" && val.endsWith(".woff2")))
-            continue
-
-        /*  coerce the value into the type of the option, silently
-            skipping invalid values, as directives are lines of an
-            untrusted input and never abort the rendering  */
-        if (typeof configDefaults[key] === "boolean") {
-            if (val !== "true" && val !== "false")
-                continue
-            partial[key] = val === "true"
+        try {
+            Object.assign(partial, validateConfig({ [m[1]]: val }, { trusted: false }))
         }
-        else if (typeof configDefaults[key] === "number") {
-            const num = Number(val)
-            if (val === "" || !Number.isFinite(num) || num < 0)
-                continue
-            partial[key] = num
+        catch {
+            /*  skip the invalid directive  */
         }
-        else if (val !== "")
-            partial[key] = val
     }
-    return partial as Partial<Config>
+    return partial
 }
 
 /*  the built-in font families, shipped as WOFF2 files by NPM
