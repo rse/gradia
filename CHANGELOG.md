@@ -2,8 +2,8 @@
 ChangeLog
 =========
 
-1.1.10 (2026-09-05)
--------------------
+1.2.0 (2026-09-05)
+------------------
 
 -   BUGFIX [code]: avoid collinear overlaps of edges in channels/gutters, where the exit stub of one
     edge and the entry stub of another at the same position ran on top of each other, by
