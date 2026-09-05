@@ -10,11 +10,9 @@ import UUID                                                 from "pure-uuid"
 /*  internal dependencies  */
 import { Node, Edge }                                       from "./gradia-api-model.js"
 import { Config, ConfigEmbedded, resolveFont, cssValueOf }  from "./gradia-api-config.js"
-import {
-    Poly, NodeStyle,
-    FS_NAME, FS_TYPE, FS_ATTR, FS_EDGE, FS_ARITY, FS_GROUP, ARITY_OFF,
-    textWidth, escapeXML
-} from "./gradia-api-render-base.js"
+import { Poly, NodeStyle, Layout, GroupBox, ContainerBox,
+    FS_NAME, FS_TYPE, FS_ATTR, FS_EDGE, FS_ARITY, FS_GROUP, ARITY_OFF, textWidth, escapeXML }
+    from "./gradia-api-render-base.js"
 import { linesOfNode, urlOf, typeOf, defaultStyleOf, containerHead,
     MIN_H, NAME_H, ATTR_H, ATTR_P, TYPE_H, TYPE_D, HEAD_H }
     from "./gradia-api-render-node.js"
@@ -41,39 +39,6 @@ const NS_GRADIA = new UUID(5, "ns:URL", "https://github.com/rse/gradia").format(
     name and CSS/URL fragment)  */
 const idPrefix = (seed: string): string =>
     `gradia-${new UUID(5, NS_GRADIA, seed).format("b16").toLowerCase()}`
-
-/*  a decorated group box surrounding the nodes of a named group  */
-export interface GroupBox {
-    name: string
-    x:    number
-    y:    number
-    w:    number
-    h:    number
-}
-
-/*  a decorated container box surrounding the members of a container node  */
-export interface ContainerBox {
-    node: Node
-    x:    number
-    y:    number
-    w:    number
-    h:    number
-}
-
-/*  the laid out graph handed over for SVG generation  */
-export interface Layout {
-    nodes:       Node[]
-    edges:       Edge[]
-    cx:          (id: string) => number
-    cy:          (id: string) => number
-    boxW:        Map<string, number>
-    boxH:        Map<string, number>
-    contentH:    Map<string, number>
-    polys:       Poly[]
-    styleOf?:    (node: Node) => NodeStyle
-    groups?:     GroupBox[]
-    containers?: ContainerBox[]
-}
 
 /*  a rectangular area, given by its top-left and bottom-right corners  */
 type Box = [ number, number, number, number ]
@@ -290,6 +255,44 @@ const renderEdgeLabels = (edge: Edge, poly: Poly, claim: (candidates: Box[]) => 
     return parts
 }
 
+/*  generate the SVG fragments for a single group box and its tag
+    in the top-left corner  */
+const renderGroup = (group: GroupBox, font: string,
+    color: (key: ConfigEmbedded) => string): string[] => [
+    `<rect x="${group.x}" y="${group.y}" width="${group.w}" height="${group.h}" rx="12" ` +
+        `style="fill: ${color("color-group-box")}; ` +
+        `stroke: ${color("color-group-border")}" stroke-width="3.0"/>`,
+    `<text x="${group.x + TAG_DX}" y="${group.y + TAG_DY + FS_GROUP}" ` +
+        `font-size="${FS_GROUP}" font-weight="600" ` +
+        `style="font-family: ${font}; fill: ${color("color-group-name")}">${escapeXML(group.name)}</text>`
+]
+
+/*  generate the SVG fragments for a single container box and its tag
+    in the top-left corner, with the optional type line above the name
+    (a container with a "url" attribute becomes a hyperlink covering
+    the whole box)  */
+const renderContainer = (c: ContainerBox, font: string,
+    color: (key: ConfigEmbedded) => string): string[] => {
+    const type  = typeOf(c.node)
+    const url   = urlOf(c.node)
+    const parts = [
+        `<rect x="${c.x}" y="${c.y}" width="${c.w}" height="${c.h}" rx="12" ` +
+            `style="fill: ${color("color-container-box")}; ` +
+            `stroke: ${color("color-container-border")}" stroke-width="3.0" stroke-dasharray="10 6"/>`,
+        ...(type !== undefined ? [
+            `<text x="${c.x + TAG_DX}" y="${c.y + TAG_DY + FS_TYPE}" ` +
+                `font-size="${FS_TYPE}" ` +
+                `style="font-family: ${font}; fill: ${color("color-container-name")}">${escapeXML(type)}</text>`
+        ] : []),
+        `<text x="${c.x + TAG_DX}" y="${c.y + containerHead(c.node) - HEAD_H + TAG_DY + FS_GROUP}" ` +
+            `font-size="${FS_GROUP}" font-weight="600" ` +
+            `style="font-family: ${font}; fill: ${color("color-container-name")}">${escapeXML(c.node.name)}</text>`
+    ]
+    if (url === undefined)
+        return parts
+    return [ `<a href="${escapeXML(url)}" xlink:href="${escapeXML(url)}">`, ...parts, "</a>" ]
+}
+
 /*  render a laid out graph into an SVG document (the seed determines the
     identifier prefix of the document, see "idPrefix" above)  */
 export const renderSVG = (layout: Layout, config: Config, explicit: Partial<Config>,
@@ -336,41 +339,10 @@ export const renderSVG = (layout: Layout, config: Config, explicit: Partial<Conf
     const svgNodes = nodes.flatMap((node) => renderNode(node, layout, styleOf(node), font, color, config))
 
     /*  generate the SVG fragments for the group boxes (drawn below
-        everything else) and their tags in the top-left corners  */
-    const svgGroups = groups.flatMap((group) => [
-        `<rect x="${group.x}" y="${group.y}" width="${group.w}" height="${group.h}" rx="12" ` +
-            `style="fill: ${color("color-group-box")}; ` +
-            `stroke: ${color("color-group-border")}" stroke-width="3.0"/>`,
-        `<text x="${group.x + TAG_DX}" y="${group.y + TAG_DY + FS_GROUP}" ` +
-            `font-size="${FS_GROUP}" font-weight="600" ` +
-            `style="font-family: ${font}; fill: ${color("color-group-name")}">${escapeXML(group.name)}</text>`
-    ])
-
-    /*  generate the SVG fragments for the container boxes (drawn below
-        the edges and nodes, an outer box before its nested ones) and
-        their tags in the top-left corners, with the optional type line
-        above the name (a container with a "url" attribute becomes a
-        hyperlink covering the whole box)  */
-    const svgContainers = containers.flatMap((c) => {
-        const type  = typeOf(c.node)
-        const url   = urlOf(c.node)
-        const parts = [
-            `<rect x="${c.x}" y="${c.y}" width="${c.w}" height="${c.h}" rx="12" ` +
-                `style="fill: ${color("color-container-box")}; ` +
-                `stroke: ${color("color-container-border")}" stroke-width="3.0" stroke-dasharray="10 6"/>`,
-            ...(type !== undefined ? [
-                `<text x="${c.x + TAG_DX}" y="${c.y + TAG_DY + FS_TYPE}" ` +
-                    `font-size="${FS_TYPE}" ` +
-                    `style="font-family: ${font}; fill: ${color("color-container-name")}">${escapeXML(type)}</text>`
-            ] : []),
-            `<text x="${c.x + TAG_DX}" y="${c.y + containerHead(c.node) - HEAD_H + TAG_DY + FS_GROUP}" ` +
-                `font-size="${FS_GROUP}" font-weight="600" ` +
-                `style="font-family: ${font}; fill: ${color("color-container-name")}">${escapeXML(c.node.name)}</text>`
-        ]
-        if (url === undefined)
-            return parts
-        return [ `<a href="${escapeXML(url)}" xlink:href="${escapeXML(url)}">`, ...parts, "</a>" ]
-    })
+        everything else) and the container boxes (drawn below the edges
+        and nodes, an outer box before its nested ones)  */
+    const svgGroups     = groups.flatMap((group) => renderGroup(group, font, color))
+    const svgContainers = containers.flatMap((c) => renderContainer(c, font, color))
 
     /*  determine the overall bounding box of all rendered elements  */
     const groupBoxes: Box[] = groups.map((group) =>

@@ -52,8 +52,7 @@ program.name("gradia")
     .argument("[input]", "input graph description file (omitted in MCP service mode)")
     .action(async (input: string | undefined, options: CLIOptions) => {
         /*  parse and validate the rendering configuration options  */
-        const config: Partial<Config> = {}
-        const store = config as Record<string, string | boolean | number>
+        const store: Record<string, string | boolean | number> = {}
         for (const nv of options.config) {
             const m = /^([a-z][a-z0-9-]*)=(.*)$/.exec(nv)
             if (m === null)
@@ -77,6 +76,7 @@ program.name("gradia")
             else
                 store[key] = m[2]
         }
+        const config = store as Partial<Config>
 
         /*  optionally run as an MCP service instead of rendering once,
             with the command-line options acting as the defaults of the

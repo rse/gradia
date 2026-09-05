@@ -5,6 +5,7 @@
 */
 
 /*  internal dependencies  */
+import { Node, Edge }     from "./gradia-api-model.js"
 import { ConfigEmbedded } from "./gradia-api-config.js"
 
 /*  rendering font size constants (the further geometry is configurable,
@@ -30,8 +31,9 @@ export const textWidth = (text: string, size: number): number =>
     inside a word harms the readability more than an overlong box)  */
 export const textWrap = (text: string, size: number, maxWidth: number): string[] => {
     const words = text.split(/\s+/).filter((word) => word !== "")
-    if (maxWidth <= 0 || words.length <= 1 || textWidth(text, size) <= maxWidth)
-        return [ text ]
+    const norm  = words.join(" ")
+    if (maxWidth <= 0 || words.length <= 1 || textWidth(norm, size) <= maxWidth)
+        return [ norm ]
     const lines: string[] = []
     let line = words[0]
     for (const word of words.slice(1)) {
@@ -65,5 +67,38 @@ export interface NodeStyle {
     stroke: ConfigEmbedded
     text:   ConfigEmbedded
     dash?:  string
+}
+
+/*  a decorated group box surrounding the nodes of a named group  */
+export interface GroupBox {
+    name: string
+    x:    number
+    y:    number
+    w:    number
+    h:    number
+}
+
+/*  a decorated container box surrounding the members of a container node  */
+export interface ContainerBox {
+    node: Node
+    x:    number
+    y:    number
+    w:    number
+    h:    number
+}
+
+/*  the laid out graph handed over for SVG generation  */
+export interface Layout {
+    nodes:       Node[]
+    edges:       Edge[]
+    cx:          (id: string) => number
+    cy:          (id: string) => number
+    boxW:        Map<string, number>
+    boxH:        Map<string, number>
+    contentH:    Map<string, number>
+    polys:       Poly[]
+    styleOf?:    (node: Node) => NodeStyle
+    groups?:     GroupBox[]
+    containers?: ContainerBox[]
 }
 

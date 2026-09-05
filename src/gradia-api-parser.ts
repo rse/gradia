@@ -11,8 +11,8 @@ import { Attr, Graph } from "./gradia-api-model.js"
 interface Token {
     type:   "word" | "string" | "edge" | "punct" | "newline"
     text:   string
-    name?:  string
-    arity?: string
+    name?:  string   /*  edge tokens only: the edge name   */
+    arity?: string   /*  edge tokens only: the edge arity  */
     line:   number
     col:    number
 }

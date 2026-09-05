@@ -7,11 +7,11 @@
 /*  internal dependencies  */
 import { Node, Edge, Graph }                       from "./gradia-api-model.js"
 import { Config }                                  from "./gradia-api-config.js"
-import { Poly, FS_GROUP, FS_TYPE, textWidth }      from "./gradia-api-render-base.js"
+import { Poly, FS_GROUP, FS_TYPE, textWidth, Layout, ContainerBox }
+    from "./gradia-api-render-base.js"
 import { parentOf, containerTypeOf, containerHead, typeOf, defaultStyleOf }
     from "./gradia-api-render-node.js"
 import { simplifyPoly }                            from "./gradia-api-render-edge.js"
-import { Layout, ContainerBox }                    from "./gradia-api-render-svg.js"
 
 /*  the side of a container boundary a gate node sits on: an "in" gate
     on the west side carries an edge entering the container, an "out"
@@ -179,109 +179,36 @@ export const renderContained = async (
         return types[type].render(graph, config)
     const pad = config["container-box-padding"]
 
-    /*  lay out a single containment level  */
-    const layoutLevel = async (container: Node | null, type: string): Promise<Level> => {
-        const members = container === null ?
-            nodes.filter((node) => parentOf(node) === undefined) :
-            containment.childrenOf.get(container.id) ?? []
-        const memberIds = new Set(members.map((member) => member.id))
+    /*  reject the node ids which could collide with the gate node ids  */
+    for (const node of nodes)
+        if (node.id.includes("\u0000"))
+            throw new Error(`node id ${JSON.stringify(node.id)} contains a reserved control character`)
 
-        /*  the member of this level a node of its subtree belongs to  */
-        const topOf = (id: string): string | undefined => {
-            for (let cur: string | undefined = id; cur !== undefined; cur = containment.parentOf.get(cur))
-                if (memberIds.has(cur))
-                    return cur
-            return undefined
+    /*  the box size of a container placeholder: its content plus
+        the padding and the head, at least as wide as its tag  */
+    const sizeOf = (member: Node, b: Bounds): { w: number, h: number } => {
+        const tag = Math.max(textWidth(member.name, FS_GROUP),
+            textWidth(typeOf(member) ?? "", FS_TYPE))
+        return {
+            w: Math.max(b.maxX - b.minX, tag) + pad * 2,
+            h: b.maxY - b.minY + pad * 2 + containerHead(member)
         }
+    }
 
-        /*  lay out the member containers first  */
-        const inner = new Map<string, Level>()
-        for (const member of members)
-            if (isContainer(member))
-                inner.set(member.id, await layoutLevel(member, containerTypeOf(member) ?? type))
-
-        /*  the box size of a container placeholder: its content plus
-            the padding and the head, at least as wide as its tag  */
-        const sizeOf = (member: Node): { w: number, h: number } => {
-            const b = inner.get(member.id)!.bounds
-            const tag = Math.max(textWidth(member.name, FS_GROUP),
-                textWidth(typeOf(member) ?? "", FS_TYPE))
-            return {
-                w: Math.max(b.maxX - b.minX, tag) + pad * 2,
-                h: b.maxY - b.minY + pad * 2 + containerHead(member)
-            }
-        }
-
-        /*  the vertical offset (from the placeholder center) of the
-            port an edge crossing the boundary of a member container
-            attaches at: the position of its inner gate  */
-        const portOffset = (member: Node, y: number): number =>
-            (y - inner.get(member.id)!.bounds.minY) + containerHead(member) + pad - sizeOf(member).h / 2
-
-        /*  derive the edges of this level: the edges lifted to it (both
-            endpoints in the subtree, but not both in the same member
-            container), and, for a gated diagram type, the edges crossing
-            its own boundary, continued from a gate node. The name of an
-            edge is placed at its lifted level, its arity at the level
-            holding its arrow head  */
-        const gates      = new Map<string, GateSide>()
-        const levelNodes = new Map<string, Node>(members.map((member) => [ member.id, member ]))
-        const levelEdges: Edge[]   = []
-        const origin:     number[] = []
-        const fixedPort  = new Map<string, number>()
-        const continues  = (id: string, edge: number): boolean =>
-            inner.get(id)?.partial.has(edge) ?? false
-        graph.edges.forEach((edge, i) => {
-            const ts = topOf(edge.source)
-            const tt = topOf(edge.target)
-            if (ts === undefined && tt === undefined)
-                return
-            if (ts !== undefined && tt !== undefined && ts === tt && inner.has(ts))
-                return
-            let source: string
-            let target: string
-            if (ts === undefined || tt === undefined) {
-                if (!types[type].gated)
-                    return
-                const gate = gateId(i, ts === undefined ? "in" : "out")
-                gates.set(gate, ts === undefined ? "in" : "out")
-                levelNodes.set(gate, { id: gate, name: "", attrs: [] })
-                source = ts ?? gate
-                target = tt ?? gate
-            }
-            else {
-                source = ts
-                target = tt
-            }
-            const li = levelEdges.length
-            levelEdges.push({
-                source,
-                target,
-                name:  ts !== undefined && tt !== undefined ? edge.name : undefined,
-                arity: tt !== undefined && !continues(tt, i) ? edge.arity : undefined
-            })
-            origin.push(i)
-            if (continues(source, i))
-                fixedPort.set(`${li}:s`, portOffset(levelNodes.get(source)!,
-                    inner.get(source)!.partial.get(i)!.at(-1)![1]))
-            if (continues(target, i))
-                fixedPort.set(`${li}:t`, portOffset(levelNodes.get(target)!,
-                    inner.get(target)!.partial.get(i)![0][1]))
-        })
-
-        /*  lay out the level with the member containers as placeholders  */
-        const fixedSize = new Map<string, { w: number, h: number }>()
-        for (const member of members)
-            if (inner.has(member.id))
-                fixedSize.set(member.id, sizeOf(member))
-        for (const gate of gates.keys())
-            fixedSize.set(gate, { w: 0, h: 0 })
-        const layout = await types[type].render({ nodes: levelNodes, edges: levelEdges }, config, {
-            fixedSize,
-            fixedPort: (edge, role) => fixedPort.get(`${edge}:${role}`),
-            gates
-        })
-
+    /*  compose a laid out containment level with its inner levels: the
+        inner layouts are shifted into their container boxes, the edges
+        of the level are stitched together with the partial routes
+        inside the containers they leave or enter, and the placeholders
+        and gates are dropped (the container boxes are rendered in
+        their place)  */
+    const composeLevel = (
+        layout:     Layout,
+        inner:      Map<string, Level>,
+        levelEdges: Edge[],
+        origin:     number[],
+        gates:      Map<string, GateSide>,
+        type:       string
+    ): Level => {
         /*  shift every inner layout into its container box (the parts
             are the level layout itself and the shifted inner layouts,
             with every node id dispatching to the part it belongs to)  */
@@ -292,10 +219,10 @@ export const renderContained = async (
         const boxes:      ContainerBox[] = []
         const innerBoxes: ContainerBox[] = []
         for (const [ id, level ] of inner) {
-            const member = levelNodes.get(id)!
+            const member = graph.nodes.get(id)!
             if (!layout.nodes.some((node) => node.id === id))
                 throw new Error(`container "${id}" cannot be placed twice by diagram type "${type}"`)
-            const { w, h } = sizeOf(member)
+            const { w, h } = sizeOf(member, level.bounds)
             const cx = layout.cx(id)
             const cy = layout.cy(id)
             const k  = parts.push({
@@ -325,7 +252,7 @@ export const renderContained = async (
             (an edge crossing the boundary of this level stays partial)  */
         const edges:   Edge[] = []
         const polys:   Poly[] = []
-        const partial = new Map<number, Poly>()
+        const partial         = new Map<number, Poly>()
         parts.forEach((part, k) => {
             if (k === 0)
                 return
@@ -371,6 +298,100 @@ export const renderContained = async (
             containers: [ ...boxes, ...innerBoxes ]
         }
         return { layout: composed, bounds: boundsOf(composed, Array.from(partial.values())), partial }
+    }
+
+    /*  lay out a single containment level  */
+    const layoutLevel = async (container: Node | null, type: string): Promise<Level> => {
+        const members = container === null ?
+            nodes.filter((node) => parentOf(node) === undefined) :
+            containment.childrenOf.get(container.id) ?? []
+        const memberIds = new Set(members.map((member) => member.id))
+
+        /*  the member of this level a node of its subtree belongs to  */
+        const topOf = (id: string): string | undefined => {
+            for (let cur: string | undefined = id; cur !== undefined; cur = containment.parentOf.get(cur))
+                if (memberIds.has(cur))
+                    return cur
+            return undefined
+        }
+
+        /*  lay out the member containers first  */
+        const inner = new Map<string, Level>()
+        for (const member of members)
+            if (isContainer(member))
+                inner.set(member.id, await layoutLevel(member, containerTypeOf(member) ?? type))
+
+        /*  the vertical offset (from the placeholder center) of the
+            port an edge crossing the boundary of a member container
+            attaches at: the position of its inner gate  */
+        const portOffset = (member: Node, y: number): number => {
+            const { bounds } = inner.get(member.id)!
+            return (y - bounds.minY) + containerHead(member) + pad - sizeOf(member, bounds).h / 2
+        }
+
+        /*  derive the edges of this level: the edges lifted to it (both
+            endpoints in the subtree, but not both inside the same member
+            container), and, for a gated diagram type, the edges crossing
+            its own boundary, continued from a gate node. The name of an
+            edge is placed at its lifted level, its arity at the level
+            holding its arrow head  */
+        const gates                = new Map<string, GateSide>()
+        const levelNodes           = new Map<string, Node>(members.map((member) => [ member.id, member ]))
+        const levelEdges: Edge[]   = []
+        const origin:     number[] = []
+        const fixedPort            = new Map<string, number>()
+        const continues            = (id: string, edge: number): boolean =>
+            inner.get(id)?.partial.has(edge) ?? false
+        graph.edges.forEach((edge, i) => {
+            const ts = topOf(edge.source)
+            const tt = topOf(edge.target)
+            if (ts === undefined && tt === undefined)
+                return
+            if (ts !== undefined && tt !== undefined && ts === tt && inner.has(ts) && edge.source !== ts)
+                return
+            let source: string
+            let target: string
+            if (ts === undefined || tt === undefined) {
+                if (!types[type].gated)
+                    return
+                const gate = gateId(i, ts === undefined ? "in" : "out")
+                gates.set(gate, ts === undefined ? "in" : "out")
+                levelNodes.set(gate, { id: gate, name: "", attrs: [] })
+                source = ts ?? gate
+                target = tt ?? gate
+            }
+            else {
+                source = ts
+                target = tt
+            }
+            const li = levelEdges.length
+            levelEdges.push({
+                source,
+                target,
+                name:  ts !== undefined && tt !== undefined ? edge.name : undefined,
+                arity: tt !== undefined && !continues(tt, i) ? edge.arity : undefined
+            })
+            origin.push(i)
+            if (continues(source, i))
+                fixedPort.set(`${li}:s`, portOffset(levelNodes.get(source)!,
+                    inner.get(source)!.partial.get(i)!.at(-1)![1]))
+            if (continues(target, i))
+                fixedPort.set(`${li}:t`, portOffset(levelNodes.get(target)!,
+                    inner.get(target)!.partial.get(i)![0][1]))
+        })
+
+        /*  lay out the level with the member containers as placeholders  */
+        const fixedSize = new Map<string, { w: number, h: number }>()
+        for (const [ id, level ] of inner)
+            fixedSize.set(id, sizeOf(levelNodes.get(id)!, level.bounds))
+        for (const gate of gates.keys())
+            fixedSize.set(gate, { w: 0, h: 0 })
+        const layout = await types[type].render({ nodes: levelNodes, edges: levelEdges }, config, {
+            fixedSize,
+            fixedPort: (edge, role) => fixedPort.get(`${edge}:${role}`),
+            gates
+        })
+        return composeLevel(layout, inner, levelEdges, origin, gates, type)
     }
     return (await layoutLevel(null, type)).layout
 }

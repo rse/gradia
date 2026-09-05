@@ -10,8 +10,8 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { z }                    from "zod"
 
 /*  internal dependencies  */
-import { Config, configDefaults }                       from "./gradia-api-config.js"
-import { Gradia, DiagramType, diagramTypes,
+import { Config, configDefaults }                         from "./gradia-api-config.js"
+import { Gradia, DiagramType, diagramTypes, diagramTypeDefault,
     DiagramFormat, diagramFormats, diagramFormatDefault } from "./gradia-api.js"
 
 /*  the rendering configuration options offered to the MCP client
@@ -246,23 +246,26 @@ argument, the tool instead returns an error result whose text starts with
 "gradia: ERROR: ", followed by the reason.
 `.trim()
 
-/*  the arguments of the "gradia_render" tool  */
-const toolArguments = {
+/*  the arguments of the "gradia_render" tool (with their descriptions
+    reflecting the service defaults underlying the arguments)  */
+const toolArgumentsOf = (defaults: MCPDefaults) => ({
     input: z.string()
         .describe("The graph description in the Gradia input language (see the tool description for its grammar)."),
-    type: z.enum(diagramTypes as [ DiagramType, ...DiagramType[] ]).optional()
+    type: z.enum(diagramTypes).optional()
         .describe("The diagram type. Takes precedence over a \"#type\" directive inside the input. " +
-            "Defaults to the \"#type\" directive of the input, else to \"graph\"."),
+            (defaults.type !== undefined ?
+                `Defaults to "${defaults.type}".` :
+                `Defaults to the "#type" directive of the input, else to "${diagramTypeDefault}".`)),
     format: z.enum(diagramFormats).optional()
         .describe("The output format: \"svg:standalone\" (a standalone SVG/XML document), " +
             "\"svg:embedded\" (the SVG without the \"<?xml?>\" declaration, for embedding into HTML), " +
             "\"url:xml\" (a \"data:image/svg+xml\" URL with URL-encoded XML), or " +
             "\"url:base64\" (a \"data:image/svg+xml\" URL with Base64-encoded XML). " +
-            `Defaults to "${diagramFormatDefault}".`),
+            `Defaults to "${defaults.format ?? diagramFormatDefault}".`),
     config: z.record(z.string(), z.union([ z.string(), z.number(), z.boolean() ])).optional()
         .describe("The rendering configuration options (see the tool description for their names, " +
             "types, and defaults). Takes precedence over the \"#config\" directives inside the input.")
-}
+})
 
 /*  validate and coerce the rendering configuration options of a tool
     call (the arguments are treated as untrusted, so an unknown option
@@ -283,7 +286,7 @@ const validateConfig = (raw: Record<string, string | number | boolean>): Partial
         }
         else if (typeof configDefaults[k] === "number") {
             const num = Number(val)
-            if (typeof val === "boolean" || val === "" || !Number.isFinite(num) || num < 0)
+            if (typeof val === "boolean" || String(val).trim() === "" || !Number.isFinite(num) || num < 0)
                 throw new Error(`invalid value "${String(val)}" for numeric configuration option "${key}" ` +
                     "(expected a non-negative number)")
             config[k] = num
@@ -291,6 +294,8 @@ const validateConfig = (raw: Record<string, string | number | boolean>): Partial
         else {
             if (typeof val !== "string")
                 throw new Error(`invalid value "${String(val)}" for string configuration option "${key}" (expected a string)`)
+            if (val === "")
+                throw new Error(`invalid empty value for string configuration option "${key}"`)
             if (k === "font-family" && val.endsWith(".woff2"))
                 throw new Error("configuration option \"font-family\" must not be the path to a WOFF2 file in this context")
             config[k] = val
@@ -318,7 +323,7 @@ export const serve = async (meta: { version: string }, defaults: MCPDefaults = {
     server.registerTool("gradia_render", {
         title:       "Render an object graph as an SVG diagram",
         description: toolDescription,
-        inputSchema: toolArguments,
+        inputSchema: toolArgumentsOf(defaults),
         annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false }
     }, async (args) => {
         try {

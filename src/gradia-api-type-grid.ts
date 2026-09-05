@@ -8,7 +8,7 @@
 import { Graph }        from "./gradia-api-model.js"
 import { Config }       from "./gradia-api-config.js"
 import { measureNodes } from "./gradia-api-render-node.js"
-import { Layout }       from "./gradia-api-render-svg.js"
+import { Layout }       from "./gradia-api-render-base.js"
 import { LevelContext } from "./gradia-api-render-container.js"
 
 /*  lay out an edge-less graph model as a compact grid of tiles (for a

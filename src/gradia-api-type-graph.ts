@@ -10,10 +10,9 @@ import { DagreLayout } from "@antv/layout"
 /*  internal dependencies  */
 import { Graph, Node, Edge }                 from "./gradia-api-model.js"
 import { Config }                            from "./gradia-api-config.js"
-import { Poly, FS_EDGE, FS_ARITY, ARITY_OFF, textWidth }
+import { Poly, FS_EDGE, FS_ARITY, ARITY_OFF, textWidth, Layout }
     from "./gradia-api-render-base.js"
 import { measureNodes }                      from "./gradia-api-render-node.js"
-import { Layout }                            from "./gradia-api-render-svg.js"
 import { LevelContext, GateSide }            from "./gradia-api-render-container.js"
 import { Side, TrackUser, simplifyPoly, assignPorts, assignTracks, computeHops }
     from "./gradia-api-render-edge.js"
@@ -31,6 +30,8 @@ const GUT_PAD  = 12  /*  cross-axis padding inside a gutter          */
 const GUT_LBL  = 22  /*  clearance above/below a label in a gutter   */
 const LOOP_GAP = 24  /*  detour of a self-loop beside its node box   */
 const LOOP_TOP = 52  /*  detour of a self-loop above its node box    */
+
+/*  node nudging constants  */
 const NUDGE_GAP    = 24  /*  min port distance of a nudged node from its gutter tracks  */
 const NUDGE_PASSES = 3   /*  max number of node nudging passes                          */
 
@@ -178,6 +179,8 @@ const compactRows = (
     const cells = new Set<string>()
     for (const node of nodes)
         cells.add(`${col.get(node.id)}:${row.get(node.id)}`)
+
+    /*  lift every edge-less node into the topmost free cell of its column  */
     const linked = new Set<string>()
     for (const edge of edges) {
         linked.add(edge.source)
@@ -195,6 +198,9 @@ const compactRows = (
                 break
             }
     }
+
+    /*  merge every row into the row above it as long as no column is
+        occupied in both, then renumber the rows densely  */
     const byRow = new Map<number, Node[]>()
     for (const node of nodes)
         pushTo(byRow, row.get(node.id)!, node)
@@ -242,16 +248,19 @@ const placeGates = (
         ncols++
     const place = (ids: string[], c: number): void => {
         /*  the gates are placed in the order of their wanted rows, so
-            the ones displaced into other rows never cross each other  */
-        const wantOf = new Map<string, number>()
+            the ones displaced into other rows never cross each other
+            (the wanted row is the current row of the connected node,
+            re-read per gate, as an inserted row shifts the nodes below)  */
+        const otherOf = new Map<string, string>()
         for (const id of ids) {
             const edge = edges.find((edge) => edge.source === id || edge.target === id)!
-            wantOf.set(id, row.get(edge.source === id ? edge.target : edge.source)!)
+            otherOf.set(id, edge.source === id ? edge.target : edge.source)
         }
-        ids.sort((a, b) => wantOf.get(a)! - wantOf.get(b)!)
+        const wantOf = (id: string): number => row.get(otherOf.get(id)!)!
+        ids.sort((a, b) => wantOf(a) - wantOf(b))
         const placed: string[] = []
         for (const id of ids) {
-            const want  = wantOf.get(id)!
+            const want  = wantOf(id)
             const taken = (r: number): boolean =>
                 placed.some((other) => row.get(other) === r)
             let r: number | undefined
@@ -262,9 +271,9 @@ const placeGates = (
                     r = want - d
             }
             if (r === undefined) {
-                for (const [ other, or ] of row)
-                    if (or > want)
-                        row.set(other, or + 1)
+                for (const [ other, otherRow ] of row)
+                    if (otherRow > want)
+                        row.set(other, otherRow + 1)
                 nrows++
                 r = want + 1
             }
@@ -673,6 +682,55 @@ const nudgeNodes = (
     return current
 }
 
+/*  determine the attachment sides of every edge, derived from the
+    column relation of its endpoint nodes (a self-loop leaves on the
+    east side and re-enters on the north side of its own box), except
+    for an edge end attaching at a fixed port of a container box,
+    which always uses the side of the inner gate: the west side
+    when entering the container, the east side when leaving it  */
+const attachSides = (
+    edges: Edge[],
+    col:   Map<string, number>,
+    level: LevelContext
+): { s: Side, t: Side }[] =>
+    edges.map((edge, i) => {
+        const sc = col.get(edge.source)!
+        const tc = col.get(edge.target)!
+        if (edge.source === edge.target)
+            return { s: "e", t: "n" }
+        const s: Side = level.fixedPort?.(i, "s") !== undefined ? "e" : sc <= tc ? "e" : "w"
+        const t: Side = level.fixedPort?.(i, "t") !== undefined ? "w" : sc <  tc ? "w" : "e"
+        return { s, t }
+    })
+
+/*  grow every box whose edge attachments exceed the configured
+    per-side maximum, step-wise by one port separation per
+    additional edge, so the edges keep enough attachment room
+    without a fixed height increase (the fixed-size boxes of a
+    containment level are exempt)  */
+const growBoxes = (
+    nodes:  Node[],
+    edges:  Edge[],
+    sides:  { s: Side, t: Side }[],
+    boxH:   Map<string, number>,
+    config: Config,
+    level:  LevelContext
+): void => {
+    const portCnt = new Map<string, number>()
+    edges.forEach((edge, i) => {
+        portCnt.set(`${sides[i].s}:${edge.source}`, (portCnt.get(`${sides[i].s}:${edge.source}`) ?? 0) + 1)
+        portCnt.set(`${sides[i].t}:${edge.target}`, (portCnt.get(`${sides[i].t}:${edge.target}`) ?? 0) + 1)
+    })
+    for (const node of nodes) {
+        if (level.fixedSize?.has(node.id))
+            continue
+        const cnt = Math.max(portCnt.get(`w:${node.id}`) ?? 0, portCnt.get(`e:${node.id}`) ?? 0)
+        if (cnt > config["graph-node-degree-max"])
+            boxH.set(node.id, boxH.get(node.id)! +
+                (cnt - config["graph-node-degree-max"]) * config["size-edge-port-gap"])
+    }
+}
+
 /*  lay out a directed graph model (for a containment level: with the
     container placeholders at their fixed sizes, the edge ends attaching
     to them at their fixed ports, and the gate nodes on the boundary)  */
@@ -737,21 +795,8 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
     let { ncols, nrows } = placeGates(gates, edges, col, row,
         Math.min(gridCols, maxCols), compactRows(real, realEdges, col, row))
 
-    /*  determine the attachment sides of every edge, derived from the
-        column relation of its endpoint nodes (a self-loop leaves on the
-        east side and re-enters on the north side of its own box), except
-        for an edge end attaching at a fixed port of a container box,
-        which always uses the side of the inner gate: the west side
-        when entering the container, the east side when leaving it  */
-    const sides: { s: Side, t: Side }[] = edges.map((edge, i) => {
-        const sc = col.get(edge.source)!
-        const tc = col.get(edge.target)!
-        if (edge.source === edge.target)
-            return { s: "e", t: "n" }
-        const s: Side = level.fixedPort?.(i, "s") !== undefined ? "e" : sc <= tc ? "e" : "w"
-        const t: Side = level.fixedPort?.(i, "t") !== undefined ? "w" : sc <  tc ? "w" : "e"
-        return { s, t }
-    })
+    /*  determine the attachment sides of every edge  */
+    const sides = attachSides(edges, col, level)
 
     /*  plan the coarse channel/gutter route of every edge (a west side
         attachment in the first column needs a channel left of it, so
@@ -765,24 +810,8 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
     }
     const { plans, chanCnt, gutCnt, chanLbl, gutLbl } = routes
 
-    /*  grow every box whose edge attachments exceed the configured
-        per-side maximum, step-wise by one port separation per
-        additional edge, so the edges keep enough attachment room
-        without a fixed height increase (the fixed-size boxes of a
-        containment level are exempt)  */
-    const portCnt = new Map<string, number>()
-    edges.forEach((edge, i) => {
-        portCnt.set(`${sides[i].s}:${edge.source}`, (portCnt.get(`${sides[i].s}:${edge.source}`) ?? 0) + 1)
-        portCnt.set(`${sides[i].t}:${edge.target}`, (portCnt.get(`${sides[i].t}:${edge.target}`) ?? 0) + 1)
-    })
-    for (const node of nodes) {
-        if (level.fixedSize?.has(node.id))
-            continue
-        const cnt = Math.max(portCnt.get(`w:${node.id}`) ?? 0, portCnt.get(`e:${node.id}`) ?? 0)
-        if (cnt > config["graph-node-degree-max"])
-            boxH.set(node.id, boxH.get(node.id)! +
-                (cnt - config["graph-node-degree-max"]) * config["size-edge-port-gap"])
-    }
+    /*  grow the boxes by their edge attachment needs  */
+    growBoxes(nodes, edges, sides, boxH, config, level)
 
     /*  determine grid cell sizes and node center positions (the nodes
         centered in their rows, before any vertical nudging)  */

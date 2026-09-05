@@ -9,7 +9,7 @@ import { Edge }  from "./gradia-api-model.js"
 import { Poly }  from "./gradia-api-render-base.js"
 
 /*  edge attachment port geometry  */
-const        PORT_PAD = 10  /*  padding of the port band inside the box  */
+const PORT_PAD = 10  /*  padding of the port band inside the box  */
 
 /*  drop duplicate and collinear intermediate points of a polyline  */
 export const simplifyPoly = (pts: Poly): Poly => {
@@ -36,6 +36,13 @@ export const simplifyPoly = (pts: Poly): Poly => {
     latter carrying the incoming ends of the self-loops only)  */
 export type Side = "e" | "w" | "n"
 
+/*  an edge endpoint (the source or the target of an edge) attaching
+    to a node side  */
+interface PortRef {
+    edge: number
+    role: "s" | "t"
+}
+
 /*  distribute the edge attachment ports along each node side, ordered
     by the vertical position the edge approaches from (the approachY
     override where given, the opposite endpoint center otherwise) and
@@ -56,7 +63,7 @@ export const assignPorts = (
     fixedY?:    (edge: number, role: "s" | "t") => number | undefined
 ): Map<string, { x: number, y: number }> => {
     /*  group the edge endpoints by the node side they attach to  */
-    const portGroups = new Map<string, { edge: number, role: "s" | "t" }[]>()
+    const portGroups = new Map<string, PortRef[]>()
     const addPort    = (key: string, edge: number, role: "s" | "t") => {
         const group = portGroups.get(key)
         if (group === undefined)
@@ -93,7 +100,7 @@ export const assignPorts = (
         const px = cx(id) + (side === "e" ? +1 : -1) * boxW.get(id)! / 2
 
         /*  place the fixed ports at their given offsets  */
-        const fixedOf = (p: { edge: number, role: "s" | "t" }) =>
+        const fixedOf = (p: PortRef) =>
             fixedY?.(p.edge, p.role)
         const taken: number[] = []
         for (const p of group.filter((p) => fixedOf(p) !== undefined)) {
@@ -105,9 +112,9 @@ export const assignPorts = (
         /*  spread the remaining ports, each pushed below the fixed
             ports it would come too close to (and the ones pushed before)  */
         const free    = group.filter((p) => fixedOf(p) === undefined)
-        const otherOf = (p: { edge: number, role: "s" | "t" }) =>
+        const otherOf = (p: PortRef) =>
             p.role === "s" ? edges[p.edge].target : edges[p.edge].source
-        const keyOf   = (p: { edge: number, role: "s" | "t" }) =>
+        const keyOf   = (p: PortRef) =>
             approachY?.(p.edge) ?? cy(otherOf(p))
         free.sort((a, b) => (keyOf(a) - keyOf(b)) || (a.edge - b.edge))
         const spacing = Math.min(portGap, (boxH.get(id)! - PORT_PAD) / free.length)

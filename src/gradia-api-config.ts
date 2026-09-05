@@ -94,22 +94,22 @@ export const parseDirectives = (input: string): Partial<Config> => {
             description, as they would let it read arbitrary local WOFF2 files  */
         if (key === "font-embed" || (key === "font-family" && val.endsWith(".woff2")))
             continue
+
+        /*  coerce the value into the type of the option, silently
+            skipping invalid values, as directives are lines of an
+            untrusted input and never abort the rendering  */
         if (typeof configDefaults[key] === "boolean") {
-            /*  silently skip invalid boolean values, as directives are
-                lines of an untrusted input and never abort the rendering  */
             if (val !== "true" && val !== "false")
                 continue
             partial[key] = val === "true"
         }
         else if (typeof configDefaults[key] === "number") {
-            /*  silently skip invalid numeric values, as directives are
-                lines of an untrusted input and never abort the rendering  */
             const num = Number(val)
             if (val === "" || !Number.isFinite(num) || num < 0)
                 continue
             partial[key] = num
         }
-        else
+        else if (val !== "")
             partial[key] = val
     }
     return partial as Partial<Config>
@@ -126,8 +126,8 @@ const fontsBuiltIn: Record<string, { file: string, weight: string }> = {
 
 /*  resolve the configured font family: either a built-in font family, a
     plain font family name, or a path to a WOFF2 file (the content of
-    the two former optionally embedded as base64, together with the
-    weight range of the embedded, potentially variable, font)  */
+    the built-in family or the WOFF2 file optionally embedded as base64,
+    the former together with the weight range of its variable font)  */
 export const resolveFont = (config: Config): { family: string, embed?: string, weight?: string } => {
     const spec = config["font-family"]
     if (Object.hasOwn(fontsBuiltIn, spec)) {

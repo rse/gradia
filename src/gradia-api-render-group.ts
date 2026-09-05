@@ -7,8 +7,9 @@
 /*  internal dependencies  */
 import { Node, Graph }                         from "./gradia-api-model.js"
 import { Config }                              from "./gradia-api-config.js"
-import { Poly, FS_GROUP, textWidth }           from "./gradia-api-render-base.js"
-import { Layout, GroupBox, ContainerBox }      from "./gradia-api-render-svg.js"
+import { Poly, FS_GROUP, textWidth, Layout, GroupBox, ContainerBox }
+    from "./gradia-api-render-base.js"
+import { defaultStyleOf }                      from "./gradia-api-render-node.js"
 import { Containment, rootOf, boundsOf }       from "./gradia-api-render-container.js"
 
 /*  rendering geometry constants  */
@@ -107,8 +108,7 @@ export const composeGroups = (parts: GroupPart[], layouts: Layout[], config: Con
         contentH: merge((layout) => layout.contentH),
         polys:    layouts.flatMap((layout, i) => layout.polys.map((poly): Poly =>
             poly.map(([ px, py ]) => [ px + dxs[i], py + dys[i] ]))),
-        styleOf:  layouts.every((layout) => layout.styleOf !== undefined) ?
-            (node) => layouts[groupIdxOf(node.id)].styleOf!(node) : undefined,
+        styleOf:  (node) => (layouts[groupIdxOf(node.id)].styleOf ?? defaultStyleOf)(node),
         groups,
         containers: layouts.flatMap((layout, i) => (layout.containers ?? []).map((c): ContainerBox =>
             ({ ...c, x: c.x + dxs[i], y: c.y + dys[i] })))

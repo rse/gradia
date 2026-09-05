@@ -7,15 +7,18 @@
 /*  internal dependencies  */
 import { Node, Edge, Graph }                       from "./gradia-api-model.js"
 import { Config }                                  from "./gradia-api-config.js"
-import { Poly, NodeStyle }                         from "./gradia-api-render-base.js"
+import { Poly, NodeStyle, Layout }                 from "./gradia-api-render-base.js"
 import { isPrimary, measureNodes, defaultStyleOf } from "./gradia-api-render-node.js"
-import { Layout }                                  from "./gradia-api-render-svg.js"
 import { LevelContext }                            from "./gradia-api-render-container.js"
 import { Side, TrackUser, simplifyPoly, assignPorts, assignTracks } from "./gradia-api-render-edge.js"
 
 /*  the separator between a node id and its placement suffix,
     distinguishing the two clones of a twice-placed node  */
 const CLONE = "\u0000"
+
+/*  rendering geometry constants  */
+const CHAN_W1  = 28  /*  width of a one-edge inter-column channel  */
+const CHAN_PAD = 16  /*  cross-axis padding inside a channel       */
 
 /*  validate the constrained input topology and classify the declared
     nodes: exactly one node is annotated with "primary: true" and every
@@ -102,10 +105,10 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
     const colOf = (id: string): number =>
         id === center.id ? 1 : (inputSet.has(id) ? 0 : 2)
 
-    /*  determine the attachment sides of every edge (east/west),
-        derived from the column relation of its endpoint nodes  */
-    const sides: { s: Side, t: Side }[] = edges.map((edge) =>
-        colOf(edge.source) < colOf(edge.target) ? { s: "e", t: "w" } : { s: "w", t: "e" })
+    /*  the attachment sides of every edge (east/west): every edge runs
+        from the input toward the output column (see classifyTopology),
+        hence leaves on the east and enters on the west side  */
+    const sides: { s: Side, t: Side }[] = edges.map(() => ({ s: "e", t: "w" }))
 
     /*  determine node box sizes from their textual content (all boxes at
         half height scale), then grow every box whose edge attachments
@@ -162,7 +165,7 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
     ]
     const chanW    = chanCnt.map((cnt) =>
         Math.min(config["hub-channel-width-max"], Math.max(config["hub-channel-width-min"],
-            28 + (cnt - 1) * config["size-edge-track-gap"])))
+            CHAN_W1 + (cnt - 1) * config["size-edge-track-gap"])))
     const colLX: number[] = []
     let x = margin
     for (let c = 0; c < 3; c++) {
@@ -201,7 +204,7 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
     })
     const chanOff = new Map<string, number>()
     chanUsers.forEach((users, c) => {
-        for (const [ edge, off ] of assignTracks(users, chanW[c], 16, config["size-edge-track-gap"]))
+        for (const [ edge, off ] of assignTracks(users, chanW[c], CHAN_PAD, config["size-edge-track-gap"]))
             chanOff.set(`${c}:${edge}`, off)
     })
 

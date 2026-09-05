@@ -58,7 +58,7 @@ export const attrsOfNode = (node: Node): Attr[] =>
     box, restricted to relative URLs and safe schemes, as the generated
     SVG anchor would otherwise execute an injected "javascript:" URL)  */
 const URL_SCHEME = /^\s*([A-Za-z][A-Za-z0-9+.-]*):/
-const URL_SAFE   = [ "http", "https", "mailto" ]
+const URL_SAFE   = new Set([ "http", "https", "mailto" ])
 export const urlOf = (node: Node): string | undefined => {
     const raw = node.attrs.findLast((attr) => attr.key === "url")?.val
     if (raw === undefined)
@@ -68,7 +68,7 @@ export const urlOf = (node: Node): string | undefined => {
         resolving the URL and they would otherwise hide an unsafe scheme  */
     const url    = raw.replace(/[\u0000-\u001F\u007F]/g, "")
     const scheme = URL_SCHEME.exec(url)
-    if (scheme !== null && !URL_SAFE.includes(scheme[1].toLowerCase()))
+    if (scheme !== null && !URL_SAFE.has(scheme[1].toLowerCase()))
         return undefined
     return url
 }
@@ -131,13 +131,10 @@ export const measureNodes = (
             continue
         }
         const lines = linesOfNode(node, config)
-        let w = 0
-        for (const line of lines.name)
-            w = Math.max(w, textWidth(line, FS_NAME))
-        for (const line of lines.type)
-            w = Math.max(w, textWidth(line, FS_TYPE))
-        for (const line of lines.attrs)
-            w = Math.max(w, textWidth(line, FS_ATTR))
+        const w = Math.max(0,
+            ...lines.name.map((line)  => textWidth(line, FS_NAME)),
+            ...lines.type.map((line)  => textWidth(line, FS_TYPE)),
+            ...lines.attrs.map((line) => textWidth(line, FS_ATTR)))
         const h = MIN_H + (lines.name.length - 1) * NAME_H + lines.type.length * TYPE_H +
             (lines.attrs.length > 0 ? ATTR_P + (lines.attrs.length - 1) * ATTR_H + ATTR_B : 0)
         boxW.set(node.id, Math.max(config["size-node-width-min"], Math.ceil(w) + PAD_W * 2))

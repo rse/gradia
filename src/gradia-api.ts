@@ -83,8 +83,11 @@ export class Gradia {
         if (!diagramFormats.includes(format))
             throw new Error(`invalid output format "${format}"`)
 
-        /*  layer the rendering configuration  */
-        const explicit = options.config ?? {}
+        /*  layer the rendering configuration (an option explicitly set
+            to "undefined" is dropped, as it would otherwise override its
+            default instead of falling back to it)  */
+        const explicit = Object.fromEntries(Object.entries(options.config ?? {})
+            .filter(([ , val ]) => val !== undefined)) as Partial<Config>
         const config   = { ...configDefaults, ...explicit }
 
         /*  determine (and validate) the containment tree of the graph  */
