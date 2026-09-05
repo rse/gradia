@@ -36,6 +36,9 @@ ChangeLog
     instead of rendering an inconsistent partial output
 -   BUGFIX [code]: reject a consumer-built graph model whose edge references an undeclared node,
     instead of rendering a silently broken output with "NaN" path coordinates
+-   BUGFIX [code]: keep the boundary gates of a "graph" container level in the row order of
+    their connected nodes, where a gate displaced into a newly inserted row shifted the nodes
+    below it while the later gates still targeted the old rows, letting their edges cross
 
 1.1.9 (2026-09-04)
 ------------------
