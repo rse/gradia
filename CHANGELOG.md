@@ -25,6 +25,10 @@ ChangeLog
     letting such overlaps dominate the crossings in the edge track ordering
 -   BUGFIX [code]: render a self-loop on a container node, which was silently dropped together
     with its label, by routing it at the enclosing level around the container box
+-   BUGFIX [code]: keep the edge ports of a container box inside the box, where the ports of its
+    own edges were spread over the full box height and then pushed below the box by the fixed
+    port of an inner gate, by spacing all ports together and dealing the free ports into the
+    gaps around the fixed ones
 -   BUGFIX [code]: reject a consumer-built graph model whose node map key and node id disagree,
     instead of rendering an inconsistent partial output
 -   BUGFIX [code]: reject a consumer-built graph model whose edge references an undeclared node,

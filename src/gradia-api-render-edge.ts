@@ -50,7 +50,8 @@ interface PortRef {
     to hold them all). A port with a fixed vertical offset from the
     box center (fixedY, the edge ends attaching to a container box at
     the position of the inner gate node) is placed exactly there and
-    the distributed ports of the same side are pushed off it  */
+    the distributed ports of the same side are dealt into the gaps
+    around it  */
 export const assignPorts = (
     edges:      Edge[],
     sides:      { s: Side, t: Side }[],
@@ -108,32 +109,58 @@ export const assignPorts = (
             portPos.set(`${p.edge}:${p.role}`, { x: px, y: py })
             taken.push(py)
         }
+        taken.sort((a, b) => a - b)
 
-        /*  spread the remaining ports, each pushed below the fixed
-            ports it would come too close to (and the ones pushed before)  */
+        /*  spread the remaining ports, ordered by their approach and
+            at the spacing leaving room for the fixed ports, too (with
+            no fixed port, simply centered on the box)  */
         const free    = group.filter((p) => fixedOf(p) === undefined)
         const otherOf = (p: PortRef) =>
             p.role === "s" ? edges[p.edge].target : edges[p.edge].source
         const keyOf   = (p: PortRef) =>
             approachY?.(p.edge) ?? cy(otherOf(p))
         free.sort((a, b) => (keyOf(a) - keyOf(b)) || (a.edge - b.edge))
-        const spacing = Math.min(portGap, (boxH.get(id)! - PORT_PAD) / free.length)
-        let prev = -Infinity
-        free.forEach((p, idx) => {
-            let py = cy(id) + (idx - (free.length - 1) / 2) * spacing
-            if (taken.length > 0) {
-                py = Math.max(py, prev + spacing)
-                for (let moved = true; moved;) {
-                    moved = false
-                    for (const ty of taken)
-                        if (Math.abs(ty - py) < spacing) {
-                            py    = ty + spacing
-                            moved = true
-                        }
-                }
-                prev = py
-            }
+        const n       = free.length + taken.length
+        const spacing = Math.min(portGap, (boxH.get(id)! - PORT_PAD) / n)
+        const place   = (p: PortRef, py: number) =>
             portPos.set(`${p.edge}:${p.role}`, { x: px, y: py })
+        if (taken.length === 0) {
+            free.forEach((p, idx) => place(p, cy(id) + (idx - (n - 1) / 2) * spacing))
+            continue
+        }
+
+        /*  deal the free ports into the gaps between the fixed ports
+            (each into the gap its approach falls into, overflowing into
+            the neighboring gaps once a gap holds as many ports as fit
+            into it at the spacing) and place the ports of every gap at
+            their slots of the even distribution of all ports, shifted
+            into the gap as far as needed (and squeezed if not fitting)  */
+        const lo    = cy(id) - (boxH.get(id)! - PORT_PAD) / 2 + spacing / 2
+        const hi    = cy(id) + (boxH.get(id)! - PORT_PAD) / 2 - spacing / 2
+        const walls = [ lo - spacing, ...taken, hi + spacing ]
+        const gapOf = (p: PortRef) =>
+            taken.filter((ty) => ty < keyOf(p)).length
+        const gaps  = walls.slice(1).map((wall, j) => ({
+            lo:    Math.max(lo, walls[j] + spacing),
+            hi:    Math.min(hi, wall - spacing),
+            ports: free.filter((p) => gapOf(p) === j)
+        }))
+        const capOf = (gap: { lo: number, hi: number }) =>
+            gap.hi < gap.lo ? 0 : Math.floor((gap.hi - gap.lo) / spacing) + 1
+        for (let j = 0; j < gaps.length - 1; j++)
+            while (gaps[j].ports.length > capOf(gaps[j]))
+                gaps[j + 1].ports.unshift(gaps[j].ports.pop()!)
+        for (let j = gaps.length - 1; j > 0; j--)
+            while (gaps[j].ports.length > capOf(gaps[j]))
+                gaps[j - 1].ports.push(gaps[j].ports.shift()!)
+        let k = 0
+        gaps.forEach((gap, j) => {
+            const r     = gap.ports.length
+            const step  = r > 1 ? Math.min(spacing, Math.max(gap.hi - gap.lo, 0) / (r - 1)) : spacing
+            const first = Math.min(Math.max(cy(id) + (k + j - (n - 1) / 2) * spacing, gap.lo),
+                gap.hi - (r - 1) * step)
+            gap.ports.forEach((p, i) => place(p, first + i * step))
+            k += r
         })
     }
     return portPos
