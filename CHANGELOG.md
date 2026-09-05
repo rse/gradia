@@ -2,6 +2,18 @@
 ChangeLog
 =========
 
+1.1.10 (2026-09-05)
+-------------------
+
+-   BUGFIX [code]: avoid collinear overlaps of edges in channels/gutters, where the exit stub of one
+    edge and the entry stub of another at the same position ran on top of each other, by
+    letting such overlaps dominate the crossings in the edge track ordering
+-   IMPROVEMENT [code]: order the edge tracks of large channels/gutters by a local search moving
+    blocks of adjacent edges, which finds orders with considerably fewer crossings
+-   IMPROVEMENT [code]: let the edge labels also dodge the edge lines and their crossing hops,
+    preferring the position covering the fewest lines
+-   IMPROVEMENT [othr]: re-render the sample SVG diagrams
+
 1.1.9 (2026-09-04)
 ------------------
 

@@ -118,6 +118,14 @@ export interface TrackUser {
     of two edges sharing a track, keeping their rounded corners apart  */
 const TRACK_CLEARANCE = 24
 
+/*  the cross-axis positions of the stubs of a track user reaching the
+    near side of the channel/gutter (its entering segment, or its
+    exiting one if mirrored, or both if hairpin) and the far side  */
+const nears = (u: TrackUser): number[] =>
+    u.hairpin ? [ u.posIn, u.posOut ] : [ u.mirror ? u.posOut : u.posIn ]
+const fars  = (u: TrackUser): number[] =>
+    u.hairpin ? [] : [ u.mirror ? u.posIn : u.posOut ]
+
 /*  the number of crossings caused by placing user a on a nearer track
     than user b: the far-side stubs of a (its exiting segment, or its
     entering one if mirrored) cross the track-following segment of b,
@@ -126,32 +134,39 @@ const TRACK_CLEARANCE = 24
 const trackCrossings = (a: TrackUser, b: TrackUser): number => {
     const within = (u: TrackUser, pos: number): boolean =>
         pos >= Math.min(u.posIn, u.posOut) && pos <= Math.max(u.posIn, u.posOut)
-    const nears = (u: TrackUser): number[] =>
-        u.hairpin ? [ u.posIn, u.posOut ] : [ u.mirror ? u.posOut : u.posIn ]
-    const fars  = (u: TrackUser): number[] =>
-        u.hairpin ? [] : [ u.mirror ? u.posIn : u.posOut ]
     return fars(a).filter((pos) => within(b, pos)).length +
         nears(b).filter((pos) => within(a, pos)).length
 }
+
+/*  the number of collinear overlaps caused by placing user a on a
+    nearer track than user b: a far-side stub of a and a near-side stub
+    of b at the very same cross-axis position run on top of each other
+    between the two tracks (unlike a crossing, which is still readable
+    through its hop, an overlap merges the two edges visually)  */
+const trackOverlaps = (a: TrackUser, b: TrackUser): number =>
+    fars(a).filter((pos) => nears(b).includes(pos)).length
 
 /*  the maximum number of users for which the crossing-minimal track
     order is determined exactly (the effort doubles with every user)  */
 const TRACK_EXACT_MAX = 14
 
 /*  reorder the seeded track users to the order causing the fewest
-    crossings, with ties broken toward the seed order: for small user
-    sets exactly, by a dynamic programming over the user subsets (the
-    linear ordering problem), for larger ones by a local search moving
-    single users while this reduces the crossings  */
+    overlaps and then the fewest crossings, with ties broken toward the
+    seed order: for small user sets exactly, by a dynamic programming
+    over the user subsets (the linear ordering problem), for larger
+    ones by a local search moving blocks of adjacent users while this
+    reduces the overlaps/crossings  */
 const minimizeCrossings = (seed: TrackUser[]): TrackUser[] => {
     const n = seed.length
     if (n < 2)
         return seed
 
-    /*  the weighted cost of placing seed user i before seed user j:
-        the crossings dominate, a seed order inversion breaks ties  */
+    /*  the weighted cost of placing seed user i before seed user j: the
+        overlaps dominate (one outweighs all crossings possible among the
+        users, at most three per pair), then the crossings, and finally
+        a seed order inversion breaks ties  */
     const cost = seed.map((a, i) => seed.map((b, j) =>
-        trackCrossings(a, b) * n * n + (i > j ? 1 : 0)))
+        (trackOverlaps(a, b) * 2 * n * n + trackCrossings(a, b)) * n * n + (i > j ? 1 : 0)))
     let order: number[]
     if (n <= TRACK_EXACT_MAX) {
         const best = new Float64Array(1 << n).fill(Infinity)
@@ -177,28 +192,36 @@ const minimizeCrossings = (seed: TrackUser[]): TrackUser[] => {
             order.unshift(last[s])
     }
     else {
-        const totalOf = (list: number[]): number => {
-            let total = 0
-            for (let i = 0; i < list.length; i++)
-                for (let j = i + 1; j < list.length; j++)
-                    total += cost[list[i]][list[j]]
-            return total
-        }
+        /*  move a block of adjacent users over the run of users behind
+            or ahead of it, as soon as this reduces the cost (which only
+            the pairs between the block and the run passed contribute
+            to, so the cost change is accumulated while extending the
+            run), until no such move remains (a single-user move is
+            the block move of length one, while the longer blocks let
+            groups of users pass an obstacle which none of its users
+            could pass on its own)  */
         order = seed.map((_, i) => i)
-        let total = totalOf(order)
         for (let improved = true; improved;) {
             improved = false
-            for (let i = 0; i < n && !improved; i++) {
-                for (let j = 0; j < n && !improved; j++) {
-                    if (i === j)
-                        continue
-                    const moved = [ ...order ]
-                    moved.splice(j, 0, ...moved.splice(i, 1))
-                    const t = totalOf(moved)
-                    if (t < total) {
-                        order    = moved
-                        total    = t
-                        improved = true
+            for (let len = 1; len < n && !improved; len++) {
+                for (let i = 0; i + len <= n && !improved; i++) {
+                    let delta = 0
+                    for (let k = i + len; k < n && !improved; k++) {
+                        for (let b = i; b < i + len; b++)
+                            delta += cost[order[k]][order[b]] - cost[order[b]][order[k]]
+                        if (delta < 0) {
+                            order.splice(k - len + 1, 0, ...order.splice(i, len))
+                            improved = true
+                        }
+                    }
+                    delta = 0
+                    for (let k = i - 1; k >= 0 && !improved; k--) {
+                        for (let b = i; b < i + len; b++)
+                            delta += cost[order[b]][order[k]] - cost[order[k]][order[b]]
+                        if (delta < 0) {
+                            order.splice(k, 0, ...order.splice(i, len))
+                            improved = true
+                        }
                     }
                 }
             }

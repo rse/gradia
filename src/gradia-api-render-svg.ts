@@ -71,11 +71,20 @@ type Box = [ number, number, number, number ]
 const TAG_DX = 18  /*  left offset of the group tag  */
 const TAG_DY = 12  /*  top offset of the group tag   */
 
+/*  the half width of the box an edge line segment occupies  */
+const LINE_PAD = 2
+
 /*  track occupied areas (node boxes and already placed labels) to
-    let subsequent labels dodge into a collision-free position (the
-    returned "occupied" array grows with every claimed label box and
-    hence also serves as the box input of the overall bounding box)  */
-const labelPlacer = (layout: Layout): { claim: (candidates: Box[]) => Box, occupied: Box[] } => {
+    let subsequent labels dodge into a collision-free position, and the
+    edge lines (their segments and crossing hops) to let the labels at
+    least prefer the position covering the fewest lines (the returned
+    "occupied" array grows with every claimed label box and hence also
+    serves as the box input of the overall bounding box)  */
+const labelPlacer = (
+    layout:    Layout,
+    hops:      Map<number, number[]>[],
+    hopRadius: number
+): { claim: (candidates: Box[]) => Box, occupied: Box[] } => {
     const { nodes, cx, cy, boxW, boxH } = layout
     const occupied: Box[] = nodes.map((node) => [
         cx(node.id) - boxW.get(node.id)! / 2, cy(node.id) - boxH.get(node.id)! / 2,
@@ -87,11 +96,35 @@ const labelPlacer = (layout: Layout): { claim: (candidates: Box[]) => Box, occup
         occupied.push([ group.x + TAG_DX, group.y + TAG_DY,
             group.x + TAG_DX + textWidth(group.name, FS_GROUP), group.y + TAG_DY + FS_GROUP * 1.2 ])
 
-    /*  claim the first collision-free candidate box  */
-    const collides = (box: Box): boolean =>
-        occupied.some((o) => box[0] < o[2] && box[2] > o[0] && box[1] < o[3] && box[3] > o[1])
+    /*  collect the edge line segments and the hops bulging above them  */
+    const lines: Box[] = []
+    layout.polys.forEach((poly, i) => {
+        for (let k = 0; k < poly.length - 1; k++) {
+            const [ a, b ] = [ poly[k], poly[k + 1] ]
+            lines.push([ Math.min(a[0], b[0]) - LINE_PAD, Math.min(a[1], b[1]) - LINE_PAD,
+                Math.max(a[0], b[0]) + LINE_PAD, Math.max(a[1], b[1]) + LINE_PAD ])
+            for (const hx of hops[i].get(k) ?? [])
+                lines.push([ hx - hopRadius, a[1] - hopRadius, hx + hopRadius, a[1] ])
+        }
+    })
+
+    /*  claim the candidate box colliding with the fewest occupied
+        areas and, among those, with the fewest edge lines (earlier
+        candidates win ties, so the first collision-free one is taken)  */
+    const collisions = (boxes: Box[], box: Box): number =>
+        boxes.filter((o) => box[0] < o[2] && box[2] > o[0] && box[1] < o[3] && box[3] > o[1]).length
     const claim = (candidates: Box[]): Box => {
-        const box = candidates.find((c) => !collides(c)) ?? candidates[0]
+        let box   = candidates[0]
+        let worst = Infinity
+        for (const c of candidates) {
+            const score = collisions(occupied, c) * (lines.length + 1) + collisions(lines, c)
+            if (score < worst) {
+                box   = c
+                worst = score
+            }
+            if (score === 0)
+                break
+        }
         occupied.push(box)
         return box
     }
@@ -272,7 +305,7 @@ export const renderSVG = (layout: Layout, config: Config, explicit: Partial<Conf
     const hops = computeHops(polys)
 
     /*  prepare the collision-free placement of the edge labels  */
-    const { claim, occupied } = labelPlacer(layout)
+    const { claim, occupied } = labelPlacer(layout, hops, config["size-edge-hop-radius"])
 
     /*  generate the SVG fragments for the edges (paths below, labels above)  */
     const svgEdges:  string[] = []
