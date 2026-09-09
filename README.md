@@ -328,14 +328,14 @@ color-edge-halo            #ffffff      grid-columns-min           3
 size-canvas-margin         40           grid-gap-horizontal        40
 size-node-width-min        220          grid-gap-vertical          20
 size-node-width-max        0            grid-node-width-equal      true
-size-node-height-scale     2.25
+size-node-height-scale     2.25         grid-node-height-equal     true
 ```
 
 The `size-*`, `group-*`, `container-*`, `graph-*`, `hub-*`, and
 `grid-*` options control the rendering geometry (canvas margin, node
 box sizing, edge routing, group and container box spacing, and the
 per-diagram-type layout) and take non-negative numbers, except the
-boolean `grid-node-width-equal`.
+booleans `grid-node-width-equal` and `grid-node-height-equal`.
 
 The `size-node-width-max` option additionally enables the word-wrapping
 of the node box texts: given a positive value, the node name, its type,
@@ -379,10 +379,16 @@ stacked, while `grid-columns-max` caps it, so that larger diagrams grow
 in height only. The column count never exceeds the node count and the
 maximum always wins over the minimum.
 
-The `grid-node-width-equal` option controls the tile widths of a `grid`
-diagram: the value `true` forces all node boxes to the width of the
-widest one and hence yields a strictly regular grid, while `false` lets
-each column become only as wide as its own widest node box.
+The `grid-node-width-equal` and `grid-node-height-equal` options control
+the tile sizes of a `grid` diagram: the value `true` forces all node
+boxes to the width of the widest one (or the height of the tallest one)
+and hence yields a strictly regular grid, while `false` lets each column
+become only as wide as its own widest node box (or each row only as tall
+as its own tallest node box), with the tiles left-aligned within their
+column (or top-aligned within their row). A nested container box takes
+part in the width unification only, as its height is the one of its
+content: it never grows to the height of the tallest tile of its row,
+but keeps its row as tall as itself.
 
 The `font-family` and `color-*` options are embedded directly into the
 generated SVG. When such an option is *not* explicitly configured, the

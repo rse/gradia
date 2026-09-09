@@ -2,6 +2,16 @@
 ChangeLog
 =========
 
+1.2.3 (2026-09-09)
+------------------
+
+-   IMPROVEMENT [code, othr]: let the container boxes nested into a "grid" keep the height of
+    their own content, as they took part in the tile height unification and hence all grew to
+    the height of the largest one, and let each row become only as tall as its own tallest tile
+
+-   FEATURE [code, othr]: support the new boolean "grid-node-height-equal" option (default
+    "true"), the counterpart of "grid-node-width-equal" for the tile heights
+
 1.2.2 (2026-09-09)
 ------------------
 

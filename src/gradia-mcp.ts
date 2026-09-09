@@ -213,8 +213,10 @@ ${configOptions}
 The "size-*", "group-*", "container-*", "graph-*", "hub-*", and "grid-*" options
 control the rendering geometry (canvas margin, node box sizing, edge routing,
 group and container box spacing, and the per-diagram-type layout) and take
-non-negative numbers, except the boolean "grid-node-width-equal", which forces
-all node boxes of a "grid" diagram to the width of the widest one.
+non-negative numbers, except the booleans "grid-node-width-equal" and
+"grid-node-height-equal", which force all node boxes of a "grid" diagram to
+the width of the widest one and to the height of the tallest one (a nested
+container box taking part in the width unification only).
 
 The "size-node-width-max" option additionally enables the word-wrapping of the
 node box texts: given a positive value, the node name, its type, and its
