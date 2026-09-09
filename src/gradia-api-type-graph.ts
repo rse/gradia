@@ -287,26 +287,37 @@ const placeGates = (
 }
 
 /*  the coarse route of an edge: the inter-column channels and the
-    inter-row gutters it occupies, and per channel the way it passes
+    inter-row gutters it occupies, per channel the way it passes
     through it (mirrored: entering from the right side, hairpin:
-    leaving on the very side it entered from)  */
+    leaving on the very side it entered from), and the end lying in
+    the gutter: an edge reaching its gate node through a gutter ends
+    there, straight through the gate-side channel, instead of climbing
+    back into the row of the gate  */
 interface RoutePlan {
     chans: number[]
     guts:  number[]
     flags: { mirror: boolean, hairpin: boolean }[]
+    gate?: "s" | "t"
 }
+
+/*  the channels an edge runs a vertical track in (the gate-side
+    channel of a gutter-ending edge is merely crossed horizontally)  */
+const trackChans = (plan: RoutePlan): number[] =>
+    plan.gate === "t" ? [ plan.chans[0] ] : plan.gate === "s" ? [ plan.chans[1] ] : plan.chans
 
 /*  plan the coarse route of every edge: which inter-column channels
     and inter-row gutters it occupies (based on the grid indices and
     the attachment sides only): the source stub reaches the channel
     beside its attachment side, the target stub the channel beside
     its one, and, if those differ, the gutter next to the target row
-    connects them  */
+    connects them (an edge whose gate end lies beyond that gutter ends
+    in the gutter itself, as the gate merely marks the border passage)  */
 const planRoutes = (
     edges: Edge[],
     col:   Map<string, number>,
     row:   Map<string, number>,
-    sides: { s: Side, t: Side }[]
+    sides: { s: Side, t: Side }[],
+    gates: Map<string, GateSide>
 ): { plans: RoutePlan[], chanCnt: Map<number, number>, gutCnt: Map<number, number>,
     chanLbl: Map<number, number>, gutLbl: Map<number, number>, gutLoop: Map<number, number> } => {
     const flag = (from: "l" | "r", to: "l" | "r") =>
@@ -326,11 +337,13 @@ const planRoutes = (
         const tTo   = sides[i].t === "w" ? "r" : "l"
         if (sChan === tChan)
             return { chans: [ sChan ], guts: [], flags: [ flag(sFrom, tTo) ] }
-        const dir = tChan > sChan ? "r" : "l"
+        const dir  = tChan > sChan ? "r" : "l"
+        const gate = gates.has(edge.target) ? "t" : gates.has(edge.source) ? "s" : undefined
         return {
             chans: [ sChan, tChan ],
             guts:  [ tr > sr ? tr - 1 : tr ],
-            flags: [ flag(sFrom, dir), flag(dir === "r" ? "l" : "r", tTo) ]
+            flags: [ flag(sFrom, dir), flag(dir === "r" ? "l" : "r", tTo) ],
+            gate
         }
     })
 
@@ -348,7 +361,8 @@ const planRoutes = (
     const chanNeed = (c: number, width: number) =>
         chanLbl.set(c, Math.max(chanLbl.get(c) ?? 0, width))
     plans.forEach((plan, i) => {
-        for (const c of plan.chans)
+        const chans = trackChans(plan)
+        for (const c of chans)
             chanCnt.set(c, (chanCnt.get(c) ?? 0) + 1)
         for (const g of plan.guts)
             gutCnt.set(g, (gutCnt.get(g) ?? 0) + 1)
@@ -359,8 +373,8 @@ const planRoutes = (
             chanNeed(plan.chans[0], textWidth(name, FS_EDGE) + 2 * CHAN_LBL)
         else if (name !== undefined && plan.guts.length > 0)
             gutLbl.set(plan.guts[0], (gutLbl.get(plan.guts[0]) ?? 0) + 1)
-        if (arity !== undefined && plan.chans.length > 0)
-            chanNeed(plan.chans[plan.chans.length - 1],
+        if (arity !== undefined && chans.length > 0)
+            chanNeed(chans[chans.length - 1],
                 ARITY_OFF + textWidth(arity, FS_ARITY) + CHAN_LBL)
     })
 
@@ -471,10 +485,11 @@ const assignTrackCoords = (
     const gutBase = (g: number) => rowCY[g] + rowHeight[g] / 2 + gutH[g] / 2
 
     /*  assign the vertical tracks within the inter-column channels (the
-        leg of a self-loop spans up to its detour above the box)  */
+        leg of a self-loop spans up to its detour above the box, and a
+        gutter-ending edge takes no track in its gate-side channel)  */
     const chanUsers = new Map<number, TrackUser[]>()
     edges.forEach((edge, i) => {
-        const { chans, guts, flags } = plans[i]
+        const { chans, guts, flags, gate } = plans[i]
         if (chans.length === 0)
             return
         const sp = portPos.get(`${i}:s`)!
@@ -485,8 +500,10 @@ const assignTrackCoords = (
             pushTo(chanUsers, chans[0], { edge: i, posIn: sp.y, posOut: tp.y, ...flags[0] })
         else {
             const gy = gutBase(guts[0])
-            pushTo(chanUsers, chans[0], { edge: i, posIn: sp.y, posOut: gy,   ...flags[0] })
-            pushTo(chanUsers, chans[1], { edge: i, posIn: gy,   posOut: tp.y, ...flags[1] })
+            if (gate !== "s")
+                pushTo(chanUsers, chans[0], { edge: i, posIn: sp.y, posOut: gy,   ...flags[0] })
+            if (gate !== "t")
+                pushTo(chanUsers, chans[1], { edge: i, posIn: gy,   posOut: tp.y, ...flags[1] })
         }
     })
     const chanOff = new Map<string, number>()
@@ -496,17 +513,20 @@ const assignTrackCoords = (
     const chanX = (c: number, edge: number) => colCX[c] + colWidth[c] / 2 + chanW[c] / 2 +
         chanOff.get(`${c}:${edge}`)!
 
-    /*  assign the horizontal tracks within the inter-row gutters  */
+    /*  assign the horizontal tracks within the inter-row gutters (the
+        run of a gutter-ending edge extends up to its gate, where its
+        stub continues straight and hence crosses no other track)  */
     const gutUsers = new Map<number, TrackUser[]>()
     edges.forEach((_, i) => {
-        const { chans, guts } = plans[i]
+        const { chans, guts, gate } = plans[i]
         if (guts.length === 0)
             return
         const sp = portPos.get(`${i}:s`)!
+        const tp = portPos.get(`${i}:t`)!
         pushTo(gutUsers, guts[0], {
             edge:   i,
-            posIn:  chanX(chans[0], i),
-            posOut: chanX(chans[1], i),
+            posIn:  gate === "s" ? sp.x : chanX(chans[0], i),
+            posOut: gate === "t" ? tp.x : chanX(chans[1], i),
             mirror: sp.y > gutBase(guts[0])
         })
     })
@@ -560,10 +580,17 @@ const routePolys = (
                 pts = [ [ sp.x, sp.y ], [ ch, sp.y ], [ ch, tp.y ], [ tp.x, tp.y ] ]
         }
         else {
+            /*  a gutter-ending edge leaves the gutter straight into its
+                gate instead of turning into the gate-side channel  */
             const ch1 = chanX(chans[0], i)
             const ch2 = chanX(chans[1], i)
             const gy  = gutY(guts[0], i)
-            pts = [ [ sp.x, sp.y ], [ ch1, sp.y ], [ ch1, gy ], [ ch2, gy ], [ ch2, tp.y ], [ tp.x, tp.y ] ]
+            if (plans[i].gate === "t")
+                pts = [ [ sp.x, sp.y ], [ ch1, sp.y ], [ ch1, gy ], [ tp.x, gy ] ]
+            else if (plans[i].gate === "s")
+                pts = [ [ sp.x, gy ], [ ch2, gy ], [ ch2, tp.y ], [ tp.x, tp.y ] ]
+            else
+                pts = [ [ sp.x, sp.y ], [ ch1, sp.y ], [ ch1, gy ], [ ch2, gy ], [ ch2, tp.y ], [ tp.x, tp.y ] ]
         }
         return simplifyPoly(pts)
     })
@@ -635,7 +662,8 @@ const nudgeNodes = (
 ): Routing => {
     const gutterFree = (g: number, c: number): boolean =>
         !plans.some((plan) => plan.guts[0] === g
-            && Math.min(...plan.chans) < c && c <= Math.max(...plan.chans))
+            && Math.min(...plan.chans) < c
+            && c <= Math.max(...plan.chans) + (plan.gate === "t" ? 1 : 0))
         && !edges.some((edge) => edge.source === edge.target
             && row.get(edge.source) === g + 1 && col.get(edge.source) === c)
     const shiftRange = (id: string): [ number, number ] => {
@@ -859,12 +887,12 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
     /*  plan the coarse channel/gutter route of every edge (a west side
         attachment in the first column needs a channel left of it, so
         the whole grid is shifted one column to the right then)  */
-    let routes = planRoutes(edges, col, row, sides)
+    let routes = planRoutes(edges, col, row, sides, gates)
     if (routes.plans.some((plan) => plan.chans.some((c) => c < 0))) {
         for (const node of nodes)
             col.set(node.id, col.get(node.id)! + 1)
         ncols++
-        routes = planRoutes(edges, col, row, sides)
+        routes = planRoutes(edges, col, row, sides, gates)
     }
     const { plans, chanCnt, gutCnt, chanLbl, gutLbl, gutLoop } = routes
 

@@ -2,6 +2,16 @@
 ChangeLog
 =========
 
+1.2.2 (2026-09-09)
+------------------
+
+-   IMPROVEMENT [code, othr]: let an edge crossing a "graph" container boundary, which has to
+    detour through a gutter around the nodes between its inner node and the border, pass the
+    border at the height of that gutter, as it climbed back into the row of its boundary gate
+    before and then dropped again outside, where its target usually lies at another height
+
+-   IMPROVEMENT [othr]: re-render the "container-sample" SVG diagram
+
 1.2.1 (2026-09-05)
 ------------------
 

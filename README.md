@@ -247,8 +247,10 @@ separated by `|`.
   except a container with one of its own members. An edge crossing the
   boundary of a container laid out as `graph` is routed through the box
   border to the inner node (entering on the west and leaving on the east
-  side), while an edge crossing the boundary of a container laid out as
-  `hub` or `grid` ends at the box border instead.
+  side, and where other nodes lie between the inner node and the border,
+  around them through the gutter below, passing the border at the
+  height of that gutter), while an edge crossing the boundary of a
+  container laid out as `hub` or `grid` ends at the box border instead.
 
 - All remaining attributes are displayed as `<key>: <val>` lines inside
   the node box.
