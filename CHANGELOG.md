@@ -9,6 +9,12 @@ ChangeLog
     primary a second time on top of the output column, rendered as a dashed "self" box, colored
     by the new (darker grey) "color-node-self-name", "-box", and "-border" options
 
+-   UPDATE [infr]: upgrade the "zod", "eslint", "typescript-eslint", "@types/node", "@rse/stx",
+    and "vite" dependencies to their latest versions
+
+-   CLEANUP [code]: clean up the renderer, diagram-type, and CLI/MCP source modules with
+    clarifying comments, aligned formatting, and removal of dead code branches
+
 1.2.3 (2026-09-09)
 ------------------
 
