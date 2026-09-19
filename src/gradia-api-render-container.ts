@@ -7,7 +7,7 @@
 /*  internal dependencies  */
 import { Node, Edge, Graph }                       from "./gradia-api-model.js"
 import { Config }                                  from "./gradia-api-config.js"
-import { Poly, FS_GROUP, FS_TYPE, textWidth, Layout, ContainerBox }
+import { Poly, FS_GROUP, textWidth, Layout, ContainerBox }
     from "./gradia-api-render-base.js"
 import { parentOf, containerTypeOf, containerHead, typeOf, defaultStyleOf }
     from "./gradia-api-render-node.js"
@@ -193,10 +193,10 @@ export const renderContained = async (
         the padding and the head, at least as wide as its tag  */
     const sizeOf = (member: Node, b: Bounds): { w: number, h: number } => {
         const tag = Math.max(textWidth(member.name, FS_GROUP),
-            textWidth(typeOf(member) ?? "", FS_TYPE))
+            textWidth(typeOf(member) ?? "", config["size-font-type"]))
         return {
             w: Math.max(b.maxX - b.minX, tag) + pad * 2,
-            h: b.maxY - b.minY + pad * 2 + containerHead(member)
+            h: b.maxY - b.minY + pad * 2 + containerHead(member, config)
         }
     }
 
@@ -233,7 +233,7 @@ export const renderContained = async (
             const k  = parts.push({
                 layout: level.layout,
                 dx:     cx - w / 2 + pad - level.bounds.minX,
-                dy:     cy - h / 2 + containerHead(member) + pad - level.bounds.minY
+                dy:     cy - h / 2 + containerHead(member, config) + pad - level.bounds.minY
             }) - 1
             for (const node of level.layout.nodes)
                 partOf.set(node.id, k)
@@ -331,7 +331,7 @@ export const renderContained = async (
             attaches at: the position of its inner gate  */
         const portOffset = (member: Node, y: number): number => {
             const { bounds } = inner.get(member.id)!
-            return (y - bounds.minY) + containerHead(member) + pad - sizeOf(member, bounds).h / 2
+            return (y - bounds.minY) + containerHead(member, config) + pad - sizeOf(member, bounds).h / 2
         }
 
         /*  derive the edges of this level: the edges lifted to it (both

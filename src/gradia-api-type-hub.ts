@@ -7,7 +7,7 @@
 /*  internal dependencies  */
 import { Node, Edge, Graph }                       from "./gradia-api-model.js"
 import { Config }                                  from "./gradia-api-config.js"
-import { Poly, NodeStyle, Layout, FS_ARITY, ARITY_OFF, textWidth } from "./gradia-api-render-base.js"
+import { Poly, NodeStyle, Layout, ARITY_OFF, textWidth } from "./gradia-api-render-base.js"
 import { isPrimary, measureNodes, defaultStyleOf } from "./gradia-api-render-node.js"
 import { LevelContext }                            from "./gradia-api-render-container.js"
 import { Side, TrackUser, simplifyPoly, assignPorts, assignTracks } from "./gradia-api-render-edge.js"
@@ -212,7 +212,7 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
             .reduce((a, node) => Math.max(a, boxW.get(node.id)!), 0)
     const outerW   = [ subWidth(inputs, true), subWidth(outputs, true) ]
     const wrapGap  = edges.reduce((a, edge) => outerSet.has(edge.target) && edge.arity !== undefined ?
-        Math.max(a, ARITY_OFF + textWidth(edge.arity, FS_ARITY) + WRAP_PAD) : a, WRAP_GAP)
+        Math.max(a, ARITY_OFF + textWidth(edge.arity, config["size-font-arity"]) + WRAP_PAD) : a, WRAP_GAP)
     const sideW    = (list: Node[], c: number): number =>
         subWidth(list, false) + (outerW[c] > 0 ? (c === 1 ? wrapGap : WRAP_GAP) + outerW[c] : 0)
     const colWidth = [ sideW(inputs, 0), boxW.get(center.id)!, sideW(outputs, 1) ]

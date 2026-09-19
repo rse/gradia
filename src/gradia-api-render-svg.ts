@@ -9,9 +9,10 @@ import UUID                                                 from "pure-uuid"
 
 /*  internal dependencies  */
 import { Node, Edge }                                       from "./gradia-api-model.js"
-import { Config, ConfigEmbedded, resolveFont, cssValueOf }  from "./gradia-api-config.js"
+import { Config, ConfigEmbedded, ConfigFontSize, resolveFont, cssValueOf, cssSizeOf }
+    from "./gradia-api-config.js"
 import { Poly, NodeStyle, Layout, GroupBox, ContainerBox,
-    FS_NAME, FS_TYPE, FS_ATTR, FS_EDGE, FS_ARITY, FS_GROUP, ARITY_OFF, textWidth, escapeXML }
+    FS_GROUP, ARITY_OFF, textWidth, escapeXML }
     from "./gradia-api-render-base.js"
 import { linesOfNode, urlOf, typeOf, defaultStyleOf, containerHead,
     MIN_H, NAME_H, ATTR_H, ATTR_P, TYPE_H, TYPE_D, HEAD_H }
@@ -50,7 +51,7 @@ const idPrefix = (seed: string): string =>
     document, where the class names are global (and where the embedding
     document hence can declare all classes once on its own)  */
 interface Styler {
-    text: (fill: ConfigEmbedded, size: number,
+    text: (fill: ConfigEmbedded, size: ConfigFontSize | number,
         options?: { bold?: boolean, middle?: boolean, halo?: boolean }) => string
     box:  (fill: ConfigEmbedded, stroke: ConfigEmbedded, width: number) => string
 }
@@ -74,7 +75,8 @@ const LINE_PAD = 2
 const labelPlacer = (
     layout:    Layout,
     hops:      Map<number, number[]>[],
-    hopRadius: number
+    hopRadius: number,
+    config:    Config
 ): { claim: (candidates: Box[]) => Box, occupied: Box[] } => {
     const { nodes, cx, cy, boxW, boxH } = layout
     const occupied: Box[] = nodes.map((node) => [
@@ -88,7 +90,7 @@ const labelPlacer = (
             group.x + TAG_DX + textWidth(group.name, FS_GROUP), group.y + TAG_DY + FS_GROUP * 1.2 ])
     for (const c of layout.containers ?? [])
         occupied.push([ c.x + TAG_DX, c.y + TAG_DY,
-            c.x + TAG_DX + textWidth(c.node.name, FS_GROUP), c.y + containerHead(c.node) ])
+            c.x + TAG_DX + textWidth(c.node.name, FS_GROUP), c.y + containerHead(c.node, config) ])
 
     /*  collect the edge line segments and the hops bulging above them  */
     const lines: Box[] = []
@@ -145,24 +147,25 @@ const renderNode = (node: Node, layout: Layout, style: NodeStyle, styler: Styler
         the optional type lines shifting the name and attributes down and
         the additional wrapped name lines shifting the attributes down  */
     const ty    = cy(node.id) - contentH.get(node.id)! / 2
-    const th    = lines.type.length * TYPE_H
-    const nh    = (lines.name.length - 1) * NAME_H
+    const th    = lines.type.length * TYPE_H(config)
+    const nh    = (lines.name.length - 1) * NAME_H(config)
+    const asc   = config["size-font-node"] * 0.36
     const nameY = lines.attrs.length > 0 ?
-        ty + th + MIN_H / 2 + FS_NAME * 0.36 : cy(node.id) + th / 2 + FS_NAME * 0.36 - nh / 2
+        ty + th + MIN_H(config) / 2 + asc : cy(node.id) + th / 2 + asc - nh / 2
     lines.type.forEach((line, k) => {
         parts.push(`<text x="${cx(node.id)}" ` +
-            `y="${nameY - TYPE_D - (lines.type.length - 1 - k) * TYPE_H}" ` +
-            `class="${styler.text(style.text, FS_TYPE, { middle: true })}">${escapeXML(line)}</text>`)
+            `y="${nameY - TYPE_D(config) - (lines.type.length - 1 - k) * TYPE_H(config)}" ` +
+            `class="${styler.text(style.text, "size-font-type", { middle: true })}">${escapeXML(line)}</text>`)
     })
     lines.name.forEach((line, k) => {
-        parts.push(`<text x="${cx(node.id)}" y="${nameY + k * NAME_H}" ` +
-            `class="${styler.text(style.text, FS_NAME, { bold: true, middle: true })}">` +
+        parts.push(`<text x="${cx(node.id)}" y="${nameY + k * NAME_H(config)}" ` +
+            `class="${styler.text(style.text, "size-font-node", { bold: true, middle: true })}">` +
             `${escapeXML(line)}</text>`)
     })
     lines.attrs.forEach((line, k) => {
         parts.push(`<text x="${cx(node.id)}" ` +
-            `y="${ty + th + nh + MIN_H + ATTR_P + k * ATTR_H}" ` +
-            `class="${styler.text(style.text, FS_ATTR, { middle: true })}">${escapeXML(line)}</text>`)
+            `y="${ty + th + nh + MIN_H(config) + ATTR_P + k * ATTR_H(config)}" ` +
+            `class="${styler.text(style.text, "size-font-prop", { middle: true })}">${escapeXML(line)}</text>`)
     })
     if (url === undefined)
         return parts
@@ -204,29 +207,31 @@ const viewBoxOf = (layout: Layout, boxes: Box[], margin: number): { x: number, y
     arity, placed near the arrow head (both dodging into a collision-free
     position through the "claim" of the label placer)  */
 const renderEdgeLabels = (edge: Edge, poly: Poly, claim: (candidates: Box[]) => Box,
-    styler: Styler): string[] => {
+    styler: Styler, config: Config): string[] => {
     const parts: string[] = []
     if (edge.name !== undefined) {
-        const w = textWidth(edge.name, FS_EDGE)
+        const w = textWidth(edge.name, config["size-font-edge"])
+        const h = config["size-font-edge"] + 4
         const candidates: Box[] = []
         for (const f of [ 0.50, 0.40, 0.60, 0.30, 0.70, 0.20, 0.80 ]) {
             const p = pointAt(poly, f)
             if (p.horizontal) {
-                candidates.push([ p.x - w / 2, p.y - 23, p.x + w / 2, p.y - 3 ])
-                candidates.push([ p.x - w / 2, p.y + 3,  p.x + w / 2, p.y + 23 ])
+                candidates.push([ p.x - w / 2, p.y - 3 - h,  p.x + w / 2, p.y - 3     ])
+                candidates.push([ p.x - w / 2, p.y + 3,      p.x + w / 2, p.y + 3 + h ])
             }
             else {
-                candidates.push([ p.x + 5,     p.y - 10, p.x + 5 + w, p.y + 10 ])
-                candidates.push([ p.x - 5 - w, p.y - 10, p.x - 5,     p.y + 10 ])
+                candidates.push([ p.x + 5,     p.y - h / 2,  p.x + 5 + w, p.y + h / 2 ])
+                candidates.push([ p.x - 5 - w, p.y - h / 2,  p.x - 5,     p.y + h / 2 ])
             }
         }
         const box = claim(candidates)
         parts.push(`<text x="${(box[0] + box[2]) / 2}" y="${box[3] - 3}" ` +
-            `class="${styler.text("color-edge-name", FS_EDGE, { middle: true, halo: true })}">` +
+            `class="${styler.text("color-edge-name", "size-font-edge", { middle: true, halo: true })}">` +
             `${escapeXML(edge.name)}</text>`)
     }
     if (edge.arity !== undefined) {
-        const w    = textWidth(edge.arity, FS_ARITY)
+        const w    = textWidth(edge.arity, config["size-font-arity"])
+        const h    = Math.round(config["size-font-arity"] * 0.8)
         const p    = pointAt(poly, 1.0)
         const prev = pointAt(poly, 0.999)
 
@@ -238,23 +243,23 @@ const renderEdgeLabels = (edge: Edge, poly: Poly, claim: (candidates: Box[]) => 
             const dx = Math.sign(p.x - prev.x) || 1
             const ax = p.x - dx * (ARITY_OFF + w / 2)
             candidates = [
-                [ ax - w / 2,           p.y - 17, ax + w / 2,           p.y - 4  ],
-                [ ax - w / 2,           p.y + 4,  ax + w / 2,           p.y + 17 ],
-                [ ax - w / 2 - dx * 14, p.y - 17, ax + w / 2 - dx * 14, p.y - 4  ]
+                [ ax - w / 2,           p.y - 4 - h, ax + w / 2,           p.y - 4     ],
+                [ ax - w / 2,           p.y + 4,     ax + w / 2,           p.y + 4 + h ],
+                [ ax - w / 2 - dx * 14, p.y - 4 - h, ax + w / 2 - dx * 14, p.y - 4     ]
             ]
         }
         else {
             const dy = Math.sign(p.y - prev.y) || 1
             const ay = p.y - dy * ARITY_OFF
             candidates = [
-                [ p.x + 6,     ay - 7,           p.x + 6 + w, ay + 6           ],
-                [ p.x - 6 - w, ay - 7,           p.x - 6,     ay + 6           ],
-                [ p.x + 6,     ay - 7 - dy * 14, p.x + 6 + w, ay + 6 - dy * 14 ]
+                [ p.x + 6,     ay + 6 - h,           p.x + 6 + w, ay + 6           ],
+                [ p.x - 6 - w, ay + 6 - h,           p.x - 6,     ay + 6           ],
+                [ p.x + 6,     ay + 6 - h - dy * 14, p.x + 6 + w, ay + 6 - dy * 14 ]
             ]
         }
         const box = claim(candidates)
         parts.push(`<text x="${(box[0] + box[2]) / 2}" y="${box[3] - 3}" ` +
-            `class="${styler.text("color-edge-arity", FS_ARITY, { middle: true, halo: true })}">` +
+            `class="${styler.text("color-edge-arity", "size-font-arity", { middle: true, halo: true })}">` +
             `${escapeXML(edge.arity)}</text>`)
     }
     return parts
@@ -273,7 +278,7 @@ const renderGroup = (group: GroupBox, styler: Styler): string[] => [
     in the top-left corner, with the optional type line above the name
     (a container with a "url" attribute becomes a hyperlink covering
     the whole box)  */
-const renderContainer = (c: ContainerBox, styler: Styler): string[] => {
+const renderContainer = (c: ContainerBox, styler: Styler, config: Config): string[] => {
     const type  = typeOf(c.node)
     const url   = urlOf(c.node)
     const parts = [
@@ -281,10 +286,10 @@ const renderContainer = (c: ContainerBox, styler: Styler): string[] => {
             `class="${styler.box("color-container-box", "color-container-border", 3)}" ` +
             "stroke-dasharray=\"10 6\"/>",
         ...(type !== undefined ? [
-            `<text x="${c.x + TAG_DX}" y="${c.y + TAG_DY + FS_TYPE}" ` +
-                `class="${styler.text("color-container-name", FS_TYPE)}">${escapeXML(type)}</text>`
+            `<text x="${c.x + TAG_DX}" y="${c.y + TAG_DY + config["size-font-type"]}" ` +
+                `class="${styler.text("color-container-name", "size-font-type")}">${escapeXML(type)}</text>`
         ] : []),
-        `<text x="${c.x + TAG_DX}" y="${c.y + containerHead(c.node) - HEAD_H + TAG_DY + FS_GROUP}" ` +
+        `<text x="${c.x + TAG_DX}" y="${c.y + containerHead(c.node, config) - HEAD_H + TAG_DY + FS_GROUP}" ` +
             `class="${styler.text("color-container-name", FS_GROUP, { bold: true })}">` +
             `${escapeXML(c.node.name)}</text>`
     ]
@@ -332,7 +337,8 @@ export const renderSVG = (layout: Layout, config: Config, explicit: Partial<Conf
     }
     const styler: Styler = {
         text: (fill, size, options = {}) => classOf(
-            `font-family: ${font}; font-size: ${size}px; ` +
+            `font-family: ${font}; ` +
+            `font-size: ${typeof size === "number" ? `${size}px` : cssSizeOf(config, size)}; ` +
             (options.bold   ? "font-weight: 600; "    : "") +
             (options.middle ? "text-anchor: middle; " : "") +
             `fill: ${color(fill)}` +
@@ -348,7 +354,7 @@ export const renderSVG = (layout: Layout, config: Config, explicit: Partial<Conf
     const hops = computeHops(polys)
 
     /*  prepare the collision-free placement of the edge labels  */
-    const { claim, occupied } = labelPlacer(layout, hops, config["size-edge-hop-radius"])
+    const { claim, occupied } = labelPlacer(layout, hops, config["size-edge-hop-radius"], config)
 
     /*  generate the SVG fragments for the edges (paths below, labels above)  */
     const svgEdges:  string[] = []
@@ -357,7 +363,7 @@ export const renderSVG = (layout: Layout, config: Config, explicit: Partial<Conf
         svgEdges.push(`<path d="${pathOf(polys[i], hops[i],
             config["size-edge-corner-radius"], config["size-edge-hop-radius"])}" ` +
             `class="${classEdge}" marker-end="url(#${idArrow})"/>`)
-        svgLabels.push(...renderEdgeLabels(edge, polys[i], claim, styler))
+        svgLabels.push(...renderEdgeLabels(edge, polys[i], claim, styler, config))
     })
 
     /*  generate the SVG fragments for the node boxes  */
@@ -367,7 +373,7 @@ export const renderSVG = (layout: Layout, config: Config, explicit: Partial<Conf
         everything else) and the container boxes (drawn below the edges
         and nodes, an outer box before its nested ones)  */
     const svgGroups     = groups.flatMap((group) => renderGroup(group, styler))
-    const svgContainers = containers.flatMap((c) => renderContainer(c, styler))
+    const svgContainers = containers.flatMap((c) => renderContainer(c, styler, config))
 
     /*  determine the overall bounding box of all rendered elements  */
     const groupBoxes: Box[] = groups.map((group) =>

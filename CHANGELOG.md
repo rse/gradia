@@ -2,6 +2,14 @@
 ChangeLog
 =========
 
+1.3.1 (2026-09-20)
+------------------
+
+-   FEATURE [code, docs]: make the font sizes of the node names, node types, node properties, edge
+    names, and edge arities configurable through the new "size-font-node", "size-font-type",
+    "size-font-prop", "size-font-edge", and "size-font-arity" options, which size the layout and
+    are overridable at display time through their CSS custom properties
+
 1.3.0 (2026-09-19)
 ------------------
 

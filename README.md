@@ -307,40 +307,51 @@ command-line options (`font-embed` being command-line only, see below).
 The recognized options, and their default values, are:
 
 ```
-font-family                Helvetica    size-node-height-scale     2.25
-font-embed                 false        size-edge-corner-radius    20
-color-node-regular-name    #336699      size-edge-hop-radius       8
-color-node-regular-box     #e0f0ff      size-edge-track-gap        12
-color-node-regular-border  #c0d0e0      size-edge-port-gap         24
-color-node-primary-name    #ffffff      group-box-padding          30
-color-node-primary-box     #336699      group-box-gap              40
-color-node-primary-border  #003366      container-box-padding      30
-color-node-ghost-name      #666666      graph-columns-max          4
-color-node-ghost-box       #f0f0f0      graph-channel-width-max    140
-color-node-ghost-border    #a0a0a0      graph-channel-width-min    24
-color-node-self-name       #444444      graph-gutter-height-max    90
-color-node-self-box        #e0e0e0      graph-gutter-height-min    20
-color-node-self-border     #707070      graph-node-separation      30
-color-group-name           #6699cc      graph-rank-separation      60
-color-group-box            #f4f8fc      graph-node-degree-max      3
-color-group-border         #c0d0e0      hub-channel-width-max      340
-color-container-name       #666666      hub-channel-width-min      240
-color-container-box        #f6f6f6      hub-node-gap               20
-color-container-border     #a0a0a0      hub-node-degree-max        3
-color-edge-line            #999999      hub-node-count-max         0
-color-edge-name            #333333      grid-columns-max           4
-color-edge-arity           #333333      grid-columns-min           3
-color-edge-halo            #ffffff      grid-gap-horizontal        40
-size-canvas-margin         40           grid-gap-vertical          20
-size-node-width-min        220          grid-node-width-equal      true
-size-node-width-max        0            grid-node-height-equal     true
+font-family                Helvetica    size-node-width-min        220
+font-embed                 false        size-node-width-max        0
+color-node-regular-name    #336699      size-node-height-scale     2.25
+color-node-regular-box     #e0f0ff      size-edge-corner-radius    20
+color-node-regular-border  #c0d0e0      size-edge-hop-radius       8
+color-node-primary-name    #ffffff      size-edge-track-gap        12
+color-node-primary-box     #336699      size-edge-port-gap         24
+color-node-primary-border  #003366      group-box-padding          30
+color-node-ghost-name      #666666      group-box-gap              40
+color-node-ghost-box       #f0f0f0      container-box-padding      30
+color-node-ghost-border    #a0a0a0      graph-columns-max          4
+color-node-self-name       #444444      graph-channel-width-max    140
+color-node-self-box        #e0e0e0      graph-channel-width-min    24
+color-node-self-border     #707070      graph-gutter-height-max    90
+color-group-name           #6699cc      graph-gutter-height-min    20
+color-group-box            #f4f8fc      graph-node-separation      30
+color-group-border         #c0d0e0      graph-rank-separation      60
+color-container-name       #666666      graph-node-degree-max      3
+color-container-box        #f6f6f6      hub-channel-width-max      340
+color-container-border     #a0a0a0      hub-channel-width-min      240
+color-edge-line            #999999      hub-node-gap               20
+color-edge-name            #333333      hub-node-degree-max        3
+color-edge-arity           #333333      hub-node-count-max         0
+color-edge-halo            #ffffff      grid-columns-max           4
+size-font-node             30           grid-columns-min           3
+size-font-type             16           grid-gap-horizontal        40
+size-font-prop             22           grid-gap-vertical          20
+size-font-edge             16           grid-node-width-equal      true
+size-font-arity            16           grid-node-height-equal     true
+size-canvas-margin         40
 ```
 
 The `size-*`, `group-*`, `container-*`, `graph-*`, `hub-*`, and
-`grid-*` options control the rendering geometry (canvas margin, node
-box sizing, edge routing, group and container box spacing, and the
-per-diagram-type layout) and take non-negative numbers, except the
-booleans `grid-node-width-equal` and `grid-node-height-equal`.
+`grid-*` options control the rendering geometry (text font sizes, canvas
+margin, node box sizing, edge routing, group and container box spacing,
+and the per-diagram-type layout) and take non-negative numbers, except
+the booleans `grid-node-width-equal` and `grid-node-height-equal`.
+
+The `size-font-*` options control the font sizes of the node names
+(`size-font-node`), the node types (`size-font-type`), the node
+properties (`size-font-prop`), the edge names (`size-font-edge`), and
+the edge arities (`size-font-arity`). They are geometry options, as they
+size the node boxes and the channels the edge labels land in: the line
+heights inside a node box, the head of a container box, and the width
+demand of a channel all track their font size.
 
 The `size-node-width-max` option additionally enables the word-wrapping
 of the node box texts: given a positive value, the node name, its type,
@@ -412,6 +423,12 @@ falls back to the built-in default. An explicitly configured value is
 hard-coded into the SVG instead. The resulting precedence is: first
 `#config`/`--config`, then the CSS custom property `--gradia-<option>`,
 and finally the built-in default.
+
+The `size-font-*` options are embedded into the generated SVG, too, but
+as they also sized the layout, the SVG always references the CSS custom
+property `--gradia-<option>` and falls back to the *effective* value
+(configured or default). An override at display time hence retains the
+layout of the configured size and should stay close to it.
 
 The styling is not repeated on every element of the generated SVG, but
 declared once as CSS classes in a `<style>` element, which the elements

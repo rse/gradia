@@ -7,7 +7,7 @@
 /*  internal dependencies  */
 import { Attr, Node }                              from "./gradia-api-model.js"
 import { Config }                                  from "./gradia-api-config.js"
-import { NodeStyle, FS_NAME, FS_TYPE, FS_ATTR, textWidth, textWrap }
+import { NodeStyle, textWidth, textWrap }
     from "./gradia-api-render-base.js"
 
 /*  the special "primary" annotation (rendered as a distinct node coloring)  */
@@ -42,9 +42,10 @@ export const containerTypeOf = (node: Node): string | undefined =>
 /*  container box head geometry (the head holds the name tag and the
     optional type line above it)  */
 export const HEAD_H = 34  /*  height of the container box head        */
-export const HEAD_T = 20  /*  extra head height of a type line        */
-export const containerHead = (node: Node): number =>
-    HEAD_H + (typeOf(node) !== undefined ? HEAD_T : 0)
+export const HEAD_T = (config: Config): number =>
+    config["size-font-type"] + 4  /*  extra head height of a type line  */
+export const containerHead = (node: Node, config: Config): number =>
+    HEAD_H + (typeOf(node) !== undefined ? HEAD_T(config) : 0)
 
 /*  the special "order" annotation (the explicit top-down placement
     order of the node, a finite number, an invalid value being ignored)  */
@@ -81,15 +82,34 @@ export const urlOf = (node: Node): string | undefined => {
     return url
 }
 
-/*  node box text metrics (shared by the measuring and the text placement)  */
+/*  node box text metrics (shared by the measuring and the text
+    placement), where the vertical ones track the font size of the text
+    they space out, so that a configured font size never lets a line
+    collide with its neighbor  */
 export const PAD_W  = 18  /*  left/right node box text padding          */
-export const MIN_H  = 56  /*  minimum node box height                   */
-export const NAME_H = 34  /*  height of an additional name line         */
-export const ATTR_H = 30  /*  height of a single attribute line         */
 export const ATTR_P = 12  /*  top padding of the attribute block        */
 export const ATTR_B = 20  /*  bottom padding of the attribute block     */
-export const TYPE_H = 26  /*  extra height of a single type line        */
-export const TYPE_D = 36  /*  baseline distance of the type to the name */
+
+/*  minimum node box height (one name line plus its vertical padding)  */
+export const MIN_H = (config: Config): number =>
+    config["size-font-node"] + 26
+
+/*  height of an additional name line  */
+export const NAME_H = (config: Config): number =>
+    config["size-font-node"] + 4
+
+/*  height of a single attribute line  */
+export const ATTR_H = (config: Config): number =>
+    config["size-font-prop"] + 8
+
+/*  extra height of a single type line  */
+export const TYPE_H = (config: Config): number =>
+    config["size-font-type"] + 10
+
+/*  baseline distance of the type line to the name line (the cap height
+    of the name plus the line box of the type)  */
+export const TYPE_D = (config: Config): number =>
+    config["size-font-node"] * 0.72 + config["size-font-type"] * 0.90
 
 /*  the text lines rendered inside a node box  */
 export interface NodeLines {
@@ -106,10 +126,10 @@ export const linesOfNode = (node: Node, config: Config): NodeLines => {
         config["size-node-width-max"] - PAD_W * 2 : 0
     const type = typeOf(node)
     return {
-        name:  textWrap(node.name, FS_NAME, max),
-        type:  type !== undefined ? textWrap(type, FS_TYPE, max) : [],
+        name:  textWrap(node.name, config["size-font-node"], max),
+        type:  type !== undefined ? textWrap(type, config["size-font-type"], max) : [],
         attrs: attrsOfNode(node).flatMap((attr) =>
-            textWrap(`${attr.key}: ${attr.val}`, FS_ATTR, max))
+            textWrap(`${attr.key}: ${attr.val}`, config["size-font-prop"], max))
     }
 }
 
@@ -140,11 +160,12 @@ export const measureNodes = (
         }
         const lines = linesOfNode(node, config)
         const w = Math.max(0,
-            ...lines.name.map((line)  => textWidth(line, FS_NAME)),
-            ...lines.type.map((line)  => textWidth(line, FS_TYPE)),
-            ...lines.attrs.map((line) => textWidth(line, FS_ATTR)))
-        const h = MIN_H + (lines.name.length - 1) * NAME_H + lines.type.length * TYPE_H +
-            (lines.attrs.length > 0 ? ATTR_P + (lines.attrs.length - 1) * ATTR_H + ATTR_B : 0)
+            ...lines.name.map((line)  => textWidth(line, config["size-font-node"])),
+            ...lines.type.map((line)  => textWidth(line, config["size-font-type"])),
+            ...lines.attrs.map((line) => textWidth(line, config["size-font-prop"])))
+        const h = MIN_H(config) + (lines.name.length - 1) * NAME_H(config) +
+            lines.type.length * TYPE_H(config) +
+            (lines.attrs.length > 0 ? ATTR_P + (lines.attrs.length - 1) * ATTR_H(config) + ATTR_B : 0)
         boxW.set(node.id, Math.max(config["size-node-width-min"], Math.ceil(w) + PAD_W * 2))
         boxH.set(node.id, Math.max(h, Math.ceil(h * scaleOf(node))))
         contentH.set(node.id, h)

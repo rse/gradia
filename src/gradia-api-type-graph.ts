@@ -10,7 +10,7 @@ import { DagreLayout } from "@antv/layout"
 /*  internal dependencies  */
 import { Graph, Node, Edge }                 from "./gradia-api-model.js"
 import { Config }                            from "./gradia-api-config.js"
-import { Poly, FS_EDGE, FS_ARITY, ARITY_OFF, textWidth, Layout }
+import { Poly, ARITY_OFF, textWidth, Layout }
     from "./gradia-api-render-base.js"
 import { measureNodes, orderOf }             from "./gradia-api-render-node.js"
 import { LevelContext, GateSide }            from "./gradia-api-render-container.js"
@@ -320,7 +320,8 @@ const planRoutes = (
     col:   Map<string, number>,
     row:   Map<string, number>,
     sides: { s: Side, t: Side }[],
-    gates: Map<string, GateSide>
+    gates: Map<string, GateSide>,
+    config: Config
 ): { plans: RoutePlan[], chanCnt: Map<number, number>, gutCnt: Map<number, number>,
     chanLbl: Map<number, number>, gutLbl: Map<number, number>, gutLoop: Map<number, number> } => {
     const flag = (from: "l" | "r", to: "l" | "r") =>
@@ -373,12 +374,12 @@ const planRoutes = (
         if (source === target)
             return
         if (name !== undefined && plan.chans.length === 1)
-            chanNeed(plan.chans[0], textWidth(name, FS_EDGE) + 2 * CHAN_LBL)
+            chanNeed(plan.chans[0], textWidth(name, config["size-font-edge"]) + 2 * CHAN_LBL)
         else if (name !== undefined && plan.guts.length > 0)
             gutLbl.set(plan.guts[0], (gutLbl.get(plan.guts[0]) ?? 0) + 1)
         if (arity !== undefined)
             chanNeed(chans[chans.length - 1],
-                ARITY_OFF + textWidth(arity, FS_ARITY) + CHAN_LBL)
+                ARITY_OFF + textWidth(arity, config["size-font-arity"]) + CHAN_LBL)
     })
 
     /*  count the self-loops of every node, as their detours stack up
@@ -895,12 +896,12 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
     /*  plan the coarse channel/gutter route of every edge (a west side
         attachment in the first column needs a channel left of it, so
         the whole grid is shifted one column to the right then)  */
-    let routes = planRoutes(edges, col, row, sides, gates)
+    let routes = planRoutes(edges, col, row, sides, gates, config)
     if (routes.plans.some((plan) => plan.chans.some((c) => c < 0))) {
         for (const node of nodes)
             col.set(node.id, col.get(node.id)! + 1)
         ncols++
-        routes = planRoutes(edges, col, row, sides, gates)
+        routes = planRoutes(edges, col, row, sides, gates, config)
     }
     const { plans, chanCnt, gutCnt, chanLbl, gutLbl, gutLoop } = routes
 

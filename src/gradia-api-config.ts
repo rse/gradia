@@ -35,6 +35,11 @@ export const configDefaults = {
     "color-edge-name":           "#333333",
     "color-edge-arity":          "#333333",
     "color-edge-halo":           "#ffffff",
+    "size-font-node":            30,    /*  font size of node names                */
+    "size-font-type":            16,    /*  font size of node types                */
+    "size-font-prop":            22,    /*  font size of node properties           */
+    "size-font-edge":            16,    /*  font size of edge names                */
+    "size-font-arity":           16,    /*  font size of edge arities              */
     "size-canvas-margin":        40,    /*  outer margin of the canvas             */
     "size-node-width-min":       220,   /*  minimum node box width                 */
     "size-node-width-max":       0,     /*  maximum node box width (0 = unlimited) */
@@ -72,6 +77,18 @@ export type Config = typeof configDefaults
     generated SVG (and hence can alternatively be provided at display
     time through "--gradia-<option>" CSS custom properties)  */
 export type ConfigEmbedded = { [K in keyof Config]: Config[K] extends string ? K : never }[keyof Config]
+
+/*  the font size options, which are embedded into the generated SVG,
+    too, but which drive the layout as well and hence are embedded as
+    their effective value, still overridable at display time  */
+export type ConfigFontSize = "size-font-node" | "size-font-type" |
+    "size-font-prop" | "size-font-edge" | "size-font-arity"
+
+/*  resolve a font size option into a CSS value: the effective value is
+    the fallback of the CSS custom property "--gradia-<option>", as it
+    also sized the layout, so an override should stay close to it  */
+export const cssSizeOf = (config: Config, key: ConfigFontSize): string =>
+    `var(--gradia-${key}, ${config[key]}px)`
 
 /*  resolve a directly embedded configuration option into a CSS value:
     an explicitly configured value is hard-coded (stripped of the

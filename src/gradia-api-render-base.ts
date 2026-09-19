@@ -8,13 +8,9 @@
 import { Node, Edge }     from "./gradia-api-model.js"
 import { ConfigEmbedded } from "./gradia-api-config.js"
 
-/*  rendering font size constants (the further geometry is configurable,
+/*  rendering font size constant of the group tags (the font sizes of
+    the node and edge texts and the further geometry are configurable,
     see the "size-*" and per-diagram-type options in the configuration)  */
-export const FS_NAME  = 30   /*  font size of node names       */
-export const FS_TYPE  = 16   /*  font size of node types       */
-export const FS_ATTR  = 22   /*  font size of node attributes  */
-export const FS_EDGE  = 16   /*  font size of edge labels      */
-export const FS_ARITY = 16   /*  font size of edge arities     */
 export const FS_GROUP = 24   /*  font size of group tags       */
 
 /*  the setback of an edge arity label from the arrow head it annotates
