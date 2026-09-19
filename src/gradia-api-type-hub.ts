@@ -33,6 +33,7 @@ const CHAN_PAD = 16  /*  cross-axis padding inside a channel       */
 const classifyTopology = (graph: Graph): {
     center: Node, inputs: Node[], outputs: Node[], nodes: Node[], edges: Edge[]
 } => {
+    /*  determine the primary node and the ids of its input and output nodes  */
     const declared  = Array.from(graph.nodes.values())
     for (const node of declared)
         if (node.id.includes(CLONE))
@@ -40,13 +41,13 @@ const classifyTopology = (graph: Graph): {
     const primaries = declared.filter(isPrimary)
     if (primaries.length !== 1)
         throw new Error(`expected exactly one node annotated with "primary: true" (found ${primaries.length})`)
-    const center = primaries[0]
-    const inSet  = new Set<string>()
-    const outSet = new Set<string>()
-    let   self   = false
+    const center   = primaries[0]
+    const inSet    = new Set<string>()
+    const outSet   = new Set<string>()
+    let   selfLoop = false
     for (const edge of graph.edges) {
         if (edge.source === center.id && edge.target === center.id)
-            self = true
+            selfLoop = true
         else if (edge.target === center.id)
             inSet.add(edge.source)
         else if (edge.source === center.id)
@@ -79,7 +80,7 @@ const classifyTopology = (graph: Graph): {
 
     /*  place the clone of a self-referencing primary node (stripped of
         its "primary" annotation) on top of the output column  */
-    if (self)
+    if (selfLoop)
         outputs.unshift({ ...center, id: center.id + CLONE + "self",
             attrs: center.attrs.filter((attr) => attr.key !== "primary") })
 

@@ -177,7 +177,7 @@ export const resolveFont = (config: Config): { family: string, embed?: string, w
             return { family }
     }
     else if (config["font-embed"])
-        throw new Error("option \"font-embed\" requires option \"font-family\" to be a built-in font " +
+        throw new Error("configuration option \"font-embed\" requires configuration option \"font-family\" to be a built-in font " +
             `family (${Object.keys(fontsBuiltIn).map((name) => `"${name}"`).join(", ")}) ` +
             "or the path to a WOFF2 file")
     else

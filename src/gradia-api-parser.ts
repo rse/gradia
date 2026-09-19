@@ -194,7 +194,7 @@ export const parse = (input: string): Graph => {
             const target = parseNodeRef()
             graph.edges.push({ source, target, name: t.name, arity: t.arity })
             source = target
-            t = peek()
+            t      = peek()
         }
 
         /*  ensure the statement ends at the end of the line  */

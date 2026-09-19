@@ -262,6 +262,14 @@ argument, the tool instead returns an error result whose text starts with
 "gradia: ERROR: ", followed by the reason.
 `.trim()
 
+/*  the defaults of the MCP service, provided by the (trusted)
+    command-line and underlying the arguments of every tool call  */
+export interface MCPDefaults {
+    type?:   DiagramType
+    format?: DiagramFormat
+    config?: Partial<Config>
+}
+
 /*  the arguments of the "gradia_render" tool (with their descriptions
     reflecting the service defaults underlying the arguments)  */
 const toolArgumentsOf = (defaults: MCPDefaults) => ({
@@ -282,14 +290,6 @@ const toolArgumentsOf = (defaults: MCPDefaults) => ({
         .describe("The rendering configuration options (see the tool description for their names, " +
             "types, and defaults). Takes precedence over the \"#config\" directives inside the input.")
 })
-
-/*  the defaults of the MCP service, provided by the (trusted)
-    command-line and underlying the arguments of every tool call  */
-export interface MCPDefaults {
-    type?:   DiagramType
-    format?: DiagramFormat
-    config?: Partial<Config>
-}
 
 /*  run the MCP service on stdio  */
 export const serve = async (meta: { version: string }, defaults: MCPDefaults = {}) => {

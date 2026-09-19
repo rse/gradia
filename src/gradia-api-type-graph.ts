@@ -41,6 +41,7 @@ const snapToGrid = (
     rawX:  Map<string, number>,
     rawY:  Map<string, number>
 ): { col: Map<string, number>, row: Map<string, number>, ncols: number, nrows: number } => {
+    /*  cluster the distinct values into representatives more than a threshold apart  */
     const cluster = (values: number[], threshold: number): number[] => {
         const sorted = Array.from(new Set(values)).sort((a, b) => a - b)
         const reps: number[] = []
@@ -51,6 +52,8 @@ const snapToGrid = (
     }
     const colReps = cluster(nodes.map((node) => rawX.get(node.id)!), CLUSTX)
     const rowReps = cluster(nodes.map((node) => rawY.get(node.id)!), CLUSTY)
+
+    /*  determine the index of the representative nearest to a value  */
     const nearestIndexOf = (reps: number[], v: number): number => {
         let best = 0
         for (let i = 1; i < reps.length; i++)
@@ -373,7 +376,7 @@ const planRoutes = (
             chanNeed(plan.chans[0], textWidth(name, FS_EDGE) + 2 * CHAN_LBL)
         else if (name !== undefined && plan.guts.length > 0)
             gutLbl.set(plan.guts[0], (gutLbl.get(plan.guts[0]) ?? 0) + 1)
-        if (arity !== undefined && chans.length > 0)
+        if (arity !== undefined)
             chanNeed(chans[chans.length - 1],
                 ARITY_OFF + textWidth(arity, FS_ARITY) + CHAN_LBL)
     })
@@ -425,8 +428,8 @@ const computeGrid = (
     const colWidth  = Array.from({ length: ncols }, () => 0)
     const rowHeight = Array.from({ length: nrows }, () => 0)
     for (const node of nodes) {
-        colWidth[col.get(node.id)!]   = Math.max(colWidth[col.get(node.id)!],   boxW.get(node.id)!)
-        rowHeight[row.get(node.id)!]  = Math.max(rowHeight[row.get(node.id)!],  boxH.get(node.id)!)
+        colWidth[col.get(node.id)!]  = Math.max(colWidth[col.get(node.id)!],  boxW.get(node.id)!)
+        rowHeight[row.get(node.id)!] = Math.max(rowHeight[row.get(node.id)!], boxH.get(node.id)!)
     }
 
     /*  size the channels and gutters by their actual edge usage, grown
@@ -490,8 +493,6 @@ const assignTrackCoords = (
     const chanUsers = new Map<number, TrackUser[]>()
     edges.forEach((edge, i) => {
         const { chans, guts, flags, gate } = plans[i]
-        if (chans.length === 0)
-            return
         const sp = portPos.get(`${i}:s`)!
         const tp = portPos.get(`${i}:t`)!
         if (edge.source === edge.target)
@@ -558,7 +559,7 @@ const routePolys = (
     return edges.map((edge, i) => {
         const sp = portPos.get(`${i}:s`)!
         const tp = portPos.get(`${i}:t`)!
-        const { chans, guts, flags } = plans[i]
+        const { chans, guts, flags, gate } = plans[i]
         let pts: Poly
         if (edge.source === edge.target) {
             /*  route the self-loop counter-clockwise around the top-right
@@ -585,9 +586,9 @@ const routePolys = (
             const ch1 = chanX(chans[0], i)
             const ch2 = chanX(chans[1], i)
             const gy  = gutY(guts[0], i)
-            if (plans[i].gate === "t")
+            if (gate === "t")
                 pts = [ [ sp.x, sp.y ], [ ch1, sp.y ], [ ch1, gy ], [ tp.x, gy ] ]
-            else if (plans[i].gate === "s")
+            else if (gate === "s")
                 pts = [ [ sp.x, gy ], [ ch2, gy ], [ ch2, tp.y ], [ tp.x, tp.y ] ]
             else
                 pts = [ [ sp.x, sp.y ], [ ch1, sp.y ], [ ch1, gy ], [ ch2, gy ], [ ch2, tp.y ], [ tp.x, tp.y ] ]
@@ -660,12 +661,15 @@ const nudgeNodes = (
     dy:     Map<string, number>,
     route:  () => Routing
 ): Routing => {
+    /*  whether neither a gutter track nor a self-loop detour crosses a column within a gutter  */
     const gutterFree = (g: number, c: number): boolean =>
         !plans.some((plan) => plan.guts[0] === g
             && Math.min(...plan.chans) < c
             && c <= Math.max(...plan.chans) + (plan.gate === "t" ? 1 : 0))
         && !edges.some((edge) => edge.source === edge.target
             && row.get(edge.source) === g + 1 && col.get(edge.source) === c)
+
+    /*  the vertical shift range of a node: its row slack plus the room of its free adjacent gutters  */
     const shiftRange = (id: string): [ number, number ] => {
         const r     = row.get(id)!
         const c     = col.get(id)!
@@ -674,6 +678,8 @@ const nudgeNodes = (
         const down  = r < nrows - 1 && gutterFree(r, c)     ? grid.gutH[r]     - GUT_H0 : 0
         return [ -(slack + up), slack + down ]
     }
+
+    /*  whether the gutter-routed edges of a node still approach it from their gutter side  */
     const approachesSanely = (id: string, routing: Routing): boolean =>
         edges.every((edge, i) => {
             const role = edge.source === id ? "s" : edge.target === id ? "t" : null
@@ -683,6 +689,8 @@ const nudgeNodes = (
             const gap = routing.portPos.get(`${i}:${role}`)!.y - routing.gutY(g, i)
             return row.get(id)! > g ? gap >= NUDGE_GAP : gap <= -NUDGE_GAP
         })
+
+    /*  rank the routings: fewer crossings first, then fewer jogged direct same-row edges  */
     const direct = edges.map((edge, i) => plans[i].chans.length === 1
         && !plans[i].flags[0].hairpin
         && row.get(edge.source) === row.get(edge.target))

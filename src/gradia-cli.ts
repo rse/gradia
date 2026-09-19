@@ -48,7 +48,7 @@ program.name("gradia")
     .addOption(new Option("-f, --format <format>", "output format")
         .choices(diagramFormats).default(diagramFormatDefault))
     .option("-c, --config <name>=<value>",         "rendering configuration option (repeatable)",
-        (nv: string, prev: string[]) => prev.concat(nv), [] as string[])
+        (nv: string, prev: string[]) => prev.concat(nv), [])
     .argument("[input]", "input graph description file (omitted in MCP service mode)")
     .action(async (input: string | undefined, options: CLIOptions) => {
         /*  parse and validate the rendering configuration options  */

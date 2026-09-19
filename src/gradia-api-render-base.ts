@@ -48,10 +48,10 @@ export const textWrap = (text: string, size: number, maxWidth: number): string[]
     return lines
 }
 
-/*  escape a string for use in XML/SVG content (control characters are
-    stripped, as XML forbids them even in their escaped form)  */
+/*  escape a string for use in XML/SVG content (control and non-characters
+    are stripped, as XML forbids them even in their escaped form)  */
 export const escapeXML = (text: string): string =>
-    text.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, "")
+    text.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F\uFFFE\uFFFF\p{Cs}]/gu, "")
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")

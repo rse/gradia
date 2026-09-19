@@ -25,7 +25,8 @@ export const simplifyPoly = (pts: Poly): Poly => {
     /*  drop the remaining duplicate points  */
     const out: Poly = []
     for (const p of flat) {
-        if (out.length > 0 && out[out.length - 1][0] === p[0] && out[out.length - 1][1] === p[1])
+        const q = out.at(-1)
+        if (q !== undefined && q[0] === p[0] && q[1] === p[1])
             continue
         out.push(p)
     }
@@ -103,10 +104,12 @@ export const assignPorts = (
         /*  place the fixed ports at their given offsets  */
         const fixedOf = (p: PortRef) =>
             fixedY?.(p.edge, p.role)
+        const place   = (p: PortRef, py: number) =>
+            portPos.set(`${p.edge}:${p.role}`, { x: px, y: py })
         const taken: number[] = []
         for (const p of group.filter((p) => fixedOf(p) !== undefined)) {
             const py = cy(id) + fixedOf(p)!
-            portPos.set(`${p.edge}:${p.role}`, { x: px, y: py })
+            place(p, py)
             taken.push(py)
         }
         taken.sort((a, b) => a - b)
@@ -122,8 +125,6 @@ export const assignPorts = (
         free.sort((a, b) => (keyOf(a) - keyOf(b)) || (a.edge - b.edge))
         const n       = free.length + taken.length
         const spacing = Math.min(portGap, (boxH.get(id)! - PORT_PAD) / n)
-        const place   = (p: PortRef, py: number) =>
-            portPos.set(`${p.edge}:${p.role}`, { x: px, y: py })
         if (taken.length === 0) {
             free.forEach((p, idx) => place(p, cy(id) + (idx - (n - 1) / 2) * spacing))
             continue
@@ -306,7 +307,7 @@ const minimizeCrossings = (seed: TrackUser[]): TrackUser[] => {
     share a track, so fewer tracks are used and they stay centered  */
 export const assignTracks = (users: TrackUser[], width: number, pad: number, gap: number): Map<number, number> => {
     const order = (list: TrackUser[], mirror: boolean): TrackUser[] => {
-        const dir = mirror ? -1 : +1
+        const dir   = mirror ? -1 : +1
         const backs = list.filter((u) => u.posOut <  u.posIn)
             .sort((a, b) => dir * ((a.posIn - b.posIn) || (a.posOut - b.posOut)))
         const fores = list.filter((u) => u.posOut >= u.posIn)
@@ -423,15 +424,15 @@ export const pathOf = (poly: Poly, hop: Map<number, number[]>, rounding: number,
                 their individual hops would be shorter than 14px)  */
             const groups: number[][] = []
             for (const hx of xs) {
-                const g = groups[groups.length - 1]
-                if (g !== undefined && Math.abs(hx - g[g.length - 1]) <= hopRadius * 2 + 14)
+                const g = groups.at(-1)
+                if (g !== undefined && Math.abs(hx - g.at(-1)!) <= hopRadius * 2 + 14)
                     g.push(hx)
                 else
                     groups.push([ hx ])
             }
             for (const g of groups) {
                 let x1 = g[0] - dir * hopRadius
-                let x2 = g[g.length - 1] + dir * hopRadius
+                let x2 = g.at(-1)! + dir * hopRadius
 
                 /*  clamp the arc into the drawable segment part, so
                     crossings close to a corner still get their hop  */

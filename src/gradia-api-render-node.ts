@@ -113,12 +113,11 @@ export const linesOfNode = (node: Node, config: Config): NodeLines => {
     }
 }
 
-/*  determine node box sizes from their textual content
-    (boxes are scaled up in height by a per-node factor, but never
-    below the content height, to give the edges more attachment
-    room), except for the nodes
-    of a fixed size (the container placeholders and gate nodes
-    of a containment level), which are taken as given  */
+/*  determine node box sizes from their textual content (boxes are
+    scaled up in height by a per-node factor, but never below the
+    content height, to give the edges more attachment room), except
+    for the nodes of a fixed size (the container placeholders and gate
+    nodes of a containment level), which are taken as given  */
 export const measureNodes = (
     nodes:   Node[],
     config:  Config,

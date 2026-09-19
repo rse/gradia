@@ -32,9 +32,12 @@ export interface GroupPart {
     deviating group of its own. Edges have to stay within a single
     group, so reject any group-crossing edge  */
 export const partitionGroups = (graph: Graph, containment: Containment): GroupPart[] | null => {
+    /*  short-circuit when no node uses a group at all  */
     const nodes = Array.from(graph.nodes.values())
     if (!nodes.some((node) => groupOf(node) !== undefined))
         return null
+
+    /*  assign every node to the group of its outermost container  */
     const parts  = new Map<string, Graph>()
     const nameOf = new Map<string, string>()
     for (const node of nodes) {
@@ -52,6 +55,8 @@ export const partitionGroups = (graph: Graph, containment: Containment): GroupPa
         }
         part.nodes.set(node.id, node)
     }
+
+    /*  assign every edge to the common group of its endpoints  */
     for (const edge of graph.edges) {
         const sg = nameOf.get(edge.source)!
         const tg = nameOf.get(edge.target)!
@@ -60,6 +65,8 @@ export const partitionGroups = (graph: Graph, containment: Containment): GroupPa
                 `crosses groups "${sg}" and "${tg}"`)
         parts.get(sg)!.edges.push(edge)
     }
+
+    /*  provide the partitions in order of first appearance  */
     return Array.from(parts.entries()).map(([ name, subgraph ]) => ({ name, graph: subgraph }))
 }
 
@@ -99,16 +106,16 @@ export const composeGroups = (parts: GroupPart[], layouts: Layout[], config: Con
         new Map(layouts.flatMap((layout) => Array.from(pick(layout).entries())))
     const groupIdxOf = (id: string) => groupIdx.get(id)!
     return {
-        nodes:    layouts.flatMap((layout) => layout.nodes),
-        edges:    layouts.flatMap((layout) => layout.edges),
-        cx:       (id) => layouts[groupIdxOf(id)].cx(id) + dxs[groupIdxOf(id)],
-        cy:       (id) => layouts[groupIdxOf(id)].cy(id) + dys[groupIdxOf(id)],
-        boxW:     merge((layout) => layout.boxW),
-        boxH:     merge((layout) => layout.boxH),
-        contentH: merge((layout) => layout.contentH),
-        polys:    layouts.flatMap((layout, i) => layout.polys.map((poly): Poly =>
+        nodes:      layouts.flatMap((layout) => layout.nodes),
+        edges:      layouts.flatMap((layout) => layout.edges),
+        cx:         (id) => layouts[groupIdxOf(id)].cx(id) + dxs[groupIdxOf(id)],
+        cy:         (id) => layouts[groupIdxOf(id)].cy(id) + dys[groupIdxOf(id)],
+        boxW:       merge((layout) => layout.boxW),
+        boxH:       merge((layout) => layout.boxH),
+        contentH:   merge((layout) => layout.contentH),
+        polys:      layouts.flatMap((layout, i) => layout.polys.map((poly): Poly =>
             poly.map(([ px, py ]) => [ px + dxs[i], py + dys[i] ]))),
-        styleOf:  (node) => (layouts[groupIdxOf(node.id)].styleOf ?? defaultStyleOf)(node),
+        styleOf:    (node) => (layouts[groupIdxOf(node.id)].styleOf ?? defaultStyleOf)(node),
         groups,
         containers: layouts.flatMap((layout, i) => (layout.containers ?? []).map((c): ContainerBox =>
             ({ ...c, x: c.x + dxs[i], y: c.y + dys[i] })))

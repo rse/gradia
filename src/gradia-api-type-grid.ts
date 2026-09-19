@@ -5,11 +5,11 @@
 */
 
 /*  internal dependencies  */
-import { Node, Graph }  from "./gradia-api-model.js"
-import { Config }       from "./gradia-api-config.js"
+import { Node, Graph }           from "./gradia-api-model.js"
+import { Config }                from "./gradia-api-config.js"
 import { measureNodes, orderOf } from "./gradia-api-render-node.js"
-import { Layout }       from "./gradia-api-render-base.js"
-import { LevelContext } from "./gradia-api-render-container.js"
+import { Layout }                from "./gradia-api-render-base.js"
+import { LevelContext }          from "./gradia-api-render-container.js"
 
 /*  lay out an edge-less graph model as a compact grid of tiles (for a
     containment level: with the container placeholders at their fixed
@@ -17,6 +17,7 @@ import { LevelContext } from "./gradia-api-render-container.js"
     declaration order, or in the order of their "order" attributes
     (the tiles without one trailing)  */
 export const render = async (graph: Graph, config: Config, level: LevelContext = {}): Promise<Layout> => {
+    /*  determine the tiles in their rendering order  */
     const nodes = Array.from(graph.nodes.values())
         .sort((a, b) => (orderOf(a) ?? Infinity) - (orderOf(b) ?? Infinity) || 0)
 
@@ -51,7 +52,7 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
             boxW.set(node.id, tileW)
     }
 
-    /*  place the nodes in declaration order onto a roughly square,
+    /*  place the nodes in their rendering order onto a roughly square,
         row-major grid (raised to the configured minimum of columns, so
         few nodes still share a row, and capped at the configured maximum
         of columns and the node count, so larger graphs grow only in

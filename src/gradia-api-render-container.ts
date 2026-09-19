@@ -52,6 +52,7 @@ export interface Containment {
     container with one of its own members, and every "container"
     annotation has to name a valid diagram type  */
 export const containmentOf = (graph: Graph, types: string[]): Containment => {
+    /*  collect the parent/children relations of the nodes  */
     const parentOfId = new Map<string, string>()
     const childrenOf = new Map<string, Node[]>()
     for (const node of graph.nodes.values()) {
@@ -70,6 +71,8 @@ export const containmentOf = (graph: Graph, types: string[]): Containment => {
         else
             children.push(node)
     }
+
+    /*  reject the containment cycles  */
     for (const id of parentOfId.keys()) {
         const seen = new Set<string>([ id ])
         for (let p = parentOfId.get(id); p !== undefined; p = parentOfId.get(p)) {
@@ -78,6 +81,8 @@ export const containmentOf = (graph: Graph, types: string[]): Containment => {
             seen.add(p)
         }
     }
+
+    /*  reject the edges connecting a container with one of its own members  */
     const isAncestor = (a: string, id: string): boolean => {
         for (let p = parentOfId.get(id); p !== undefined; p = parentOfId.get(p))
             if (p === a)
@@ -347,7 +352,7 @@ export const renderContained = async (
             const tt = topOf(edge.target)
             if (ts === undefined && tt === undefined)
                 return
-            if (ts !== undefined && tt !== undefined && ts === tt && inner.has(ts) && edge.source !== ts)
+            if (ts !== undefined && ts === tt && inner.has(ts) && edge.source !== ts)
                 return
             let source: string
             let target: string

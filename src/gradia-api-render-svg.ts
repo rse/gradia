@@ -93,13 +93,13 @@ const labelPlacer = (
     const collisions = (boxes: Box[], box: Box): number =>
         boxes.filter((o) => box[0] < o[2] && box[2] > o[0] && box[1] < o[3] && box[3] > o[1]).length
     const claim = (candidates: Box[]): Box => {
-        let box   = candidates[0]
-        let worst = Infinity
+        let box    = candidates[0]
+        let lowest = Infinity
         for (const c of candidates) {
             const score = collisions(occupied, c) * (lines.length + 1) + collisions(lines, c)
-            if (score < worst) {
-                box   = c
-                worst = score
+            if (score < lowest) {
+                box    = c
+                lowest = score
             }
             if (score === 0)
                 break

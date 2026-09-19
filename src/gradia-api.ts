@@ -155,7 +155,7 @@ export class Gradia {
     static async render (spec: string, options: DiagramOptions = {}): Promise<string> {
         const graph  = Gradia.parse(spec)
         const type   = options.type ?? parseTypeDirective(spec)
-        const config = { ...parseDirectives(spec), ...(options.config ?? {}) }
+        const config = { ...parseDirectives(spec), ...validateConfig(options.config ?? {}, { trusted: true }) }
         return Gradia.generate(graph, { ...options, type, config })
     }
 }
