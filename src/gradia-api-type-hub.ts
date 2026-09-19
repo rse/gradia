@@ -7,7 +7,7 @@
 /*  internal dependencies  */
 import { Node, Edge, Graph }                       from "./gradia-api-model.js"
 import { Config }                                  from "./gradia-api-config.js"
-import { Poly, NodeStyle, Layout }                 from "./gradia-api-render-base.js"
+import { Poly, NodeStyle, Layout, FS_ARITY, ARITY_OFF, textWidth } from "./gradia-api-render-base.js"
 import { isPrimary, measureNodes, defaultStyleOf } from "./gradia-api-render-node.js"
 import { LevelContext }                            from "./gradia-api-render-container.js"
 import { Side, TrackUser, simplifyPoly, assignPorts, assignTracks } from "./gradia-api-render-edge.js"
@@ -18,8 +18,11 @@ import { Side, TrackUser, simplifyPoly, assignPorts, assignTracks } from "./grad
 const CLONE = "\u0000"
 
 /*  rendering geometry constants  */
-const CHAN_W1  = 28  /*  width of a one-edge inter-column channel  */
-const CHAN_PAD = 16  /*  cross-axis padding inside a channel       */
+const CHAN_W1  = 28  /*  width of a one-edge inter-column channel    */
+const CHAN_PAD = 16  /*  cross-axis padding inside a channel         */
+const WRAP_GAP = 40  /*  min horizontal gap between two sub-columns  */
+const WRAP_PAD = 8   /*  padding of an arity inside that gap         */
+const LANE_PAD = 12  /*  clearance of an edge lane to a node box     */
 
 /*  validate the constrained input topology and classify the declared
     nodes: exactly one node is annotated with "primary: true" and every
@@ -143,32 +146,76 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
                 (cnt - config["hub-node-degree-max"]) * config["size-edge-port-gap"])
     }
 
+    /*  a stack of more nodes than the configured maximum wraps into two
+        staggered sub-columns: its nodes alternate between the outer
+        sub-column and the inner one (adjacent to the channel), and
+        every outer node is vertically centered onto a gap between two
+        inner nodes, through which its edges reach the channel on their
+        straight horizontal lanes (so the edge routing is unaffected)  */
+    const countMax = config["hub-node-count-max"]
+    const outerSet = new Set<string>()
+    for (const list of [ inputs, outputs ])
+        if (countMax > 0 && list.length > countMax)
+            list.filter((_, k) => k % 2 === 0).forEach((node) => outerSet.add(node.id))
+
+    /*  the vertical half extent of the lane the edges of an outer node
+        occupy around its center: its ports at their maximum separation
+        plus the clearance to the inner node boxes (a fixed-size box
+        carries its ports at fixed positions anywhere along its side,
+        so its lane spans its entire height)  */
+    const laneOf = (id: string): number => {
+        const cnt = Math.max(portCnt.get(`w:${id}`) ?? 0, portCnt.get(`e:${id}`) ?? 0)
+        return level.fixedSize?.has(id) ? boxH.get(id)! / 2 :
+            Math.min(boxH.get(id)! / 2, (cnt - 1) * config["size-edge-port-gap"] / 2 + LANE_PAD)
+    }
+
     /*  fixed three-column layout: stack the input nodes in the first
         column and the output nodes in the third column (each stack
         vertically centered), and place the center node in the second
-        column at the vertical center of the canvas  */
-    const stackH = (list: Node[]): number =>
-        list.reduce((a, node) => a + boxH.get(node.id)!, 0) + Math.max(list.length - 1, 0) * gap
-    const totalH = Math.max(stackH(inputs), boxH.get(center.id)!, stackH(outputs))
-    const nodeCY = new Map<string, number>()
-    const stack  = (list: Node[]): void => {
-        let y = margin + (totalH - stackH(list)) / 2
+        column at the vertical center of the canvas, where an outer node
+        keeps its lane clear of the inner nodes above and below it  */
+    const stackY = new Map<string, number>()
+    const stack  = (list: Node[]): number => {
+        let [ innerB, outerB, laneB, bottom ] = [ -Infinity, -Infinity, -Infinity, 0 ]
         for (const node of list) {
-            nodeCY.set(node.id, y + boxH.get(node.id)! / 2)
-            y += boxH.get(node.id)! + gap
+            const h = boxH.get(node.id)!
+            let   y = h / 2
+            if (outerSet.has(node.id)) {
+                y      = Math.max(y, outerB + gap + h / 2, innerB + laneOf(node.id))
+                outerB = y + h / 2
+                laneB  = y + laneOf(node.id)
+            }
+            else {
+                y      = Math.max(y, innerB + gap + h / 2, laneB + h / 2)
+                innerB = y + h / 2
+            }
+            stackY.set(node.id, y)
+            bottom = Math.max(bottom, y + h / 2)
         }
+        return bottom
     }
-    stack(inputs)
-    stack(outputs)
+    const stackH = [ stack(inputs), stack(outputs) ]
+    const totalH = Math.max(stackH[0], boxH.get(center.id)!, stackH[1])
+    const nodeCY = new Map<string, number>()
+    for (const [ c, list ] of [ inputs, outputs ].entries())
+        for (const node of list)
+            nodeCY.set(node.id, margin + (totalH - stackH[c]) / 2 + stackY.get(node.id)!)
     nodeCY.set(center.id, margin + totalH / 2)
 
     /*  determine column widths and left edge positions, with the two
-        inter-column channel widths sized by actual edge usage  */
-    const colWidth = [
-        inputs.reduce((a, node)  => Math.max(a, boxW.get(node.id)!), 0),
-        boxW.get(center.id)!,
-        outputs.reduce((a, node) => Math.max(a, boxW.get(node.id)!), 0)
-    ]
+        inter-column channel widths sized by actual edge usage (a
+        wrapped column spans its two sub-columns and their gap, which
+        holds the arities set back from the arrow heads at its outer
+        nodes, as the lanes between the inner nodes have no room)  */
+    const subWidth = (list: Node[], outer: boolean): number =>
+        list.filter((node) => outerSet.has(node.id) === outer)
+            .reduce((a, node) => Math.max(a, boxW.get(node.id)!), 0)
+    const outerW   = [ subWidth(inputs, true), subWidth(outputs, true) ]
+    const wrapGap  = edges.reduce((a, edge) => outerSet.has(edge.target) && edge.arity !== undefined ?
+        Math.max(a, ARITY_OFF + textWidth(edge.arity, FS_ARITY) + WRAP_PAD) : a, WRAP_GAP)
+    const sideW    = (list: Node[], c: number): number =>
+        subWidth(list, false) + (outerW[c] > 0 ? (c === 1 ? wrapGap : WRAP_GAP) + outerW[c] : 0)
+    const colWidth = [ sideW(inputs, 0), boxW.get(center.id)!, sideW(outputs, 1) ]
     const chanOf   = (edge: Edge): number =>
         Math.min(colOf(edge.source), colOf(edge.target))
     const chanCnt  = [
@@ -185,14 +232,15 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
         x += colWidth[c] + (c < 2 ? chanW[c] : 0)
     }
 
-    /*  place the nodes within their column: input nodes right-aligned,
-        output nodes left-aligned, and the center node centered  */
+    /*  place the nodes within their (sub-)column: input nodes
+        right-aligned, output nodes left-aligned, and the center node
+        centered  */
     const cx = (id: string): number => {
         const c = colOf(id)
         if (c === 0)
-            return colLX[0] + colWidth[0] - boxW.get(id)! / 2
+            return colLX[0] + (outerSet.has(id) ? outerW[0] : colWidth[0]) - boxW.get(id)! / 2
         else if (c === 2)
-            return colLX[2] + boxW.get(id)! / 2
+            return colLX[2] + (outerSet.has(id) ? colWidth[2] - outerW[1] : 0) + boxW.get(id)! / 2
         else
             return colLX[1] + colWidth[1] / 2
     }

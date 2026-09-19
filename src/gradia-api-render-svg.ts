@@ -33,12 +33,27 @@ const NS_GRADIA = new UUID(5, "ns:URL", "https://github.com/rse/gradia").format(
 
 /*  derive a per-document identifier prefix from a seed, as the SVG
     identifiers are DOM-global and would collide once multiple diagrams
-    are embedded into the very same document. The prefix is a UUID v5 of
-    the seed and hence stays stable across regenerations of an unchanged
-    diagram (the Base16 format keeps it alphanumeric and thus a valid XML
-    name and CSS/URL fragment)  */
+    are embedded into the very same document. The prefix is derived from
+    the UUID v5 of the seed and hence stays stable across regenerations
+    of an unchanged diagram (the Base16 format keeps it alphanumeric and
+    thus a valid XML name and CSS/URL fragment, and its leading 12 digits
+    keep the identifiers short, as every edge references one, while
+    still making a collision among the diagrams of a document unlikely)  */
 const idPrefix = (seed: string): string =>
-    `gradia-${new UUID(5, NS_GRADIA, seed).format("b16").toLowerCase()}`
+    `gradia-${new UUID(5, NS_GRADIA, seed).format("b16").toLowerCase().slice(0, 12)}`
+
+/*  the styling of the rendered elements: instead of repeating the very
+    same lengthy style on every element, the elements reference CSS
+    classes, which the document declares once. A class is named after
+    the UUID v5 of its own declarations, so equal declarations share
+    one class, even across the diagrams embedded into the very same
+    document, where the class names are global (and where the embedding
+    document hence can declare all classes once on its own)  */
+interface Styler {
+    text: (fill: ConfigEmbedded, size: number,
+        options?: { bold?: boolean, middle?: boolean, halo?: boolean }) => string
+    box:  (fill: ConfigEmbedded, stroke: ConfigEmbedded, width: number) => string
+}
 
 /*  a rectangular area, given by its top-left and bottom-right corners  */
 type Box = [ number, number, number, number ]
@@ -112,8 +127,8 @@ const labelPlacer = (
 
 /*  generate the SVG fragments for a single node box (a node with a
     "url" attribute becomes a hyperlink covering the whole box)  */
-const renderNode = (node: Node, layout: Layout, style: NodeStyle, font: string,
-    color: (key: ConfigEmbedded) => string, config: Config): string[] => {
+const renderNode = (node: Node, layout: Layout, style: NodeStyle, styler: Styler,
+    config: Config): string[] => {
     const { cx, cy, boxW, boxH, contentH } = layout
     const w     = boxW.get(node.id)!
     const h     = boxH.get(node.id)!
@@ -123,7 +138,7 @@ const renderNode = (node: Node, layout: Layout, style: NodeStyle, font: string,
     const url   = urlOf(node)
     const parts: string[] = []
     parts.push(`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="6" ` +
-        `style="fill: ${color(style.fill)}; stroke: ${color(style.stroke)}" stroke-width="4.0"` +
+        `class="${styler.box(style.fill, style.stroke, 4)}"` +
         `${style.dash !== undefined ? ` stroke-dasharray="${escapeXML(style.dash)}"` : ""}/>`)
 
     /*  vertically center the textual content block within the box, with
@@ -136,20 +151,18 @@ const renderNode = (node: Node, layout: Layout, style: NodeStyle, font: string,
         ty + th + MIN_H / 2 + FS_NAME * 0.36 : cy(node.id) + th / 2 + FS_NAME * 0.36 - nh / 2
     lines.type.forEach((line, k) => {
         parts.push(`<text x="${cx(node.id)}" ` +
-            `y="${nameY - TYPE_D - (lines.type.length - 1 - k) * TYPE_H}" text-anchor="middle" ` +
-            `font-size="${FS_TYPE}" ` +
-            `style="font-family: ${font}; fill: ${color(style.text)}">${escapeXML(line)}</text>`)
+            `y="${nameY - TYPE_D - (lines.type.length - 1 - k) * TYPE_H}" ` +
+            `class="${styler.text(style.text, FS_TYPE, { middle: true })}">${escapeXML(line)}</text>`)
     })
     lines.name.forEach((line, k) => {
-        parts.push(`<text x="${cx(node.id)}" y="${nameY + k * NAME_H}" text-anchor="middle" ` +
-            `font-size="${FS_NAME}" font-weight="600" ` +
-            `style="font-family: ${font}; fill: ${color(style.text)}">${escapeXML(line)}</text>`)
+        parts.push(`<text x="${cx(node.id)}" y="${nameY + k * NAME_H}" ` +
+            `class="${styler.text(style.text, FS_NAME, { bold: true, middle: true })}">` +
+            `${escapeXML(line)}</text>`)
     })
     lines.attrs.forEach((line, k) => {
         parts.push(`<text x="${cx(node.id)}" ` +
-            `y="${ty + th + nh + MIN_H + ATTR_P + k * ATTR_H}" text-anchor="middle" ` +
-            `font-size="${FS_ATTR}" ` +
-            `style="font-family: ${font}; fill: ${color(style.text)}">${escapeXML(line)}</text>`)
+            `y="${ty + th + nh + MIN_H + ATTR_P + k * ATTR_H}" ` +
+            `class="${styler.text(style.text, FS_ATTR, { middle: true })}">${escapeXML(line)}</text>`)
     })
     if (url === undefined)
         return parts
@@ -191,11 +204,7 @@ const viewBoxOf = (layout: Layout, boxes: Box[], margin: number): { x: number, y
     arity, placed near the arrow head (both dodging into a collision-free
     position through the "claim" of the label placer)  */
 const renderEdgeLabels = (edge: Edge, poly: Poly, claim: (candidates: Box[]) => Box,
-    font: string, color: (key: ConfigEmbedded) => string): string[] => {
-    /*  the halo rendered behind the edge labels for readability
-        (its color is emitted into the style attribute below, as only
-        there the CSS custom property lookup can be resolved)  */
-    const halo = "stroke-width=\"4.5\" paint-order=\"stroke\" stroke-linejoin=\"round\""
+    styler: Styler): string[] => {
     const parts: string[] = []
     if (edge.name !== undefined) {
         const w = textWidth(edge.name, FS_EDGE)
@@ -212,11 +221,9 @@ const renderEdgeLabels = (edge: Edge, poly: Poly, claim: (candidates: Box[]) => 
             }
         }
         const box = claim(candidates)
-        parts.push(`<text x="${(box[0] + box[2]) / 2}" y="${box[3] - 3}" text-anchor="middle" ` +
-            `font-size="${FS_EDGE}" ` +
-            `style="font-family: ${font}; fill: ${color("color-edge-name")}; ` +
-            `stroke: ${color("color-edge-halo")}" ` +
-            `${halo}>${escapeXML(edge.name)}</text>`)
+        parts.push(`<text x="${(box[0] + box[2]) / 2}" y="${box[3] - 3}" ` +
+            `class="${styler.text("color-edge-name", FS_EDGE, { middle: true, halo: true })}">` +
+            `${escapeXML(edge.name)}</text>`)
     }
     if (edge.arity !== undefined) {
         const w    = textWidth(edge.arity, FS_ARITY)
@@ -246,47 +253,40 @@ const renderEdgeLabels = (edge: Edge, poly: Poly, claim: (candidates: Box[]) => 
             ]
         }
         const box = claim(candidates)
-        parts.push(`<text x="${(box[0] + box[2]) / 2}" y="${box[3] - 3}" text-anchor="middle" ` +
-            `font-size="${FS_ARITY}" ` +
-            `style="font-family: ${font}; fill: ${color("color-edge-arity")}; ` +
-            `stroke: ${color("color-edge-halo")}" ` +
-            `${halo}>${escapeXML(edge.arity)}</text>`)
+        parts.push(`<text x="${(box[0] + box[2]) / 2}" y="${box[3] - 3}" ` +
+            `class="${styler.text("color-edge-arity", FS_ARITY, { middle: true, halo: true })}">` +
+            `${escapeXML(edge.arity)}</text>`)
     }
     return parts
 }
 
 /*  generate the SVG fragments for a single group box and its tag
     in the top-left corner  */
-const renderGroup = (group: GroupBox, font: string,
-    color: (key: ConfigEmbedded) => string): string[] => [
+const renderGroup = (group: GroupBox, styler: Styler): string[] => [
     `<rect x="${group.x}" y="${group.y}" width="${group.w}" height="${group.h}" rx="12" ` +
-        `style="fill: ${color("color-group-box")}; ` +
-        `stroke: ${color("color-group-border")}" stroke-width="3.0"/>`,
+        `class="${styler.box("color-group-box", "color-group-border", 3)}"/>`,
     `<text x="${group.x + TAG_DX}" y="${group.y + TAG_DY + FS_GROUP}" ` +
-        `font-size="${FS_GROUP}" font-weight="600" ` +
-        `style="font-family: ${font}; fill: ${color("color-group-name")}">${escapeXML(group.name)}</text>`
+        `class="${styler.text("color-group-name", FS_GROUP, { bold: true })}">${escapeXML(group.name)}</text>`
 ]
 
 /*  generate the SVG fragments for a single container box and its tag
     in the top-left corner, with the optional type line above the name
     (a container with a "url" attribute becomes a hyperlink covering
     the whole box)  */
-const renderContainer = (c: ContainerBox, font: string,
-    color: (key: ConfigEmbedded) => string): string[] => {
+const renderContainer = (c: ContainerBox, styler: Styler): string[] => {
     const type  = typeOf(c.node)
     const url   = urlOf(c.node)
     const parts = [
         `<rect x="${c.x}" y="${c.y}" width="${c.w}" height="${c.h}" rx="12" ` +
-            `style="fill: ${color("color-container-box")}; ` +
-            `stroke: ${color("color-container-border")}" stroke-width="3.0" stroke-dasharray="10 6"/>`,
+            `class="${styler.box("color-container-box", "color-container-border", 3)}" ` +
+            "stroke-dasharray=\"10 6\"/>",
         ...(type !== undefined ? [
             `<text x="${c.x + TAG_DX}" y="${c.y + TAG_DY + FS_TYPE}" ` +
-                `font-size="${FS_TYPE}" ` +
-                `style="font-family: ${font}; fill: ${color("color-container-name")}">${escapeXML(type)}</text>`
+                `class="${styler.text("color-container-name", FS_TYPE)}">${escapeXML(type)}</text>`
         ] : []),
         `<text x="${c.x + TAG_DX}" y="${c.y + containerHead(c.node) - HEAD_H + TAG_DY + FS_GROUP}" ` +
-            `font-size="${FS_GROUP}" font-weight="600" ` +
-            `style="font-family: ${font}; fill: ${color("color-container-name")}">${escapeXML(c.node.name)}</text>`
+            `class="${styler.text("color-container-name", FS_GROUP, { bold: true })}">` +
+            `${escapeXML(c.node.name)}</text>`
     ]
     if (url === undefined)
         return parts
@@ -306,7 +306,7 @@ export const renderSVG = (layout: Layout, config: Config, explicit: Partial<Conf
         values: explicitly configured values are hard-coded, while all
         others are fetched at display time from the "--gradia-<option>"
         CSS custom properties, falling back to the built-in defaults  */
-    const color = (key: ConfigEmbedded): string => escapeXML(cssValueOf(explicit, key))
+    const color = (key: ConfigEmbedded): string => cssValueOf(explicit, key)
 
     /*  derive the collision-free identifiers of this SVG document  */
     const prefix  = idPrefix(seed)
@@ -317,7 +317,32 @@ export const renderSVG = (layout: Layout, config: Config, explicit: Partial<Conf
     const stack = Object.hasOwn(explicit, "font-family") ?
         `'${escapeCSS(family)}'` :
         `var(--gradia-font-family, '${escapeCSS(family)}')`
-    const font = escapeXML(`${stack}, ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif`)
+    const font = `${stack}, ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif`
+
+    /*  collect the CSS classes the rendered elements reference (the
+        halo behind an edge label keeps it readable on top of a line)  */
+    const rules = new Map<string, string>()
+    const classOf = (decls: string): string => {
+        let name = rules.get(decls)
+        if (name === undefined) {
+            name = `gradia-${new UUID(5, NS_GRADIA, decls).format("b16").toLowerCase().slice(0, 8)}`
+            rules.set(decls, name)
+        }
+        return name
+    }
+    const styler: Styler = {
+        text: (fill, size, options = {}) => classOf(
+            `font-family: ${font}; font-size: ${size}px; ` +
+            (options.bold   ? "font-weight: 600; "    : "") +
+            (options.middle ? "text-anchor: middle; " : "") +
+            `fill: ${color(fill)}` +
+            (options.halo ? `; stroke: ${color("color-edge-halo")}; stroke-width: 4.5; ` +
+                "paint-order: stroke; stroke-linejoin: round" : "")),
+        box: (fill, stroke, width) => classOf(
+            `fill: ${color(fill)}; stroke: ${color(stroke)}; stroke-width: ${width}`)
+    }
+    const classEdge  = classOf(`fill: none; stroke: ${color("color-edge-line")}; stroke-width: 3`)
+    const classArrow = classOf(`fill: ${color("color-edge-line")}`)
 
     /*  detect the edge crossings requiring rendered hops  */
     const hops = computeHops(polys)
@@ -330,19 +355,19 @@ export const renderSVG = (layout: Layout, config: Config, explicit: Partial<Conf
     const svgLabels: string[] = []
     edges.forEach((edge, i) => {
         svgEdges.push(`<path d="${pathOf(polys[i], hops[i],
-            config["size-edge-corner-radius"], config["size-edge-hop-radius"])}" fill="none" ` +
-            `style="stroke: ${color("color-edge-line")}" stroke-width="3.0" marker-end="url(#${idArrow})"/>`)
-        svgLabels.push(...renderEdgeLabels(edge, polys[i], claim, font, color))
+            config["size-edge-corner-radius"], config["size-edge-hop-radius"])}" ` +
+            `class="${classEdge}" marker-end="url(#${idArrow})"/>`)
+        svgLabels.push(...renderEdgeLabels(edge, polys[i], claim, styler))
     })
 
     /*  generate the SVG fragments for the node boxes  */
-    const svgNodes = nodes.flatMap((node) => renderNode(node, layout, styleOf(node), font, color, config))
+    const svgNodes = nodes.flatMap((node) => renderNode(node, layout, styleOf(node), styler, config))
 
     /*  generate the SVG fragments for the group boxes (drawn below
         everything else) and the container boxes (drawn below the edges
         and nodes, an outer box before its nested ones)  */
-    const svgGroups     = groups.flatMap((group) => renderGroup(group, font, color))
-    const svgContainers = containers.flatMap((c) => renderContainer(c, font, color))
+    const svgGroups     = groups.flatMap((group) => renderGroup(group, styler))
+    const svgContainers = containers.flatMap((c) => renderContainer(c, styler))
 
     /*  determine the overall bounding box of all rendered elements  */
     const groupBoxes: Box[] = groups.map((group) =>
@@ -351,23 +376,24 @@ export const renderSVG = (layout: Layout, config: Config, explicit: Partial<Conf
         [ c.x, c.y, c.x + c.w, c.y + c.h ])
     const vb = viewBoxOf(layout, [ ...occupied, ...groupBoxes, ...containerBoxes ], config["size-canvas-margin"])
 
-    /*  assemble the final SVG document  */
+    /*  assemble the final SVG document (with one CSS rule per line)  */
     return [
         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>",
         "<svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" " +
             `viewBox="${vb.x} ${vb.y} ${vb.w} ${vb.h}" width="${vb.w}" height="${vb.h}">`,
         "<defs>",
+        "<style>",
         ...(embed !== undefined ? [
-            "<style>",
             `@font-face { font-family: "${escapeXML(escapeCSS(family))}"; ` +
                 (weight !== undefined ? `font-weight: ${escapeXML(escapeCSS(weight))}; ` : "") +
-                `src: url(data:font/woff2;base64,${embed}) format("woff2"); }`,
-            "</style>"
+                `src: url(data:font/woff2;base64,${embed}) format("woff2"); }`
         ] : []),
+        ...Array.from(rules, ([ decls, name ]) => `.${name} { ${escapeXML(decls)} }`),
+        "</style>",
         `<marker id="${idArrow}" viewBox="0 0 10 10" refX="9" refY="5" ` +
             "markerWidth=\"21\" markerHeight=\"21\" markerUnits=\"userSpaceOnUse\" " +
             "orient=\"auto-start-reverse\">",
-        `<path d="M 0 1 L 9 5 L 0 9 z" style="fill: ${color("color-edge-line")}"/>`,
+        `<path d="M 0 1 L 9 5 L 0 9 z" class="${classArrow}"/>`,
         "</marker>",
         "</defs>",
         ...svgGroups,

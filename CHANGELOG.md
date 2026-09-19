@@ -2,6 +2,17 @@
 ChangeLog
 =========
 
+1.3.0 (2026-09-19)
+------------------
+
+-   FEATURE [code, docs]: wrap an input/output column of a "hub" diagram with more nodes than the
+    new "hub-node-count-max" option into two staggered sub-columns, the edges of the outer nodes
+    running through the gaps of the inner ones, which nearly halves the height of a large diagram
+
+-   IMPROVEMENT [code, docs]: style the SVG elements through content-named CSS classes declared
+    once per document instead of a lengthy inline style per element, and shorten the identifier
+    prefix to 12 digits, which about halves the size of the generated SVG
+
 1.2.4 (2026-09-19)
 ------------------
 

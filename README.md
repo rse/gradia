@@ -327,13 +327,13 @@ color-group-border         #c0d0e0      hub-channel-width-max      340
 color-container-name       #666666      hub-channel-width-min      240
 color-container-box        #f6f6f6      hub-node-gap               20
 color-container-border     #a0a0a0      hub-node-degree-max        3
-color-edge-line            #999999      grid-columns-max           4
-color-edge-name            #333333      grid-columns-min           3
-color-edge-arity           #333333      grid-gap-horizontal        40
-color-edge-halo            #ffffff      grid-gap-vertical          20
-size-canvas-margin         40           grid-node-width-equal      true
-size-node-width-min        220          grid-node-height-equal     true
-size-node-width-max        0
+color-edge-line            #999999      hub-node-count-max         0
+color-edge-name            #333333      grid-columns-max           4
+color-edge-arity           #333333      grid-columns-min           3
+color-edge-halo            #ffffff      grid-gap-horizontal        40
+size-canvas-margin         40           grid-gap-vertical          20
+size-node-width-min        220          grid-node-width-equal      true
+size-node-width-max        0            grid-node-height-equal     true
 ```
 
 The `size-*`, `group-*`, `container-*`, `graph-*`, `hub-*`, and
@@ -376,6 +376,15 @@ unlabeled diagram can be spaced out, while the `-max` options cap it, so
 that neither many parallel edges nor a long label can push the nodes
 apart without bound.
 
+The `hub-node-count-max` option controls the wrapping of the input and
+output column of a `hub` diagram: given a positive value, a column of
+more nodes than this wraps into two staggered sub-columns, whose nodes
+alternate between the outer sub-column and the inner one, with every
+outer node vertically centered onto a gap between two inner nodes,
+through which its edges reach the primary node. This trades nearly
+half of the height of a large diagram for additional width. The value
+`0` disables the wrapping entirely.
+
 The `grid-columns-min` and `grid-columns-max` options control the column
 count of a `grid` diagram, which by default is derived from the node
 count as a roughly square grid: `grid-columns-min` raises the derived
@@ -403,6 +412,15 @@ falls back to the built-in default. An explicitly configured value is
 hard-coded into the SVG instead. The resulting precedence is: first
 `#config`/`--config`, then the CSS custom property `--gradia-<option>`,
 and finally the built-in default.
+
+The styling is not repeated on every element of the generated SVG, but
+declared once as CSS classes in a `<style>` element, which the elements
+reference. A class is named `gradia-<digest>` after the digest of its
+own declarations, so equal declarations always yield the very same
+class. As the class names are global once multiple diagrams are embedded
+into the very same document, the embedding document can hence strip the
+`<style>` elements off the diagrams and declare the union of their
+rules (one per line) a single time on its own.
 
 The `font-family` option is either a built-in font family, a plain font
 family name, or the path to a WOFF2 file. The only built-in font family
