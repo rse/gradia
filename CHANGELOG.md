@@ -5,6 +5,10 @@ ChangeLog
 1.3.1 (2026-09-20)
 ------------------
 
+-   IMPROVEMENT [code, docs]: apply "hub-node-count-max" to the larger column of a "hub" diagram
+    alone and let its tallest resulting (sub-)column cap the smaller column implicitly, so a column
+    wraps exactly if that lowers the height of the diagram
+
 -   FEATURE [code, docs]: make the font sizes of the node names, node types, node properties, edge
     names, and edge arities configurable through the new "size-font-node", "size-font-type",
     "size-font-prop", "size-font-edge", and "size-font-arity" options, which size the layout and

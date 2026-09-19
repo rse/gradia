@@ -393,8 +393,12 @@ more nodes than this wraps into two staggered sub-columns, whose nodes
 alternate between the outer sub-column and the inner one, with every
 outer node vertically centered onto a gap between two inner nodes,
 through which its edges reach the primary node. This trades nearly
-half of the height of a large diagram for additional width. The value
-`0` disables the wrapping entirely.
+half of the height of a large diagram for additional width. The option
+decides for the larger of the two columns alone, as the height of the
+diagram follows that one: the node count of its tallest resulting
+(sub-)column implicitly caps the smaller column, which hence wraps
+exactly if that lowers the height of the diagram. The value `0`
+disables the wrapping entirely.
 
 The `grid-columns-min` and `grid-columns-max` options control the column
 count of a `grid` diagram, which by default is derived from the node

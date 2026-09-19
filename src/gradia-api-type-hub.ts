@@ -151,11 +151,19 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
         sub-column and the inner one (adjacent to the channel), and
         every outer node is vertically centered onto a gap between two
         inner nodes, through which its edges reach the channel on their
-        straight horizontal lanes (so the edge routing is unaffected)  */
+        straight horizontal lanes (so the edge routing is unaffected).
+        The configured maximum decides for the larger stack alone, as the
+        height of the diagram follows that one: the tallest (sub-)column
+        it ends up with implicitly caps the smaller stack, which hence
+        wraps exactly if that lowers the height of the diagram  */
     const countMax = config["hub-node-count-max"]
+    const bySize   = inputs.length >= outputs.length ? [ inputs, outputs ] : [ outputs, inputs ]
+    const wrapped  = [ countMax > 0 && bySize[0].length > countMax, false ]
+    const capped   = wrapped[0] ? Math.ceil(bySize[0].length / 2) : bySize[0].length
+    wrapped[1]     = countMax > 0 && bySize[1].length > capped
     const outerSet = new Set<string>()
-    for (const list of [ inputs, outputs ])
-        if (countMax > 0 && list.length > countMax)
+    for (const [ c, list ] of bySize.entries())
+        if (wrapped[c])
             list.filter((_, k) => k % 2 === 0).forEach((node) => outerSet.add(node.id))
 
     /*  the vertical half extent of the lane the edges of an outer node
