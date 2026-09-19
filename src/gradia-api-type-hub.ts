@@ -13,7 +13,8 @@ import { LevelContext }                            from "./gradia-api-render-con
 import { Side, TrackUser, simplifyPoly, assignPorts, assignTracks } from "./gradia-api-render-edge.js"
 
 /*  the separator between a node id and its placement suffix,
-    distinguishing the two clones of a twice-placed node  */
+    distinguishing the two clones of a twice-placed node and the
+    output clone of a self-referencing primary node  */
 const CLONE = "\u0000"
 
 /*  rendering geometry constants  */
@@ -27,7 +28,8 @@ const CHAN_PAD = 16  /*  cross-axis padding inside a channel       */
     (edges originate from the primary); a node referenced in both
     directions is placed twice, once in the input column and once in
     the output column, with its edges rewritten to attach to the
-    corresponding placement  */
+    corresponding placement. A self-loop on the primary is unrolled
+    likewise, onto a clone of the primary in the output column  */
 const classifyTopology = (graph: Graph): {
     center: Node, inputs: Node[], outputs: Node[], nodes: Node[], edges: Edge[]
 } => {
@@ -41,9 +43,10 @@ const classifyTopology = (graph: Graph): {
     const center = primaries[0]
     const inSet  = new Set<string>()
     const outSet = new Set<string>()
+    let   self   = false
     for (const edge of graph.edges) {
         if (edge.source === center.id && edge.target === center.id)
-            throw new Error(`self-loop on primary node "${center.id}" not supported`)
+            self = true
         else if (edge.target === center.id)
             inSet.add(edge.source)
         else if (edge.source === center.id)
@@ -74,9 +77,17 @@ const classifyTopology = (graph: Graph): {
             outputs.push(node)
     }
 
+    /*  place the clone of a self-referencing primary node (stripped of
+        its "primary" annotation) on top of the output column  */
+    if (self)
+        outputs.unshift({ ...center, id: center.id + CLONE + "self",
+            attrs: center.attrs.filter((attr) => attr.key !== "primary") })
+
     /*  rewrite the edges of the twice-placed nodes onto their clones  */
     const edges = graph.edges.map((edge) => {
-        if (edge.target === center.id && dual.has(edge.source))
+        if (edge.source === center.id && edge.target === center.id)
+            return { ...edge, target: edge.target + CLONE + "self" }
+        else if (edge.target === center.id && dual.has(edge.source))
             return { ...edge, source: edge.source + CLONE + "in" }
         else if (edge.source === center.id && dual.has(edge.target))
             return { ...edge, target: edge.target + CLONE + "out" }
@@ -227,12 +238,19 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
 
     /*  hand over the laid out graph for SVG rendering (the output copy
         of a twice-placed node is rendered as a dashed grey "ghost" box,
-        all other boxes get the default primary/regular coloring)  */
+        the output clone of a self-referencing primary node as a dashed,
+        darker grey "self" box, and all other boxes get the default
+        primary/regular coloring)  */
     const styleOf = (node: Node): NodeStyle =>
         node.id.endsWith(CLONE + "out") ? {
             fill:   "color-node-ghost-box",
             stroke: "color-node-ghost-border",
             text:   "color-node-ghost-name",
+            dash:   "10 6"
+        } : node.id.endsWith(CLONE + "self") ? {
+            fill:   "color-node-self-box",
+            stroke: "color-node-self-border",
+            text:   "color-node-self-name",
             dash:   "10 6"
         } : defaultStyleOf(node)
     return { nodes, edges, cx, cy, boxW, boxH, contentH, polys, styleOf }

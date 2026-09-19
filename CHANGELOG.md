@@ -2,6 +2,13 @@
 ChangeLog
 =========
 
+1.2.4 (2026-09-19)
+------------------
+
+-   FEATURE [code, docs]: accept a self-loop on the primary node of a "hub" diagram by placing the
+    primary a second time on top of the output column, rendered as a dashed "self" box, colored
+    by the new (darker grey) "color-node-self-name", "-box", and "-border" options
+
 1.2.3 (2026-09-09)
 ------------------
 

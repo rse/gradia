@@ -50,7 +50,6 @@ conditions hold:
 - Exactly one node carries the attribute "primary: true".
 - Every edge either points to or originates from that primary node. An edge
   between two non-primary nodes is rejected.
-- The primary node carries no self-loop.
 - Every non-primary node is an input or an output of the primary node, i.e.,
   no node is free-standing.
 
@@ -58,6 +57,11 @@ A node which is both an input and an output of the primary node is placed
 twice, once in the input column and once in the output column. The second
 placement is rendered as a dashed "ghost" box, colored by the
 "color-node-ghost-*" options.
+
+A self-loop on the primary node is unrolled: the primary node is placed a
+second time on top of the output column, as the target of the self-loop.
+This second placement is rendered as a dashed "self" box, colored by the
+(darker grey) "color-node-self-*" options.
 
 The "grid" type rejects the input with an error as soon as the graph contains
 at least one edge.

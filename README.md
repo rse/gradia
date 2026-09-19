@@ -269,8 +269,6 @@ following conditions hold:
 - Every edge either points to or originates from that primary node. An
   edge between two non-primary nodes is rejected.
 
-- The primary node carries no self-loop.
-
 - Every non-primary node is an input or an output of the primary node,
   i.e., no node is free-standing.
 
@@ -278,6 +276,11 @@ A node which is both an input and an output of the primary node is placed
 twice, once in the input column and once in the output column. The second
 placement is rendered as a dashed "ghost" box, colored by the
 `color-node-ghost-*` options.
+
+A self-loop on the primary node is unrolled: the primary node is placed a
+second time on top of the output column, as the target of the self-loop.
+This second placement is rendered as a dashed "self" box, colored by the
+(darker grey) `color-node-self-*` options.
 
 The diagram type `grid` rejects the input with an error as soon as the
 graph contains at least one edge.
@@ -304,31 +307,33 @@ command-line options (`font-embed` being command-line only, see below).
 The recognized options, and their default values, are:
 
 ```
-font-family                Helvetica    size-edge-corner-radius    20
-font-embed                 false        size-edge-hop-radius       8
-color-node-regular-name    #336699      size-edge-track-gap        12
-color-node-regular-box     #e0f0ff      size-edge-port-gap         24
-color-node-regular-border  #c0d0e0      group-box-padding          30
-color-node-primary-name    #ffffff      group-box-gap              40
-color-node-primary-box     #336699      container-box-padding      30
-color-node-primary-border  #003366      graph-columns-max          4
-color-node-ghost-name      #666666      graph-channel-width-max    140
-color-node-ghost-box       #f0f0f0      graph-channel-width-min    24
-color-node-ghost-border    #a0a0a0      graph-gutter-height-max    90
-color-group-name           #6699cc      graph-gutter-height-min    20
-color-group-box            #f4f8fc      graph-node-separation      30
-color-group-border         #c0d0e0      graph-rank-separation      60
-color-container-name       #666666      graph-node-degree-max      3
-color-container-box        #f6f6f6      hub-channel-width-max      340
-color-container-border     #a0a0a0      hub-channel-width-min      240
-color-edge-line            #999999      hub-node-gap               20
-color-edge-name            #333333      hub-node-degree-max        3
-color-edge-arity           #333333      grid-columns-max           4
-color-edge-halo            #ffffff      grid-columns-min           3
-size-canvas-margin         40           grid-gap-horizontal        40
-size-node-width-min        220          grid-gap-vertical          20
-size-node-width-max        0            grid-node-width-equal      true
-size-node-height-scale     2.25         grid-node-height-equal     true
+font-family                Helvetica    size-node-height-scale     2.25
+font-embed                 false        size-edge-corner-radius    20
+color-node-regular-name    #336699      size-edge-hop-radius       8
+color-node-regular-box     #e0f0ff      size-edge-track-gap        12
+color-node-regular-border  #c0d0e0      size-edge-port-gap         24
+color-node-primary-name    #ffffff      group-box-padding          30
+color-node-primary-box     #336699      group-box-gap              40
+color-node-primary-border  #003366      container-box-padding      30
+color-node-ghost-name      #666666      graph-columns-max          4
+color-node-ghost-box       #f0f0f0      graph-channel-width-max    140
+color-node-ghost-border    #a0a0a0      graph-channel-width-min    24
+color-node-self-name       #444444      graph-gutter-height-max    90
+color-node-self-box        #e0e0e0      graph-gutter-height-min    20
+color-node-self-border     #707070      graph-node-separation      30
+color-group-name           #6699cc      graph-rank-separation      60
+color-group-box            #f4f8fc      graph-node-degree-max      3
+color-group-border         #c0d0e0      hub-channel-width-max      340
+color-container-name       #666666      hub-channel-width-min      240
+color-container-box        #f6f6f6      hub-node-gap               20
+color-container-border     #a0a0a0      hub-node-degree-max        3
+color-edge-line            #999999      grid-columns-max           4
+color-edge-name            #333333      grid-columns-min           3
+color-edge-arity           #333333      grid-gap-horizontal        40
+color-edge-halo            #ffffff      grid-gap-vertical          20
+size-canvas-margin         40           grid-node-width-equal      true
+size-node-width-min        220          grid-node-height-equal     true
+size-node-width-max        0
 ```
 
 The `size-*`, `group-*`, `container-*`, `graph-*`, `hub-*`, and
