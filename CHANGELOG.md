@@ -2,8 +2,20 @@
 ChangeLog
 =========
 
-1.3.1 (2026-09-20)
+1.4.0 (2026-09-20)
 ------------------
+
+-   IMPROVEMENT [code, docs]: grow a node box up to the height holding all of its edge attachment
+    ports at the full "size-edge-port-gap" instead of packing them into its textual content height,
+    so the parallel edges of a node and their labels stay readably apart
+
+-   IMPROVEMENT [code]: let an arity label stay at the arrow head of its edge instead of dodging
+    the edge lines, as its halo keeps it readable on top of a line while a drift away from its own
+    arrow left it ambiguous between the neighboring ports of a node
+
+-   IMPROVEMENT [code]: offer an arity label both sides of its edge line at three setbacks from its
+    arrow head, each stepping by the label extent, as the three positions within one label width
+    left it on top of the very label it had to dodge
 
 -   IMPROVEMENT [code]: let an edge label keep a clearance from the foreign edge lines, so a label
     which merely does not overlap a parallel foreign line no longer reads as the annotation of that

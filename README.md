@@ -370,11 +370,13 @@ like all channels by the edges routed through them.
 
 The `size-edge-port-gap` option controls the distance of the edge
 attachment ports along a node side, and hence the vertical distance of
-the parallel edges and their labels. It is a *maximum*: a node box too
-small to hold all its ports at that distance packs them closer together
-instead. A node side carrying more edges than `graph-node-degree-max`
-or `hub-node-degree-max` grows its box height by this very
-distance per additional edge.
+the parallel edges and their labels. A node box grows in height until
+it holds all of its ports at that distance, so the edges of a node stay
+readably apart however short its textual content is, and a node side
+carrying more edges than `graph-node-degree-max` or
+`hub-node-degree-max` grows by this very distance per additional edge
+on top of that. Only the fixed-size box of a container placeholder
+cannot grow and hence packs its ports closer together instead.
 
 The `graph-channel-width-*` and `graph-gutter-height-*` options control
 the spacing of a `graph` diagram: its inter-column channels and

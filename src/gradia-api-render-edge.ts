@@ -5,11 +5,25 @@
 */
 
 /*  internal dependencies  */
-import { Edge }  from "./gradia-api-model.js"
-import { Poly }  from "./gradia-api-render-base.js"
+import { Edge }             from "./gradia-api-model.js"
+import { Config }           from "./gradia-api-config.js"
+import { Poly, ARITY_PAD, ARROW_H, arityHeight }
+    from "./gradia-api-render-base.js"
 
 /*  edge attachment port geometry  */
-const PORT_PAD = 10  /*  padding of the port band inside the box  */
+export const PORT_PAD = 10  /*  padding of the port band inside the box  */
+
+/*  the separation of the adjacent ports of a node side: the configured
+    one, raised to what the arity labels demand once any edge carries
+    one, as such a label sits ARITY_PAD below the line of the port above
+    it, whose arrow head reaches down by half its height, and needs two
+    more ARITY_PAD of air between the two, so it stays attributable to
+    its own arrow instead of drifting into the neighboring one  */
+export const portGapOf = (edges: Edge[], config: Config): number =>
+    edges.some((edge) => edge.arity !== undefined) ?
+        Math.max(config["size-edge-port-gap"],
+            Math.ceil(3 * ARITY_PAD + arityHeight(config) + ARROW_H / 2)) :
+        config["size-edge-port-gap"]
 
 /*  drop duplicate and collinear intermediate points of a polyline  */
 export const simplifyPoly = (pts: Poly): Poly => {

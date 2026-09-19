@@ -10,7 +10,8 @@ import { Config }                                  from "./gradia-api-config.js"
 import { Poly, NodeStyle, Layout, ARITY_OFF, textWidth } from "./gradia-api-render-base.js"
 import { isPrimary, measureNodes, defaultStyleOf } from "./gradia-api-render-node.js"
 import { LevelContext }                            from "./gradia-api-render-container.js"
-import { Side, TrackUser, simplifyPoly, assignPorts, assignTracks } from "./gradia-api-render-edge.js"
+import { Side, TrackUser, simplifyPoly, assignPorts, assignTracks, PORT_PAD }
+    from "./gradia-api-render-edge.js"
 
 /*  the separator between a node id and its placement suffix,
     distinguishing the two clones of a twice-placed node and the
@@ -125,12 +126,14 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
         hence leaves on the east and enters on the west side  */
     const sides: { s: Side, t: Side }[] = edges.map(() => ({ s: "e", t: "w" }))
 
-    /*  determine node box sizes from their textual content (all boxes at
-        half height scale), then grow every box whose edge attachments
-        exceed the configured per-side maximum, step-wise by one port
-        separation per additional edge, so the edges keep enough
-        attachment room without a fixed height increase (the fixed-size
-        boxes of a containment level are exempt)  */
+    /*  determine node box sizes from their textual content (all boxes
+        at half height scale), then grow every box up to the height
+        hosting all of its edge attachments at the full port separation,
+        and the one whose attachments exceed the configured per-side
+        maximum additionally step-wise by one separation per additional
+        edge, so the ports of a node never pack tighter than configured,
+        however small its content height is (the fixed-size boxes of a
+        containment level are exempt)  */
     const { boxW, boxH, contentH } = measureNodes(nodes, config, () => scale / 2, level.fixedSize)
     const portCnt = new Map<string, number>()
     edges.forEach((edge, i) => {
@@ -140,10 +143,11 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
     for (const node of nodes) {
         if (level.fixedSize?.has(node.id))
             continue
-        const cnt = Math.max(portCnt.get(`w:${node.id}`) ?? 0, portCnt.get(`e:${node.id}`) ?? 0)
-        if (cnt > config["hub-node-degree-max"])
-            boxH.set(node.id, boxH.get(node.id)! +
-                (cnt - config["hub-node-degree-max"]) * config["size-edge-port-gap"])
+        const cnt   = Math.max(portCnt.get(`w:${node.id}`) ?? 0, portCnt.get(`e:${node.id}`) ?? 0)
+        const extra = Math.max(0, cnt - config["hub-node-degree-max"])
+        boxH.set(node.id, Math.max(
+            boxH.get(node.id)! + extra * config["size-edge-port-gap"],
+            cnt * config["size-edge-port-gap"] + PORT_PAD))
     }
 
     /*  a stack of more nodes than the configured maximum wraps into two

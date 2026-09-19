@@ -70,6 +70,11 @@ const LINE_PAD = 2
     merely not overlapping such a line still reads as its annotation  */
 const LINE_GAP = 12
 
+/*  the gap between two arity labels set back one behind the other along
+    one and the same edge line, and the number of such setbacks tried  */
+const ARITY_STEP = 8
+const ARITY_BACK = 3
+
 /*  track occupied areas (node boxes and already placed labels) to
     let subsequent labels dodge into a collision-free position, and the
     edge lines (their segments and crossing hops) to let the labels at
@@ -81,7 +86,7 @@ const labelPlacer = (
     hops:      Map<number, number[]>[],
     hopRadius: number,
     config:    Config
-): { claim: (candidates: Box[], edge: number) => Box, occupied: Box[] } => {
+): { claim: (candidates: Box[], edge: number, dodge?: boolean) => Box, occupied: Box[] } => {
     const { nodes, cx, cy, boxW, boxH } = layout
     const occupied: Box[] = nodes.map((node) => [
         cx(node.id) - boxW.get(node.id)! / 2, cy(node.id) - boxH.get(node.id)! / 2,
@@ -117,18 +122,21 @@ const labelPlacer = (
         where the own edge lines count on touch only, as the label sits
         beside its own route by construction, while the foreign ones
         count already within a clearance, so a label hugging a foreign
-        line loses against one staying with its own edge  */
+        line loses against one staying with its own edge. A claim with
+        "dodge" unset weighs the lines not at all, as its candidates are
+        ordered by a proximity which matters more than a crossed line,
+        which the halo of the label keeps readable anyway  */
     const collisions = (boxes: Box[], box: Box): number =>
         boxes.filter((o) => box[0] < o[2] && box[2] > o[0] && box[1] < o[3] && box[3] > o[1]).length
     const crossings = (box: Box, edge: number): number => {
         const near: Box = [ box[0] - LINE_GAP, box[1] - LINE_GAP, box[2] + LINE_GAP, box[3] + LINE_GAP ]
         return lines.reduce((n, boxes, i) => n + collisions(boxes, i === edge ? box : near), 0)
     }
-    const claim = (candidates: Box[], edge: number): Box => {
+    const claim = (candidates: Box[], edge: number, dodge = true): Box => {
         let box    = candidates[0]
         let lowest = Infinity
         for (const c of candidates) {
-            const score = collisions(occupied, c) * (lineCount + 1) + crossings(c, edge)
+            const score = collisions(occupied, c) * (lineCount + 1) + (dodge ? crossings(c, edge) : 0)
             if (score < lowest) {
                 box    = c
                 lowest = score
@@ -221,7 +229,7 @@ const viewBoxOf = (layout: Layout, boxes: Box[], margin: number): { x: number, y
     optional name, placed near the middle of the route, and its optional
     arity, placed near the arrow head (both dodging into a collision-free
     position through the "claim" of the label placer)  */
-const renderEdgeLabels = (edge: Edge, poly: Poly, claim: (candidates: Box[]) => Box,
+const renderEdgeLabels = (edge: Edge, poly: Poly, claim: (candidates: Box[], dodge?: boolean) => Box,
     styler: Styler, config: Config): string[] => {
     const parts: string[] = []
     if (edge.name !== undefined) {
@@ -252,27 +260,33 @@ const renderEdgeLabels = (edge: Edge, poly: Poly, claim: (candidates: Box[]) => 
 
         /*  set the arity back from the arrow head along the final
             segment and place it beside the line, so an edge approaching
-            vertically keeps its arity next to its own arrow  */
-        let candidates: Box[]
-        if (p.horizontal) {
-            const dx = Math.sign(p.x - prev.x) || 1
-            const ax = p.x - dx * (ARITY_OFF + w / 2)
-            candidates = [
-                [ ax - w / 2,           p.y - 4 - h, ax + w / 2,           p.y - 4     ],
-                [ ax - w / 2,           p.y + 4,     ax + w / 2,           p.y + 4 + h ],
-                [ ax - w / 2 - dx * 14, p.y - 4 - h, ax + w / 2 - dx * 14, p.y - 4     ]
-            ]
+            vertically keeps its arity next to its own arrow, offering
+            both sides at every further setback, which steps by the label
+            extent along the segment, as a shorter step would leave the
+            label on top of the very label it dodges  */
+        const candidates: Box[] = []
+        for (let k = 0; k < ARITY_BACK; k++) {
+            const back = k * ((p.horizontal ? w : h) + ARITY_STEP)
+            if (p.horizontal) {
+                const dx = Math.sign(p.x - prev.x) || 1
+                const ax = p.x - dx * (ARITY_OFF + w / 2 + back)
+                candidates.push([ ax - w / 2, p.y - 4 - h, ax + w / 2, p.y - 4     ])
+                candidates.push([ ax - w / 2, p.y + 4,     ax + w / 2, p.y + 4 + h ])
+            }
+            else {
+                const dy = Math.sign(p.y - prev.y) || 1
+                const ay = p.y - dy * (ARITY_OFF + back)
+                candidates.push([ p.x + 6,     ay + 6 - h, p.x + 6 + w, ay + 6 ])
+                candidates.push([ p.x - 6 - w, ay + 6 - h, p.x - 6,     ay + 6 ])
+            }
         }
-        else {
-            const dy = Math.sign(p.y - prev.y) || 1
-            const ay = p.y - dy * ARITY_OFF
-            candidates = [
-                [ p.x + 6,     ay + 6 - h,           p.x + 6 + w, ay + 6           ],
-                [ p.x - 6 - w, ay + 6 - h,           p.x - 6,     ay + 6           ],
-                [ p.x + 6,     ay + 6 - h - dy * 14, p.x + 6 + w, ay + 6 - dy * 14 ]
-            ]
-        }
-        const box = claim(candidates)
+
+        /*  an arity claims its position without dodging the edge lines,
+            as the neighboring ports of a node run closer than any
+            clearance anyway and it is the very setback from its own
+            arrow head which attaches it to its edge, so a line crossed
+            beneath its halo weighs less than a drift away from that arrow  */
+        const box = claim(candidates, false)
         parts.push(`<text x="${(box[0] + box[2]) / 2}" y="${box[3] - 3}" ` +
             `class="${styler.text("color-edge-arity", "size-font-arity", { middle: true, halo: true })}">` +
             `${escapeXML(edge.arity)}</text>`)
@@ -378,7 +392,7 @@ export const renderSVG = (layout: Layout, config: Config, explicit: Partial<Conf
         svgEdges.push(`<path d="${pathOf(polys[i], hops[i],
             config["size-edge-corner-radius"], config["size-edge-hop-radius"])}" ` +
             `class="${classEdge}" marker-end="url(#${idArrow})"/>`)
-        svgLabels.push(...renderEdgeLabels(edge, polys[i], (c) => claim(c, i), styler, config))
+        svgLabels.push(...renderEdgeLabels(edge, polys[i], (c, dodge) => claim(c, i, dodge), styler, config))
     })
 
     /*  generate the SVG fragments for the node boxes  */

@@ -14,7 +14,7 @@ import { Poly, ARITY_OFF, textWidth, Layout }
     from "./gradia-api-render-base.js"
 import { measureNodes, orderOf }             from "./gradia-api-render-node.js"
 import { LevelContext, GateSide }            from "./gradia-api-render-container.js"
-import { Side, TrackUser, simplifyPoly, assignPorts, assignTracks, computeHops }
+import { Side, TrackUser, simplifyPoly, assignPorts, assignTracks, computeHops, PORT_PAD }
     from "./gradia-api-render-edge.js"
 
 /*  rendering geometry constants  */
@@ -764,11 +764,12 @@ const attachSides = (
         return { s, t }
     })
 
-/*  grow every box whose edge attachments exceed the configured
-    per-side maximum, step-wise by one port separation per
-    additional edge, so the edges keep enough attachment room
-    without a fixed height increase (the fixed-size boxes of a
-    containment level are exempt)  */
+/*  grow every box up to the height hosting all of its edge
+    attachments at the full port separation, and the one whose
+    attachments exceed the configured per-side maximum additionally
+    step-wise by one separation per additional edge, so the ports of a
+    node never pack tighter than configured, however small its content
+    height is (the fixed-size boxes of a containment level are exempt)  */
 const growBoxes = (
     nodes:  Node[],
     edges:  Edge[],
@@ -785,10 +786,11 @@ const growBoxes = (
     for (const node of nodes) {
         if (level.fixedSize?.has(node.id))
             continue
-        const cnt = Math.max(portCnt.get(`w:${node.id}`) ?? 0, portCnt.get(`e:${node.id}`) ?? 0)
-        if (cnt > config["graph-node-degree-max"])
-            boxH.set(node.id, boxH.get(node.id)! +
-                (cnt - config["graph-node-degree-max"]) * config["size-edge-port-gap"])
+        const cnt   = Math.max(portCnt.get(`w:${node.id}`) ?? 0, portCnt.get(`e:${node.id}`) ?? 0)
+        const extra = Math.max(0, cnt - config["graph-node-degree-max"])
+        boxH.set(node.id, Math.max(
+            boxH.get(node.id)! + extra * config["size-edge-port-gap"],
+            cnt * config["size-edge-port-gap"] + PORT_PAD))
     }
 }
 
