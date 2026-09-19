@@ -9,6 +9,10 @@ ChangeLog
     ports at the full "size-edge-port-gap" instead of packing them into its textual content height,
     so the parallel edges of a node and their labels stay readably apart
 
+-   IMPROVEMENT [code, docs]: raise the port separation of a diagram whose edges carry arities to
+    what those labels demand, so a node box grows to host its arrow heads far enough apart for the
+    arity of each to sit readably beside its own arrow
+
 -   IMPROVEMENT [code]: let an arity label stay at the arrow head of its edge instead of dodging
     the edge lines, as its halo keeps it readable on top of a line while a drift away from its own
     arrow left it ambiguous between the neighboring ports of a node

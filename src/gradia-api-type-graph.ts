@@ -14,7 +14,8 @@ import { Poly, ARITY_OFF, textWidth, Layout }
     from "./gradia-api-render-base.js"
 import { measureNodes, orderOf }             from "./gradia-api-render-node.js"
 import { LevelContext, GateSide }            from "./gradia-api-render-container.js"
-import { Side, TrackUser, simplifyPoly, assignPorts, assignTracks, computeHops, PORT_PAD }
+import { Side, TrackUser, simplifyPoly, assignPorts, assignTracks, computeHops,
+    portGapOf, PORT_PAD }
     from "./gradia-api-render-edge.js"
 
 /*  rendering geometry constants  */
@@ -629,10 +630,11 @@ const routeEdges = (
     config:  Config,
     level:   LevelContext
 ): Routing => {
-    const portPre  = assignPorts(edges, sides, cx, cy, boxW, boxH, config["size-edge-port-gap"],
+    const portGap  = portGapOf(edges, config)
+    const portPre  = assignPorts(edges, sides, cx, cy, boxW, boxH, portGap,
         undefined, level.fixedPort)
     const trackPre = assignTrackCoords(edges, plans, portPre, grid, config)
-    const portPos  = assignPorts(edges, sides, cx, cy, boxW, boxH, config["size-edge-port-gap"],
+    const portPos  = assignPorts(edges, sides, cx, cy, boxW, boxH, portGap,
         (edge) => plans[edge].guts.length > 0 ?
             trackPre.gutY(plans[edge].guts[0], edge) : undefined, level.fixedPort)
     const { chanX, gutY } = assignTrackCoords(edges, plans, portPos, grid, config)
@@ -778,6 +780,7 @@ const growBoxes = (
     config: Config,
     level:  LevelContext
 ): void => {
+    const portGap = portGapOf(edges, config)
     const portCnt = new Map<string, number>()
     edges.forEach((edge, i) => {
         portCnt.set(`${sides[i].s}:${edge.source}`, (portCnt.get(`${sides[i].s}:${edge.source}`) ?? 0) + 1)
@@ -789,8 +792,7 @@ const growBoxes = (
         const cnt   = Math.max(portCnt.get(`w:${node.id}`) ?? 0, portCnt.get(`e:${node.id}`) ?? 0)
         const extra = Math.max(0, cnt - config["graph-node-degree-max"])
         boxH.set(node.id, Math.max(
-            boxH.get(node.id)! + extra * config["size-edge-port-gap"],
-            cnt * config["size-edge-port-gap"] + PORT_PAD))
+            boxH.get(node.id)! + extra * portGap, cnt * portGap + PORT_PAD))
     }
 }
 

@@ -10,7 +10,7 @@ import { Config }                                  from "./gradia-api-config.js"
 import { Poly, NodeStyle, Layout, ARITY_OFF, textWidth } from "./gradia-api-render-base.js"
 import { isPrimary, measureNodes, defaultStyleOf } from "./gradia-api-render-node.js"
 import { LevelContext }                            from "./gradia-api-render-container.js"
-import { Side, TrackUser, simplifyPoly, assignPorts, assignTracks, PORT_PAD }
+import { Side, TrackUser, simplifyPoly, assignPorts, assignTracks, portGapOf, PORT_PAD }
     from "./gradia-api-render-edge.js"
 
 /*  the separator between a node id and its placement suffix,
@@ -135,6 +135,7 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
         however small its content height is (the fixed-size boxes of a
         containment level are exempt)  */
     const { boxW, boxH, contentH } = measureNodes(nodes, config, () => scale / 2, level.fixedSize)
+    const portGap = portGapOf(edges, config)
     const portCnt = new Map<string, number>()
     edges.forEach((edge, i) => {
         portCnt.set(`${sides[i].s}:${edge.source}`, (portCnt.get(`${sides[i].s}:${edge.source}`) ?? 0) + 1)
@@ -146,8 +147,7 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
         const cnt   = Math.max(portCnt.get(`w:${node.id}`) ?? 0, portCnt.get(`e:${node.id}`) ?? 0)
         const extra = Math.max(0, cnt - config["hub-node-degree-max"])
         boxH.set(node.id, Math.max(
-            boxH.get(node.id)! + extra * config["size-edge-port-gap"],
-            cnt * config["size-edge-port-gap"] + PORT_PAD))
+            boxH.get(node.id)! + extra * portGap, cnt * portGap + PORT_PAD))
     }
 
     /*  a stack of more nodes than the configured maximum wraps into two
@@ -178,7 +178,7 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
     const laneOf = (id: string): number => {
         const cnt = Math.max(portCnt.get(`w:${id}`) ?? 0, portCnt.get(`e:${id}`) ?? 0)
         return level.fixedSize?.has(id) ? boxH.get(id)! / 2 :
-            Math.min(boxH.get(id)! / 2, (cnt - 1) * config["size-edge-port-gap"] / 2 + LANE_PAD)
+            Math.min(boxH.get(id)! / 2, (cnt - 1) * portGap / 2 + LANE_PAD)
     }
 
     /*  fixed three-column layout: stack the input nodes in the first
@@ -259,7 +259,7 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
     const cy = (id: string): number => nodeCY.get(id)!
 
     /*  distribute the edge attachment ports along each node side  */
-    const portPos = assignPorts(edges, sides, cx, cy, boxW, boxH, config["size-edge-port-gap"],
+    const portPos = assignPorts(edges, sides, cx, cy, boxW, boxH, portGap,
         undefined, level.fixedPort)
 
     /*  assign the vertical tracks within each channel (see assignTracks

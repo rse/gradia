@@ -5,8 +5,8 @@
 */
 
 /*  internal dependencies  */
-import { Node, Edge }     from "./gradia-api-model.js"
-import { ConfigEmbedded } from "./gradia-api-config.js"
+import { Node, Edge }             from "./gradia-api-model.js"
+import { Config, ConfigEmbedded } from "./gradia-api-config.js"
 
 /*  rendering font size constant of the group tags (the font sizes of
     the node and edge texts and the further geometry are configurable,
@@ -16,6 +16,16 @@ export const FS_GROUP = 24   /*  font size of group tags       */
 /*  the setback of an edge arity label from the arrow head it annotates
     (shared by the SVG rendering and the graph channel sizing)  */
 export const ARITY_OFF = 24
+
+/*  the offset of an edge arity label from its own edge line, and the
+    rendered height of an arrow head (the 21px marker of the SVG
+    covering 8 of the 10 units of its own viewBox)  */
+export const ARITY_PAD = 4
+export const ARROW_H   = 17
+
+/*  the height of the box an edge arity label occupies  */
+export const arityHeight = (config: Config): number =>
+    Math.round(config["size-font-arity"] * 0.8)
 
 /*  estimate rendered text width (no canvas available under Node,
     factor tuned for the average glyph advance of Source Sans 3)  */

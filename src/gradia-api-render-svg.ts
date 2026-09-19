@@ -12,7 +12,7 @@ import { Node, Edge }                                       from "./gradia-api-m
 import { Config, ConfigEmbedded, ConfigFontSize, resolveFont, cssValueOf, cssSizeOf }
     from "./gradia-api-config.js"
 import { Poly, NodeStyle, Layout, GroupBox, ContainerBox,
-    FS_GROUP, ARITY_OFF, textWidth, escapeXML }
+    FS_GROUP, ARITY_OFF, ARITY_PAD, arityHeight, textWidth, escapeXML }
     from "./gradia-api-render-base.js"
 import { linesOfNode, urlOf, typeOf, defaultStyleOf, containerHead,
     MIN_H, NAME_H, ATTR_H, ATTR_P, TYPE_H, TYPE_D, HEAD_H }
@@ -254,7 +254,7 @@ const renderEdgeLabels = (edge: Edge, poly: Poly, claim: (candidates: Box[], dod
     }
     if (edge.arity !== undefined) {
         const w    = textWidth(edge.arity, config["size-font-arity"])
-        const h    = Math.round(config["size-font-arity"] * 0.8)
+        const h    = arityHeight(config)
         const p    = pointAt(poly, 1.0)
         const prev = pointAt(poly, 0.999)
 
@@ -270,8 +270,8 @@ const renderEdgeLabels = (edge: Edge, poly: Poly, claim: (candidates: Box[], dod
             if (p.horizontal) {
                 const dx = Math.sign(p.x - prev.x) || 1
                 const ax = p.x - dx * (ARITY_OFF + w / 2 + back)
-                candidates.push([ ax - w / 2, p.y - 4 - h, ax + w / 2, p.y - 4     ])
-                candidates.push([ ax - w / 2, p.y + 4,     ax + w / 2, p.y + 4 + h ])
+                candidates.push([ ax - w / 2, p.y - ARITY_PAD - h, ax + w / 2, p.y - ARITY_PAD     ])
+                candidates.push([ ax - w / 2, p.y + ARITY_PAD,     ax + w / 2, p.y + ARITY_PAD + h ])
             }
             else {
                 const dy = Math.sign(p.y - prev.y) || 1

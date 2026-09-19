@@ -375,8 +375,11 @@ it holds all of its ports at that distance, so the edges of a node stay
 readably apart however short its textual content is, and a node side
 carrying more edges than `graph-node-degree-max` or
 `hub-node-degree-max` grows by this very distance per additional edge
-on top of that. Only the fixed-size box of a container placeholder
-cannot grow and hence packs its ports closer together instead.
+on top of that. In a diagram whose edges carry arities, the distance is
+raised to what those labels demand, as an arity sits beside its own
+edge line and has to stay clear of the arrow head above it. Only the
+fixed-size box of a container placeholder cannot grow and hence packs
+its ports closer together instead.
 
 The `graph-channel-width-*` and `graph-gutter-height-*` options control
 the spacing of a `graph` diagram: its inter-column channels and
