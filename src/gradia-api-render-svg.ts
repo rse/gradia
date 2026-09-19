@@ -66,6 +66,10 @@ const TAG_DY = 12  /*  top offset of the group tag   */
 /*  the half width of the box an edge line segment occupies  */
 const LINE_PAD = 2
 
+/*  the clearance a label keeps from a foreign edge line, as a label
+    merely not overlapping such a line still reads as its annotation  */
+const LINE_GAP = 12
+
 /*  track occupied areas (node boxes and already placed labels) to
     let subsequent labels dodge into a collision-free position, and the
     edge lines (their segments and crossing hops) to let the labels at
@@ -77,7 +81,7 @@ const labelPlacer = (
     hops:      Map<number, number[]>[],
     hopRadius: number,
     config:    Config
-): { claim: (candidates: Box[]) => Box, occupied: Box[] } => {
+): { claim: (candidates: Box[], edge: number) => Box, occupied: Box[] } => {
     const { nodes, cx, cy, boxW, boxH } = layout
     const occupied: Box[] = nodes.map((node) => [
         cx(node.id) - boxW.get(node.id)! / 2, cy(node.id) - boxH.get(node.id)! / 2,
@@ -92,28 +96,39 @@ const labelPlacer = (
         occupied.push([ c.x + TAG_DX, c.y + TAG_DY,
             c.x + TAG_DX + textWidth(c.node.name, FS_GROUP), c.y + containerHead(c.node, config) ])
 
-    /*  collect the edge line segments and the hops bulging above them  */
-    const lines: Box[] = []
-    layout.polys.forEach((poly, i) => {
+    /*  collect the edge line segments and the hops bulging above them,
+        kept per edge, so a label can tell its own route from the foreign ones  */
+    const lines: Box[][] = layout.polys.map((poly, i) => {
+        const boxes: Box[] = []
         for (let k = 0; k < poly.length - 1; k++) {
             const [ a, b ] = [ poly[k], poly[k + 1] ]
-            lines.push([ Math.min(a[0], b[0]) - LINE_PAD, Math.min(a[1], b[1]) - LINE_PAD,
+            boxes.push([ Math.min(a[0], b[0]) - LINE_PAD, Math.min(a[1], b[1]) - LINE_PAD,
                 Math.max(a[0], b[0]) + LINE_PAD, Math.max(a[1], b[1]) + LINE_PAD ])
             for (const hx of hops[i].get(k) ?? [])
-                lines.push([ hx - hopRadius, a[1] - hopRadius, hx + hopRadius, a[1] ])
+                boxes.push([ hx - hopRadius, a[1] - hopRadius, hx + hopRadius, a[1] ])
         }
+        return boxes
     })
+    const lineCount = lines.reduce((n, boxes) => n + boxes.length, 0)
 
     /*  claim the candidate box colliding with the fewest occupied
         areas and, among those, with the fewest edge lines (earlier
-        candidates win ties, so the first collision-free one is taken)  */
+        candidates win ties, so the first collision-free one is taken),
+        where the own edge lines count on touch only, as the label sits
+        beside its own route by construction, while the foreign ones
+        count already within a clearance, so a label hugging a foreign
+        line loses against one staying with its own edge  */
     const collisions = (boxes: Box[], box: Box): number =>
         boxes.filter((o) => box[0] < o[2] && box[2] > o[0] && box[1] < o[3] && box[3] > o[1]).length
-    const claim = (candidates: Box[]): Box => {
+    const crossings = (box: Box, edge: number): number => {
+        const near: Box = [ box[0] - LINE_GAP, box[1] - LINE_GAP, box[2] + LINE_GAP, box[3] + LINE_GAP ]
+        return lines.reduce((n, boxes, i) => n + collisions(boxes, i === edge ? box : near), 0)
+    }
+    const claim = (candidates: Box[], edge: number): Box => {
         let box    = candidates[0]
         let lowest = Infinity
         for (const c of candidates) {
-            const score = collisions(occupied, c) * (lines.length + 1) + collisions(lines, c)
+            const score = collisions(occupied, c) * (lineCount + 1) + crossings(c, edge)
             if (score < lowest) {
                 box    = c
                 lowest = score
@@ -363,7 +378,7 @@ export const renderSVG = (layout: Layout, config: Config, explicit: Partial<Conf
         svgEdges.push(`<path d="${pathOf(polys[i], hops[i],
             config["size-edge-corner-radius"], config["size-edge-hop-radius"])}" ` +
             `class="${classEdge}" marker-end="url(#${idArrow})"/>`)
-        svgLabels.push(...renderEdgeLabels(edge, polys[i], claim, styler, config))
+        svgLabels.push(...renderEdgeLabels(edge, polys[i], (c) => claim(c, i), styler, config))
     })
 
     /*  generate the SVG fragments for the node boxes  */

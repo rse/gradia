@@ -5,6 +5,10 @@ ChangeLog
 1.3.1 (2026-09-20)
 ------------------
 
+-   IMPROVEMENT [code]: let an edge label keep a clearance from the foreign edge lines, so a label
+    which merely does not overlap a parallel foreign line no longer reads as the annotation of that
+    line instead of the one of its own edge
+
 -   IMPROVEMENT [code, docs]: apply "hub-node-count-max" to the larger column of a "hub" diagram
     alone and let its tallest resulting (sub-)column cap the smaller column implicitly, so a column
     wraps exactly if that lowers the height of the diagram

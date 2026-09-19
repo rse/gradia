@@ -72,10 +72,10 @@
 <rect x="1057" y="538" width="255" height="63" rx="6" class="gradia-a6a22853"/>
 <text x="1184.5" y="580.3" class="gradia-769fb48f">EventStatistic</text>
 </a>
-<text x="969.28" y="222.28125" class="gradia-11dad4ff">channels</text>
+<text x="969.28" y="184.925" class="gradia-11dad4ff">channels</text>
 <text x="1016.36" y="147.5" class="gradia-cc24e345">0..n</text>
 <text x="968.8" y="286.59375" class="gradia-11dad4ff">roles</text>
-<text x="1016.36" y="251.5" class="gradia-cc24e345">0..n</text>
+<text x="1016.36" y="230.5" class="gradia-cc24e345">0..n</text>
 <text x="1006.8375" y="314.5" class="gradia-11dad4ff">accessList</text>
 <text x="1016.36" y="334.5" class="gradia-cc24e345">0..n</text>
 <text x="1005.28" y="384.275" class="gradia-11dad4ff">messages</text>
@@ -87,11 +87,11 @@
 <text x="831.28" y="129.15625" class="gradia-11dad4ff">activeAgendaPoint</text>
 <text x="1016.36" y="52.5" class="gradia-cc24e345">0..1</text>
 <text x="973.9200000000001" y="121.67500000000001" class="gradia-11dad4ff">agendaPoints</text>
-<text x="1016.36" y="76.5" class="gradia-cc24e345">0..n</text>
+<text x="1016.36" y="97.5" class="gradia-cc24e345">0..n</text>
 <text x="502.8" y="274" class="gradia-11dad4ff">event</text>
 <text x="568.84" y="289.5" class="gradia-cc24e345">1</text>
-<text x="453" y="314.5" class="gradia-11dad4ff">event</text>
+<text x="429" y="314.5" class="gradia-11dad4ff">event</text>
 <text x="568.84" y="313.5" class="gradia-cc24e345">1</text>
 <text x="502.8" y="381" class="gradia-11dad4ff">event</text>
-<text x="568.84" y="337.5" class="gradia-cc24e345">1</text>
+<text x="568.84" y="358.5" class="gradia-cc24e345">1</text>
 </svg>
