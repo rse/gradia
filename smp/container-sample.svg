@@ -65,13 +65,13 @@
 <text x="2135.2200000000003" y="343.3" class="gradia-769fb48f">Cache</text>
 <rect x="2294.7200000000003" y="301" width="239" height="63" rx="6" class="gradia-a6a22853"/>
 <text x="2414.2200000000003" y="343.3" class="gradia-769fb48f">Message Queue</text>
-<text x="1390.48" y="410.25" class="gradia-11dad4ff">verify</text>
+<text x="1390.48" y="406.5" class="gradia-11dad4ff">verify</text>
 <text x="1669.6" y="292.5" class="gradia-11dad4ff">persist</text>
-<text x="311.8" y="259.75" class="gradia-11dad4ff">https</text>
-<text x="364.75" y="432.5" class="gradia-11dad4ff">https</text>
-<text x="995.53" y="309.5" class="gradia-11dad4ff">rest</text>
+<text x="311.8" y="253.71875" class="gradia-11dad4ff">https</text>
+<text x="365.2" y="432.5" class="gradia-11dad4ff">https</text>
+<text x="1004.28" y="309.5" class="gradia-11dad4ff">rest</text>
+<text x="1754.835" y="545" class="gradia-11dad4ff">notify</text>
+<text x="256.03999999999996" y="488.25" class="gradia-11dad4ff">scrape</text>
+<text x="722.7850000000001" y="533" class="gradia-11dad4ff">scrape</text>
 <text x="1066.9199999999998" y="308.5" class="gradia-cc24e345">1..n</text>
-<text x="1791.23" y="545" class="gradia-11dad4ff">notify</text>
-<text x="256.03999999999996" y="476.25" class="gradia-11dad4ff">scrape</text>
-<text x="729.28" y="533" class="gradia-11dad4ff">scrape</text>
 </svg>

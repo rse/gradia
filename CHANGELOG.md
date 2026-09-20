@@ -2,6 +2,17 @@
 ChangeLog
 =========
 
+1.4.1 (2026-09-20)
+------------------
+
+-   IMPROVEMENT [code]: reserve the position beside its own arrow head for every arity label before
+    any edge name label is placed, so a name yields that area wherever it has an alternative and
+    only a name left without one still pushes its arity onto the next setback
+
+-   IMPROVEMENT [code]: slide an edge name label over the whole of every segment of its route
+    instead of offering it at a few fixed fractions of the route only, as the free space along a
+    route is regularly not where the sampled points are
+
 1.4.0 (2026-09-20)
 ------------------
 

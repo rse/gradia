@@ -75,8 +75,14 @@ const LINE_GAP = 12
 const ARITY_STEP = 8
 const ARITY_BACK = 3
 
+/*  the maximum number of steps a name label is slid along a single
+    segment of its route, as a long segment would otherwise offer far
+    more candidate positions than a placement can ever need  */
+const SLIDE_MAX = 16
+
 /*  track occupied areas (node boxes and already placed labels) to
-    let subsequent labels dodge into a collision-free position, and the
+    let subsequent labels dodge into a collision-free position, plus the
+    areas merely reserved for the labels still to be placed, and the
     edge lines (their segments and crossing hops) to let the labels at
     least prefer the position covering the fewest lines (the returned
     "occupied" array grows with every claimed label box and hence also
@@ -86,7 +92,11 @@ const labelPlacer = (
     hops:      Map<number, number[]>[],
     hopRadius: number,
     config:    Config
-): { claim: (candidates: Box[], edge: number, dodge?: boolean) => Box, occupied: Box[] } => {
+): {
+    claim:    (candidates: Box[], edge: number, dodge?: boolean, own?: Box) => Box,
+    reserve:  (box: Box) => void,
+    occupied: Box[]
+} => {
     const { nodes, cx, cy, boxW, boxH } = layout
     const occupied: Box[] = nodes.map((node) => [
         cx(node.id) - boxW.get(node.id)! / 2, cy(node.id) - boxH.get(node.id)! / 2,
@@ -132,11 +142,27 @@ const labelPlacer = (
         const near: Box = [ box[0] - LINE_GAP, box[1] - LINE_GAP, box[2] + LINE_GAP, box[3] + LINE_GAP ]
         return lines.reduce((n, boxes, i) => n + collisions(boxes, i === edge ? box : near), 0)
     }
-    const claim = (candidates: Box[], edge: number, dodge = true): Box => {
+    const reserved: Box[] = []
+    const reserve = (box: Box) => {
+        reserved.push(box)
+    }
+
+    /*  a claim counts the areas reserved for the labels still to come
+        like the occupied ones, so an early label yields the position a
+        later one depends upon wherever it has an alternative of its
+        own, while the "own" reservation of the claiming label is
+        released, as that is the very area it is about to take  */
+    const claim = (candidates: Box[], edge: number, dodge = true, own?: Box): Box => {
+        if (own !== undefined) {
+            const k = reserved.indexOf(own)
+            if (k >= 0)
+                reserved.splice(k, 1)
+        }
         let box    = candidates[0]
         let lowest = Infinity
         for (const c of candidates) {
-            const score = collisions(occupied, c) * (lineCount + 1) + (dodge ? crossings(c, edge) : 0)
+            const score = (collisions(occupied, c) + collisions(reserved, c)) * (lineCount + 1) +
+                (dodge ? crossings(c, edge) : 0)
             if (score < lowest) {
                 box    = c
                 lowest = score
@@ -147,7 +173,7 @@ const labelPlacer = (
         occupied.push(box)
         return box
     }
-    return { claim, occupied }
+    return { claim, reserve, occupied }
 }
 
 /*  generate the SVG fragments for a single node box (a node with a
@@ -225,73 +251,106 @@ const viewBoxOf = (layout: Layout, boxes: Box[], margin: number): { x: number, y
     }
 }
 
-/*  generate the SVG fragments for the labels of a single edge: its
-    optional name, placed near the middle of the route, and its optional
-    arity, placed near the arrow head (both dodging into a collision-free
+/*  the candidate positions of the arity label of an edge: set back
+    from the arrow head along the final segment and placed beside the
+    line, so an edge approaching vertically keeps its arity next to its
+    own arrow, offering both sides at every further setback, which steps
+    by the label extent along the segment, as a shorter step would leave
+    the label on top of the very label it dodges  */
+const arityBoxes = (arity: string, poly: Poly, config: Config): Box[] => {
+    const w    = textWidth(arity, config["size-font-arity"])
+    const h    = arityHeight(config)
+    const p    = pointAt(poly, 1.0)
+    const prev = pointAt(poly, 0.999)
+    const candidates: Box[] = []
+    for (let k = 0; k < ARITY_BACK; k++) {
+        const back = k * ((p.horizontal ? w : h) + ARITY_STEP)
+        if (p.horizontal) {
+            const dx = Math.sign(p.x - prev.x) || 1
+            const ax = p.x - dx * (ARITY_OFF + w / 2 + back)
+            candidates.push([ ax - w / 2, p.y - ARITY_PAD - h, ax + w / 2, p.y - ARITY_PAD     ])
+            candidates.push([ ax - w / 2, p.y + ARITY_PAD,     ax + w / 2, p.y + ARITY_PAD + h ])
+        }
+        else {
+            const dy = Math.sign(p.y - prev.y) || 1
+            const ay = p.y - dy * (ARITY_OFF + back)
+            candidates.push([ p.x + 6,     ay + 6 - h, p.x + 6 + w, ay + 6 ])
+            candidates.push([ p.x - 6 - w, ay + 6 - h, p.x - 6,     ay + 6 ])
+        }
+    }
+    return candidates
+}
+
+/*  generate the SVG fragment for the arity label of a single edge,
+    which claims one of its candidate positions without dodging the
+    edge lines, as the neighboring ports of a node run closer than any
+    clearance anyway and it is the very setback from its own arrow head
+    which attaches it to its edge, so a line crossed beneath its halo
+    weighs less than a drift away from that arrow  */
+const renderEdgeArity = (edge: Edge, candidates: Box[], claim: (candidates: Box[], dodge?: boolean,
+    own?: Box) => Box, styler: Styler): string[] => {
+    if (edge.arity === undefined)
+        return []
+    const box = claim(candidates, false, candidates[0])
+    return [ `<text x="${(box[0] + box[2]) / 2}" y="${box[3] - 3}" ` +
+        `class="${styler.text("color-edge-arity", "size-font-arity", { middle: true, halo: true })}">` +
+        `${escapeXML(edge.arity)}</text>` ]
+}
+
+/*  generate the SVG fragment for the name label of a single edge,
+    placed near the middle of the route (dodging into a collision-free
     position through the "claim" of the label placer)  */
-const renderEdgeLabels = (edge: Edge, poly: Poly, claim: (candidates: Box[], dodge?: boolean) => Box,
+const renderEdgeName = (edge: Edge, poly: Poly, claim: (candidates: Box[], dodge?: boolean) => Box,
     styler: Styler, config: Config): string[] => {
-    const parts: string[] = []
-    if (edge.name !== undefined) {
-        const w = textWidth(edge.name, config["size-font-edge"])
-        const h = config["size-font-edge"] + 4
-        const candidates: Box[] = []
-        for (const f of [ 0.50, 0.40, 0.60, 0.30, 0.70, 0.20, 0.80 ]) {
-            const p = pointAt(poly, f)
-            if (p.horizontal) {
-                candidates.push([ p.x - w / 2, p.y - 3 - h,  p.x + w / 2, p.y - 3     ])
-                candidates.push([ p.x - w / 2, p.y + 3,      p.x + w / 2, p.y + 3 + h ])
-            }
-            else {
-                candidates.push([ p.x + 5,     p.y - h / 2,  p.x + 5 + w, p.y + h / 2 ])
-                candidates.push([ p.x - 5 - w, p.y - h / 2,  p.x - 5,     p.y + h / 2 ])
+    if (edge.name === undefined)
+        return []
+    const w = textWidth(edge.name, config["size-font-edge"])
+    const h = config["size-font-edge"] + 4
+
+    /*  offer, along every segment of the own route and on both sides
+        of its line, the label centered on the segment plus the two
+        positions flush with its ends plus, where the segment takes the
+        label at all, the positions sliding between those ends in steps
+        of half the label extent, as the free space along a route is
+        regularly not where the segment centers are, and order the
+        candidates by the distance from the middle of the route, so the
+        label ends up as close to that middle as the collisions along
+        the way allow  */
+    const slide = (lo: number, hi: number, extent: number): number[] => {
+        const first     = lo + extent / 2
+        const last      = hi - extent / 2
+        const positions = [ (lo + hi) / 2, first, last ]
+        if (last > first) {
+            const steps = Math.min(Math.ceil((last - first) / (extent / 2)), SLIDE_MAX)
+            for (let k = 1; k < steps; k++)
+                positions.push(first + (last - first) * k / steps)
+        }
+        return positions
+    }
+    const mid = pointAt(poly, 0.50)
+    const near = (box: Box): number =>
+        Math.abs((box[0] + box[2]) / 2 - mid.x) + Math.abs((box[1] + box[3]) / 2 - mid.y)
+    const candidates: Box[] = []
+    for (let k = 0; k < poly.length - 1; k++) {
+        const [ a, b ] = [ poly[k], poly[k + 1] ]
+        if (a[1] === b[1]) {
+            for (const x of slide(Math.min(a[0], b[0]), Math.max(a[0], b[0]), w)) {
+                candidates.push([ x - w / 2, a[1] - 3 - h, x + w / 2, a[1] - 3     ])
+                candidates.push([ x - w / 2, a[1] + 3,     x + w / 2, a[1] + 3 + h ])
             }
         }
-        const box = claim(candidates)
-        parts.push(`<text x="${(box[0] + box[2]) / 2}" y="${box[3] - 3}" ` +
-            `class="${styler.text("color-edge-name", "size-font-edge", { middle: true, halo: true })}">` +
-            `${escapeXML(edge.name)}</text>`)
-    }
-    if (edge.arity !== undefined) {
-        const w    = textWidth(edge.arity, config["size-font-arity"])
-        const h    = arityHeight(config)
-        const p    = pointAt(poly, 1.0)
-        const prev = pointAt(poly, 0.999)
-
-        /*  set the arity back from the arrow head along the final
-            segment and place it beside the line, so an edge approaching
-            vertically keeps its arity next to its own arrow, offering
-            both sides at every further setback, which steps by the label
-            extent along the segment, as a shorter step would leave the
-            label on top of the very label it dodges  */
-        const candidates: Box[] = []
-        for (let k = 0; k < ARITY_BACK; k++) {
-            const back = k * ((p.horizontal ? w : h) + ARITY_STEP)
-            if (p.horizontal) {
-                const dx = Math.sign(p.x - prev.x) || 1
-                const ax = p.x - dx * (ARITY_OFF + w / 2 + back)
-                candidates.push([ ax - w / 2, p.y - ARITY_PAD - h, ax + w / 2, p.y - ARITY_PAD     ])
-                candidates.push([ ax - w / 2, p.y + ARITY_PAD,     ax + w / 2, p.y + ARITY_PAD + h ])
-            }
-            else {
-                const dy = Math.sign(p.y - prev.y) || 1
-                const ay = p.y - dy * (ARITY_OFF + back)
-                candidates.push([ p.x + 6,     ay + 6 - h, p.x + 6 + w, ay + 6 ])
-                candidates.push([ p.x - 6 - w, ay + 6 - h, p.x - 6,     ay + 6 ])
+        else {
+            for (const y of slide(Math.min(a[1], b[1]), Math.max(a[1], b[1]), h)) {
+                candidates.push([ a[0] + 5,     y - h / 2, a[0] + 5 + w, y + h / 2 ])
+                candidates.push([ a[0] - 5 - w, y - h / 2, a[0] - 5,     y + h / 2 ])
             }
         }
-
-        /*  an arity claims its position without dodging the edge lines,
-            as the neighboring ports of a node run closer than any
-            clearance anyway and it is the very setback from its own
-            arrow head which attaches it to its edge, so a line crossed
-            beneath its halo weighs less than a drift away from that arrow  */
-        const box = claim(candidates, false)
-        parts.push(`<text x="${(box[0] + box[2]) / 2}" y="${box[3] - 3}" ` +
-            `class="${styler.text("color-edge-arity", "size-font-arity", { middle: true, halo: true })}">` +
-            `${escapeXML(edge.arity)}</text>`)
     }
-    return parts
+    candidates.sort((a, b) => near(a) - near(b))
+    const box = claim(candidates)
+    return [ `<text x="${(box[0] + box[2]) / 2}" y="${box[3] - 3}" ` +
+        `class="${styler.text("color-edge-name", "size-font-edge", { middle: true, halo: true })}">` +
+        `${escapeXML(edge.name)}</text>` ]
 }
 
 /*  generate the SVG fragments for a single group box and its tag
@@ -383,16 +442,37 @@ export const renderSVG = (layout: Layout, config: Config, explicit: Partial<Conf
     const hops = computeHops(polys)
 
     /*  prepare the collision-free placement of the edge labels  */
-    const { claim, occupied } = labelPlacer(layout, hops, config["size-edge-hop-radius"], config)
+    const { claim, reserve, occupied } = labelPlacer(layout, hops, config["size-edge-hop-radius"], config)
 
-    /*  generate the SVG fragments for the edges (paths below, labels above)  */
-    const svgEdges:  string[] = []
+    /*  generate the SVG fragments for the edge paths  */
+    const svgEdges = polys.map((poly, i) =>
+        `<path d="${pathOf(poly, hops[i],
+            config["size-edge-corner-radius"], config["size-edge-hop-radius"])}" ` +
+        `class="${classEdge}" marker-end="url(#${idArrow})"/>`)
+
+    /*  reserve the position every arity label prefers -- the one beside
+        its own arrow head -- before any name label is placed, as an
+        arity is bound to that arrow while a name may slide along the
+        whole route: a name hence yields the reserved area wherever it
+        has an alternative, and only a name left without one takes it
+        and pushes its arity onto the next setback  */
+    const arities = edges.map((edge, i) =>
+        edge.arity !== undefined ? arityBoxes(edge.arity, polys[i], config) : undefined)
+    for (const candidates of arities)
+        if (candidates !== undefined)
+            reserve(candidates[0])
+
+    /*  generate the SVG fragments for the edge labels (the names
+        first, as their reservations keep the arity positions free)  */
     const svgLabels: string[] = []
     edges.forEach((edge, i) => {
-        svgEdges.push(`<path d="${pathOf(polys[i], hops[i],
-            config["size-edge-corner-radius"], config["size-edge-hop-radius"])}" ` +
-            `class="${classEdge}" marker-end="url(#${idArrow})"/>`)
-        svgLabels.push(...renderEdgeLabels(edge, polys[i], (c, dodge) => claim(c, i, dodge), styler, config))
+        svgLabels.push(...renderEdgeName(edge, polys[i], (c, dodge) => claim(c, i, dodge), styler, config))
+    })
+    edges.forEach((edge, i) => {
+        const candidates = arities[i]
+        if (candidates !== undefined)
+            svgLabels.push(...renderEdgeArity(edge, candidates,
+                (c, dodge, own) => claim(c, i, dodge, own), styler))
     })
 
     /*  generate the SVG fragments for the node boxes  */
