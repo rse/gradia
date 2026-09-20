@@ -392,6 +392,12 @@ unlabeled diagram can be spaced out, while the `-max` options cap it, so
 that neither many parallel edges nor a long label can push the nodes
 apart without bound.
 
+In a `graph` diagram (a `graph` container level, too) whose nodes end up
+in a single column, the container boxes are widened to the widest one,
+so the stacked boxes line up: their content stays centered, and their
+height remains the one of their content. With more than one column,
+every container box keeps the width of its own content.
+
 The `hub-node-count-max` option controls the wrapping of the input and
 output column of a `hub` diagram: given a positive value, a column of
 more nodes than this wraps into two staggered sub-columns, whose nodes
