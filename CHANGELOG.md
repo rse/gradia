@@ -2,6 +2,13 @@
 ChangeLog
 =========
 
+1.4.2 (2026-09-20)
+------------------
+
+-   IMPROVEMENT [code]: in a single-column layout, widen the container placeholders to the
+    widest one, so the stacked container boxes line up (their content stays centered and their
+    height the one of their content)
+
 1.4.1 (2026-09-20)
 ------------------
 

@@ -891,6 +891,16 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
         nrows = compactRows(real, realEdges, col, row)
     }
 
+    /*  in a single-column layout, widen the container placeholders to
+        the widest one, so the stacked container boxes line up (their
+        content stays centered and their height the one of their content)  */
+    if (ncols === 1) {
+        const fixed = real.filter((node) => level.fixedSize?.has(node.id))
+        const width = fixed.reduce((a, node) => Math.max(a, boxW.get(node.id)!), 0)
+        for (const node of fixed)
+            boxW.set(node.id, width)
+    }
+
     /*  place the gate nodes into their own boundary columns  */
     ({ ncols, nrows } = placeGates(gates, edges, col, row, ncols, nrows))
 
