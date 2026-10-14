@@ -14,20 +14,32 @@ About
 -----
 
 **Gradia** is a small API and CLI for rendering directed graphs,
-described in a concise textual input language, as SVG diagrams. Three
+described in a concise textual input language, as SVG diagrams. Seven
 diagram types are supported which fit the scenario of visualizing object
-graphs:
+graphs and the structures around them:
 
 - `graph`: a loosely grid-snapped layered layout of the whole graph,
   based on the Dagre algorithm of [@antv/layout](https://github.com/antvis/layout).
 - `hub`: a hub graph, placing one primary hub node between its input and
   output nodes.
 - `grid`: a compact grid of tiles for an edge-less graph.
+- `layout`: the cell layout of a binary structure (e.g. a message frame,
+  a file header, or a memory slot), drawing every node as a field of
+  cells below a ruler and labeling it below the cells.
+- `layer`: a layered architecture, stacking its layers as bands and
+  marking the edges pointing upwards against the layering.
+- `matrix`: a dependency structure matrix, counting the edges between
+  every pair of nodes and outlining the cycles.
+- `sequence`: a sequence diagram of participants and their messages.
+
+All node-based diagram types align their node boxes on a common raster:
+the boxes of a lane (a column or a row) share one size, rounded up to
+the raster step, so their names line up.
 
 Examples
 --------
 
-Here are examples of the three graph diagram renderings:
+Here are examples of the diagram renderings:
 
 - [broadcast-graph](smp/broadcast-graph.txt):
 
@@ -44,6 +56,38 @@ Here are examples of the three graph diagram renderings:
 - [container-sample](smp/container-sample.txt) (nested containers):
 
   ![container-sample](smp/container-sample.svg)
+
+- [layout-bits](smp/layout-bits.txt) (bit fields):
+
+  ![layout-bits](smp/layout-bits.svg)
+
+- [layout-bytes](smp/layout-bytes.txt) (byte fields):
+
+  ![layout-bytes](smp/layout-bytes.svg)
+
+- [layer-sample](smp/layer-sample.txt) (layered architecture):
+
+  ![layer-sample](smp/layer-sample.svg)
+
+- [layer-groups](smp/layer-groups.txt) (layer groups, numbers, and node shapes):
+
+  ![layer-groups](smp/layer-groups.svg)
+
+- [matrix-sample](smp/matrix-sample.txt) (dependency structure matrix):
+
+  ![matrix-sample](smp/matrix-sample.svg)
+
+- [trace-sample](smp/trace-sample.txt) (traceability matrix):
+
+  ![trace-sample](smp/trace-sample.svg)
+
+- [shape-sample](smp/shape-sample.txt) (node shapes):
+
+  ![shape-sample](smp/shape-sample.svg)
+
+- [sequence-sample](smp/sequence-sample.txt) (sequence diagram):
+
+  ![sequence-sample](smp/sequence-sample.svg)
 
 Playground
 ----------
@@ -63,7 +107,7 @@ Usage
 -----
 
 ```sh
-$ gradia [-t graph|hub|grid] [-f <format>] [-c <name>=<value>] -o <file>.svg <graph>.txt
+$ gradia [-t graph|hub|grid|layout|layer|matrix|sequence] [-f <format>] [-c <name>=<value>] -o <file>.svg <graph>.txt
 ```
 
 The diagram type is selected with the `-t` command-line option or, when
@@ -80,7 +124,7 @@ MCP Service
 -----------
 
 ```sh
-$ gradia --mcp [-t graph|hub|grid] [-f <format>] [-c <name>=<value>]
+$ gradia --mcp [-t graph|hub|grid|layout|layer|matrix|sequence] [-f <format>] [-c <name>=<value>]
 ```
 
 With the `-m`/`--mcp` option, **Gradia** instead runs as a [Model Context
@@ -147,7 +191,7 @@ separated by `|`.
 <directive>      ::= "#config" <whitespace> { <whitespace> } <option> <whitespace> { <whitespace> } ( <string> | <word> )
                    | "#type" <whitespace> { <whitespace> } <type>
 <option>         ::= <letter> { <letter> | <digit> | "-" }
-<type>           ::= "graph" | "hub" | "grid"
+<type>           ::= "graph" | "hub" | "grid" | "layout" | "layer" | "matrix" | "sequence"
 <word>           ::= <char> - <whitespace> { <char> - <whitespace> }
 <newline>        ::= "\n"
 <whitespace>     ::= " " | "\t" | "\r"
@@ -197,8 +241,9 @@ separated by `|`.
 - The `<edge-name>` is rendered as the label of the edge and the
   `<edge-arity>` as its cardinality label.
 
-- Seven attribute keys are reserved and consumed by the renderer instead
-  of being displayed as a regular `<key>: <val>` line:
+- Eight attribute keys are reserved and consumed by the renderer instead
+  of being displayed as a regular `<key>: <val>` line (beside the ones
+  the individual diagram types reserve, see below):
 
     - `url: <url>` renders the node box as a hyperlink. Only relative URLs
       and the schemes `http`, `https`, and `mailto` are honored; any other
@@ -214,7 +259,9 @@ separated by `|`.
     - `container: <type>` marks the node as a container whose members
       are laid out with the diagram type `<type>` (`graph`, `hub`, or
       `grid`), even if it has no members at all,
-    - `order: <number>` places the node explicitly (see below).
+    - `order: <number>` places the node explicitly (see below),
+    - `shape: <shape>` draws the node box with another outline (see
+      below).
 
 - A `graph` (a `graph` container level, too) with at least one node
   carrying an `order` attribute is laid out in that explicit order
@@ -252,6 +299,15 @@ separated by `|`.
   height of that gutter), while an edge crossing the boundary of a
   container laid out as `hub` or `grid` ends at the box border instead.
 
+- The attribute `shape: <shape>` draws the node box with another
+  outline, keeping its colors and its text, where the outline claims
+  the additional room it needs around the text: `box` (the
+  default), `database` (a cylinder), `queue` (a lying cylinder), `cloud`
+  (a cloud), `stack` (the box stacked onto two copies of itself, for
+  several instances), `person` (a box with a person badge on its top
+  border), or `device` (a box with a device badge), where an unknown
+  shape is ignored.
+
 - All remaining attributes are displayed as `<key>: <val>` lines inside
   the node box.
 
@@ -285,6 +341,95 @@ This second placement is rendered as a dashed "self" box, colored by the
 The diagram type `grid` rejects the input with an error as soon as the
 graph contains at least one edge.
 
+The diagram type `layout` rejects the input with an error as soon as the
+graph contains at least one edge or one container. Every node is a field
+of the binary structure and has to carry the attributes `offset` and
+`size` (non-negative and positive integers, decimal or `0x` hexadecimal),
+both counted in cells of `layout-cell-bits` bits each, where a `size` of
+`*` denotes a variable size, drawn up to the end of its row and marked
+as continuing by a trailing `...` of its label. The fields are drawn in
+rows of `layout-row-cells` cells below a ruler of the cell numbers, a
+field exceeding its row continues in the next one, overlapping fields
+are rejected, and the cells between the fields are drawn as dashed gaps.
+A layout spans at most 4096 cells and `layout-row-cells` is at most
+256, as every cell becomes several elements of the drawing.
+Every field is labeled below its cells through a brace (or, for a single
+cell, a tick), where the labels of narrow neighboring fields stagger
+downwards, connected by a leader line. The optional attribute `value`
+shows a fixed value inside the cells: one character (code point) per
+cell, if it has exactly as many characters as the field has cells (e.g. the bits of a
+marker), else once across the merged cells of the field (e.g. a magic
+number). The attributes `url` (on the label) and `primary` (the primary
+cell colors) are honored, and the `group` attribute stacks several
+structures as group boxes, while all other attributes are ignored. The
+offset of every row is shown right beside it, in hexadecimal bytes
+(or in bits, where a row does not start on a byte boundary).
+
+The diagram type `layer` lays out a layered architecture and rejects
+the input with an error as soon as the graph contains a container. The
+attribute `layer: <name>` assigns a node to a layer, the layers stack
+top-down in the order of their first appearance as bands spanning the
+whole diagram (colored by the `color-container-*` options, the layer name
+left of its nodes), and the nodes of a layer fill its band
+left-to-right (wrapped beyond `graph-columns-max` nodes), while the nodes
+without a layer trail outside of any band. An edge pointing from a lower
+layer to a higher one, i.e. against the layering, is drawn dashed in the
+`color-mark-violation` color, as it marks a violation of the layering.
+The attribute `layer-group: <path>` assigns the layer of a node to nested
+groups ("/"-separated, outermost first, e.g. "Server/Broker"), which are
+drawn as columns left of the bands, spanning the bands of their layers,
+with their names running upwards (the layers of a group are kept
+together, and all nodes of a layer have to name the same path), and
+the option `layer-numbered` numbers the layers top-down. All node boxes
+take the width of the widest one and the boxes of a layer the height of
+the highest one, so the boxes line up across the layers.
+
+The diagram type `sequence` draws a sequence diagram and rejects the
+input with an error as soon as the graph contains a container: the nodes
+(in declaration order, or in the order of their `order` attributes) are
+the participants, drawn as regular node boxes side by side (all of the
+size of the largest one) on top of their dashed lifelines, and the edges
+are the messages, drawn as regular edges with their names and arities
+between the lifelines, top-down in declaration order, where an edge from
+a node to itself loops on its own lifeline. The option
+`sequence-message-gap` sets the vertical distance of the messages.
+
+The diagram type `matrix` draws a dependency structure matrix (DSM) and
+rejects the input with an error as soon as the graph contains a
+container. The nodes are both its rows and its columns (in declaration
+order, or in the order of their `order` attributes), the row and
+column headers carrying the node labels in boxes of the node box colors
+(linked through `url`), lying and upright. A matrix reads from a row to
+its columns: the cell of row X and column Y carries the number of edges
+from X to Y (their summed numeric arities), i.e. how often X depends on Y, the diagonal is shaded, and every cycle, i.e. every set of
+nodes reaching each other through their edges, is moved into
+consecutive rows and outlined as a dashed block on the diagonal, with
+the numbers of its edges in the `color-mark-violation` color.
+
+As soon as a node carries the attribute `axis: column`, the `matrix` is a
+traceability matrix instead: the `axis: column` nodes are its columns and all
+other nodes its rows, a cell counts the edges between its row and its
+column in either direction (as a trace may be recorded on either side,
+e.g. a test case referencing the requirement it verifies), there is no
+diagonal and no cycle, and a row or column without any entry is marked
+as a gap by a header outlined dashed in the `color-mark-violation` color,
+or, if the node carries the attribute `trace: indirect` (as it relates to
+the other side indirectly only, e.g. a test case verifying a rule which
+constrains a requirement), in the `color-mark-warning` color.
+
+In both forms the type shared by all rows, and the one shared by all
+columns (their `type` attributes), become their titles in the corner
+above the row headers and left of the column headers.
+
+The diagram types marking violations or gaps (`layer` and `matrix`) explain the
+marks actually shown in a legend below the diagram (plus, for a
+`matrix`, the meaning of its cell numbers), which the `legend` option
+disables and the `legend-*` options reword (e.g. to localize them),
+where `{row}` and `{column}` stand for the row and column titles of a
+matrix, and `{item}` and `{other}` for the title of the marked side and
+the one of the other side (falling back to the texts of `legend-row`
+and `legend-column`).
+
 As the groups of a grouped graph, and the members of every container,
 are laid out individually with the selected (or, for a container, the
 annotated) diagram type, these constraints apply to every single group
@@ -296,7 +441,7 @@ group and every `hub` container needs its own primary node.
 
 ### Directives
 
-A `#type` directive sets the diagram type (`graph`, `hub`, or `grid`),
+A `#type` directive sets the diagram type (`graph`, `hub`, `grid`, `layout`, `layer`, `matrix`, or `sequence`),
 which otherwise is settable through the `-t`/`--type` command-line
 option (which takes precedence). The last occurrence wins and an invalid
 type is silently ignored. Without both, the type defaults to `graph`.
@@ -313,37 +458,56 @@ color-node-regular-name    #336699      size-node-height-scale     2.25
 color-node-regular-box     #e0f0ff      size-edge-corner-radius    20
 color-node-regular-border  #c0d0e0      size-edge-hop-radius       8
 color-node-primary-name    #ffffff      size-edge-track-gap        12
-color-node-primary-box     #336699      size-edge-port-gap         24
-color-node-primary-border  #003366      group-box-padding          30
-color-node-ghost-name      #666666      group-box-gap              40
-color-node-ghost-box       #f0f0f0      container-box-padding      30
-color-node-ghost-border    #a0a0a0      graph-columns-max          4
-color-node-self-name       #444444      graph-channel-width-max    140
-color-node-self-box        #e0e0e0      graph-channel-width-min    24
-color-node-self-border     #707070      graph-gutter-height-max    90
-color-group-name           #6699cc      graph-gutter-height-min    20
-color-group-box            #f4f8fc      graph-node-separation      30
-color-group-border         #c0d0e0      graph-rank-separation      60
-color-container-name       #666666      graph-node-degree-max      3
-color-container-box        #f6f6f6      hub-channel-width-max      340
-color-container-border     #a0a0a0      hub-channel-width-min      240
-color-edge-line            #999999      hub-node-gap               20
-color-edge-name            #333333      hub-node-degree-max        3
-color-edge-arity           #333333      hub-node-count-max         0
-color-edge-halo            #ffffff      grid-columns-max           4
-size-font-node             30           grid-columns-min           3
-size-font-type             16           grid-gap-horizontal        40
-size-font-prop             22           grid-gap-vertical          20
-size-font-edge             16           grid-node-width-equal      true
-size-font-arity            16           grid-node-height-equal     true
-size-canvas-margin         40
+color-node-primary-box     #336699      size-edge-track-gap-min    8
+color-node-primary-border  #003366      size-edge-port-gap         24
+color-node-ghost-name      #666666      group-box-padding          30
+color-node-ghost-box       #f0f0f0      group-box-gap              40
+color-node-ghost-border    #a0a0a0      container-box-padding      30
+color-node-self-name       #444444      graph-columns-max          4
+color-node-self-box        #e0e0e0      graph-channel-width-max    140
+color-node-self-border     #707070      graph-channel-width-min    24
+color-group-name           #6699cc      graph-gutter-height-max    90
+color-group-box            #f4f8fc      graph-gutter-height-min    20
+color-group-border         #c0d0e0      graph-node-separation      30
+color-container-name       #666666      graph-rank-separation      60
+color-container-box        #f6f6f6      graph-node-degree-max      3
+color-container-border     #a0a0a0      hub-channel-width-max      340
+color-edge-line            #999999      hub-channel-width-min      240
+color-edge-name            #333333      hub-node-gap               20
+color-edge-arity           #333333      hub-node-degree-max        3
+color-edge-halo            #ffffff      hub-node-count-max         0
+color-mark-violation       #cc3333      grid-columns-max           4
+color-mark-warning         #e08a00      grid-columns-min           3
+size-font-node             30           grid-gap-horizontal        40
+size-font-type             16           grid-gap-vertical          20
+size-font-prop             22           grid-node-width-equal      true
+size-font-edge             16           grid-node-height-equal     true
+size-font-arity            16           layout-row-cells           8
+size-canvas-margin         40           layout-cell-bits           8
+legend                     true         layout-cell-size           44
+                                        layer-numbered             false
+                                        matrix-cell-size           44
+                                        sequence-message-gap       56
+
+legend-row                 "row"
+legend-column              "column"
+legend-count               "references from {row} to {column}"
+legend-trace               "references between {row} and {column}"
+legend-cycle               "cyclic dependency"
+legend-upward              "dependency against the layering"
+legend-gap                 "{item} without any {other}"
+legend-indirect            "{item} without a direct {other}, covered indirectly"
 ```
 
-The `size-*`, `group-*`, `container-*`, `graph-*`, `hub-*`, and
-`grid-*` options control the rendering geometry (text font sizes, canvas
-margin, node box sizing, edge routing, group and container box spacing,
-and the per-diagram-type layout) and take non-negative numbers, except
-the booleans `grid-node-width-equal` and `grid-node-height-equal`.
+The `size-*`, `group-*`, `container-*`, `graph-*`, `hub-*`, `grid-*`,
+`layout-*`, `layer-*`, `matrix-*`, and `sequence-*` options control the
+rendering geometry (text font sizes, canvas margin, node box sizing,
+edge routing, group and container box spacing, and the
+per-diagram-type layout) and take non-negative numbers, except the
+booleans `grid-node-width-equal`, `grid-node-height-equal`, and
+`layer-numbered`. The boolean `legend` enables the legend below a
+diagram marking violations or gaps, and the `legend-*` options are the
+non-empty texts of its entries.
 
 The `size-font-*` options control the font sizes of the node names
 (`size-font-node`), the node types (`size-font-type`), the node
@@ -390,7 +554,28 @@ from its arrow head), a gutter by one text line per edge name placed
 along its run. The `-min` options raise the result, so that even an
 unlabeled diagram can be spaced out, while the `-max` options cap it, so
 that neither many parallel edges nor a long label can push the nodes
-apart without bound.
+apart without bound (except for the crowded channels and gutters, see
+below). A used channel always keeps its outermost edge tracks so far
+from the node boxes beside it, that an arrow head plus the corner in
+front of it fit in between, so neither a corner nor the hop of a
+crossing edge touches an arrow head.
+
+The `size-edge-track-gap` option controls the distance of the parallel
+edge tracks within a channel or gutter. A channel or gutter whose tracks
+do not fit at this distance into its capped width or height (by
+`graph-channel-width-max` and `graph-gutter-height-max` in a `graph`
+diagram, and by `hub-channel-width-max` in a `hub` diagram) is crowded
+and bundles its edges: the edges leading to the same node side (or else
+coming from the same node side) share one common track, which their
+individual stubs join and leave at junctions marked by a dot. The
+remaining tracks are spread at the `size-edge-track-gap` distance where
+they fit, but never closer than the `size-edge-track-gap-min` distance,
+so the parallel edge lines always stay visibly apart. Hence, a crowded
+channel or gutter of a `graph` diagram is sized by its bundled tracks
+instead of by its edge count, which may exceed its `-max` option, and a
+crowded channel of a `hub` diagram grows beyond `hub-channel-width-max`
+if its bundled tracks do not fit even at the minimum distance. All
+channels and gutters which are not crowded stay unaffected.
 
 In a `graph` diagram (a `graph` container level, too) whose nodes end up
 in a single column, the container boxes are widened to the widest one,
@@ -418,6 +603,15 @@ count, so that a few nodes still share a single row instead of being
 stacked, while `grid-columns-max` caps it, so that larger diagrams grow
 in height only. The column count never exceeds the node count and the
 maximum always wins over the minimum.
+
+The `layout-row-cells`, `layout-cell-bits`, and `layout-cell-size`
+options control a `layout` diagram: the number of cells per row, the
+number of bits a cell stands for (usually `1` for bit fields or `8` for
+byte fields, which decides the offset shown beside every row), and the
+width and height of a cell. The cells, values, ruler, braces, and labels
+are drawn in the colors and font sizes of the node boxes, node types,
+node properties, and edges, so a `layout` diagram blends into the other
+diagram types.
 
 The `grid-node-width-equal` and `grid-node-height-equal` options control
 the tile sizes of a `grid` diagram: the value `true` forces all node

@@ -3,11 +3,16 @@
 **gradia** is the opinionated tooling of *Dr. Ralf S. Engelschall*
 for *Object Graph Diagram Rendering*: a small CLI for rendering
 directed graphs, described in a concise textual input language, as SVG
-diagrams. Three diagram types are supported: `graph` (a grid-snapped
+diagrams. Seven diagram types are supported: `graph` (a grid-snapped
 layered layout of the whole graph, based on the Dagre algorithm of
 `@antv/layout`), `hub` (a hub graph, placing one primary hub node
-between its input and output nodes), and `grid` (a compact grid of
-tiles for an edge-less graph).
+between its input and output nodes), `grid` (a compact grid of
+tiles for an edge-less graph), `layout` (the cell layout of a
+binary structure, its nodes being fields with an `offset` and a `size`),
+`layer` (a layered architecture, its layers stacked as bands and
+the edges against the layering marked as violations), `matrix` (a
+dependency structure matrix, its cycles outlined as blocks), and
+`sequence` (a sequence diagram of participants and their messages).
 
 ## Repository Layout
 
@@ -25,9 +30,26 @@ tiles for an edge-less graph).
     -   `src/gradia-api-config.ts`: the rendering options (defaults,
         in-input directive parsing, font resolution)
     -   `src/gradia-api-render-base.ts`: shared rendering geometry/font
-        constants, text width measurement, and text word-wrapping
+        constants (e.g. the arrow head room `arrowRoom` every diagram
+        type keeps free in front of an arrow head), the `Layout` handed
+        over for SVG generation, text width measurement (bold-aware),
+        text word-wrapping, text template filling, and the shared
+        raster step `RASTER` (`onRaster`), onto which every diagram type
+        with node boxes rounds their sizes, unified per lane: per grid
+        column (width) and row (box height) for `graph`, per column for
+        `hub`, across the whole diagram (width) and per layer (height) for
+        `layer` (a uniform `graph` layout), per tile for `grid` (and
+        across all tiles, if equalized by its options), and across all
+        participants for `sequence`, where `graph` and `hub` grow a box
+        with many edge attachments individually afterwards, again onto
+        the raster
+    -   `src/gradia-api-render-shape.ts`: the free-standing `Shape`
+        primitives (`rect`, `path`, `text`) a diagram type draws beside
+        or instead of node boxes and edges, styled through the same
+        configuration options, their helpers, and the legend below a
+        diagram explaining its marks
     -   `src/gradia-api-render-node.ts`: node box text line breaking,
-        measurement, and styling helpers
+        measurement, ordering, outline shape geometry, and styling helpers
     -   `src/gradia-api-render-edge.ts`: edge routing (port/track
         assignment, polyline simplification, hop computation, SVG path
         generation)
@@ -43,6 +65,21 @@ tiles for an edge-less graph).
         layout via the Dagre algorithm of `@antv/layout`)
     -   `src/gradia-api-type-hub.ts`: the `hub` diagram type (hub graph layout)
     -   `src/gradia-api-type-grid.ts`: the `grid` diagram type (compact grid layout)
+    -   `src/gradia-api-type-layout.ts`: the `layout` diagram type (the
+        cells, ruler, braces, and labels of a binary structure, drawn as
+        shapes only)
+    -   `src/gradia-api-type-layer.ts`: the `layer` diagram type (an
+        explicitly ordered `graph` with uniformly sized boxes and evenly
+        spaced gutters, one row per layer, plus the layer
+        bands as shapes and the violating edges marked through the
+        per-edge `marked` flags of the `Layout`)
+    -   `src/gradia-api-type-matrix.ts`: the `matrix` diagram type (the
+        headers and cells of a dependency structure matrix, drawn as
+        shapes only, the cycles found as the strongly connected
+        components of the graph)
+    -   `src/gradia-api-type-sequence.ts`: the `sequence` diagram type
+        (the participants as node boxes, the messages as edges, and the
+        lifelines as shapes)
 -   `etc/`: the tool configurations (`eslint.mjs`, `tsconfig.json`,
     `stx.conf`, `vite.ts`)
 -   `smp/`: the sample graph descriptions (`*.txt`), their rendered
@@ -73,7 +110,7 @@ No test target is defined.
 ## CLI Command
 
 ```
-gradia [-t graph|hub|grid] [-f <format>] [-c <name>=<value>] [-o <file>.svg] <graph>.txt
+gradia [-t graph|hub|grid|layout|layer|matrix|sequence] [-f <format>] [-c <name>=<value>] [-o <file>.svg] <graph>.txt
 ```
 
 The output format is `svg:standalone` (a standalone SVG/XML document,
@@ -106,9 +143,11 @@ configuration, and the graph model -- so regenerating an unchanged
 diagram yields a byte-identical SVG.
 
 The rendering options (`font-family`, `font-embed`, the `color-*`
-family, and the numeric geometry families `size-*`, `group-*`,
-`graph-*`, `hub-*`, and `grid-*`) are set through the repeatable
-`--config <name>=<value>` command-line option, or through `#config
+family, the geometry families `size-*`, `group-*`, `container-*`,
+`graph-*`, `hub-*`, `grid-*`, `layout-*`, `layer-*`, `matrix-*`, and
+`sequence-*`, the `legend` switch, and the `legend-*` texts) are set
+through the repeatable `--config <name>=<value>` command-line option,
+or through `#config
 <option> <value>` directives inside the input, except `font-embed` and
 WOFF2 file paths, which are command-line-only, as the input is treated
 as untrusted. The `font-family` and `color-*` options are embedded into

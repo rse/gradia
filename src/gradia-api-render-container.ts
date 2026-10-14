@@ -9,7 +9,8 @@ import { Node, Edge, Graph }                       from "./gradia-api-model.js"
 import { Config }                                  from "./gradia-api-config.js"
 import { Poly, FS_GROUP, textWidth, Layout, ContainerBox }
     from "./gradia-api-render-base.js"
-import { parentOf, containerTypeOf, containerHead, typeOf, defaultStyleOf }
+import { shapeBox, shiftShape }                    from "./gradia-api-render-shape.js"
+import { parentOf, containerTypeOf, containerHead, typeOf, defaultStyleOf, badgeExtent }
     from "./gradia-api-render-node.js"
 import { simplifyPoly }                            from "./gradia-api-render-edge.js"
 
@@ -29,15 +30,27 @@ export interface LevelContext {
     gates?:     Map<string, GateSide>
 }
 
+/*  reject the containers for a diagram type laying out a flat graph
+    only: a member of a container, a node annotated as a container, and
+    a containment level with fixed-size placeholders  */
+export const rejectContainers = (type: string, nodes: Node[], level: LevelContext): void => {
+    if ((level.fixedSize?.size ?? 0) > 0
+        || nodes.some((node) => parentOf(node) !== undefined || containerTypeOf(node) !== undefined))
+        throw new Error(`diagram type "${type}" does not support containers`)
+}
+
 /*  a diagram type renderer  */
 export type Renderer = (graph: Graph, config: Config, level?: LevelContext) => Promise<Layout>
 
-/*  a diagram type: its renderer and whether it supports gate nodes
-    (and hence lets the edges crossing a container boundary continue
-    to the inner nodes, instead of ending at the container border)  */
+/*  a diagram type: its renderer, whether it lays out the members of a
+    container (and hence is valid as a "container" annotation), and
+    whether it supports gate nodes (and hence lets the edges crossing a
+    container boundary continue to the inner nodes, instead of ending at
+    the container border)  */
 export interface DiagramTypeSpec {
-    render: Renderer
-    gated:  boolean
+    render:   Renderer
+    nestable: boolean
+    gated:    boolean
 }
 
 /*  the containment tree of a graph  */
@@ -50,7 +63,7 @@ export interface Containment {
     appearance) and validate it: every "parent" has to be a declared
     node, no node may be nested into itself, no edge may connect a
     container with one of its own members, and every "container"
-    annotation has to name a valid diagram type  */
+    annotation has to name a diagram type laying out container members  */
 export const containmentOf = (graph: Graph, types: string[]): Containment => {
     /*  collect the parent/children relations of the nodes  */
     const parentOfId = new Map<string, string>()
@@ -58,7 +71,8 @@ export const containmentOf = (graph: Graph, types: string[]): Containment => {
     for (const node of graph.nodes.values()) {
         const type = containerTypeOf(node)
         if (type !== undefined && !types.includes(type))
-            throw new Error(`invalid container layout type "${type}" of node "${node.id}"`)
+            throw new Error(`invalid container layout type "${type}" of node "${node.id}" ` +
+                `(expected one of ${types.map((t) => `"${t}"`).join(", ")})`)
         const parent = parentOf(node)
         if (parent === undefined)
             continue
@@ -112,14 +126,15 @@ export interface Bounds {
     maxY: number
 }
 
-/*  determine the bounding box of a laid out graph (its nodes, edges,
-    container boxes, and the additionally given polylines)  */
+/*  determine the bounding box of a laid out graph (its nodes with
+    their badges, edges, shapes, container boxes, and the additionally
+    given polylines)  */
 export const boundsOf = (layout: Layout, extra: Poly[] = []): Bounds => {
     const { nodes, cx, cy, boxW, boxH, polys } = layout
     let [ minX, minY, maxX, maxY ] = [ Infinity, Infinity, -Infinity, -Infinity ]
     for (const node of nodes) {
         minX = Math.min(minX, cx(node.id) - boxW.get(node.id)! / 2)
-        minY = Math.min(minY, cy(node.id) - boxH.get(node.id)! / 2)
+        minY = Math.min(minY, cy(node.id) - boxH.get(node.id)! / 2 - badgeExtent(node))
         maxX = Math.max(maxX, cx(node.id) + boxW.get(node.id)! / 2)
         maxY = Math.max(maxY, cy(node.id) + boxH.get(node.id)! / 2)
     }
@@ -130,6 +145,13 @@ export const boundsOf = (layout: Layout, extra: Poly[] = []): Bounds => {
             maxX = Math.max(maxX, px)
             maxY = Math.max(maxY, py)
         }
+    }
+    for (const shape of layout.shapes ?? []) {
+        const [ x1, y1, x2, y2 ] = shapeBox(shape)
+        minX = Math.min(minX, x1)
+        minY = Math.min(minY, y1)
+        maxX = Math.max(maxX, x2)
+        maxY = Math.max(maxY, y2)
     }
     for (const c of layout.containers ?? []) {
         minX = Math.min(minX, c.x)
@@ -223,9 +245,10 @@ export const renderContained = async (
             partOf.set(node.id, 0)
         const boxes:      ContainerBox[] = []
         const innerBoxes: ContainerBox[] = []
+        const placed = new Set(layout.nodes.map((node) => node.id))
         for (const [ id, level ] of inner) {
             const member = graph.nodes.get(id)!
-            if (!layout.nodes.some((node) => node.id === id))
+            if (!placed.has(id))
                 throw new Error(`container "${id}" cannot be placed twice by diagram type "${type}"`)
             const { w, h } = sizeOf(member, level.bounds)
             const cx = layout.cx(id)
@@ -255,15 +278,19 @@ export const renderContained = async (
             the edges of this level, each stitched together with the
             partial routes inside the containers it leaves or enters
             (an edge crossing the boundary of this level stays partial)  */
-        const edges:   Edge[] = []
-        const polys:   Poly[] = []
-        const partial         = new Map<number, Poly>()
+        const edges:   Edge[]    = []
+        const polys:   Poly[]    = []
+        const marked:  boolean[] = []
+        const bundled: boolean[] = []
+        const partial            = new Map<number, Poly>()
         parts.forEach((part, k) => {
             if (k === 0)
                 return
             part.layout.edges.forEach((edge, ei) => {
                 edges.push(edge)
                 polys.push(shift(part.layout.polys[ei], k))
+                marked.push(part.layout.marked?.[ei] ?? false)
+                bundled.push(part.layout.bundled?.[ei] ?? false)
             })
         })
         levelEdges.forEach((edge, li) => {
@@ -280,6 +307,8 @@ export const renderContained = async (
             else {
                 edges.push(graph.edges[i])
                 polys.push(poly)
+                marked.push(layout.marked?.[li] ?? false)
+                bundled.push(layout.bundled?.[li] ?? false)
             }
         })
 
@@ -300,7 +329,13 @@ export const renderContained = async (
             contentH:   merge((layout) => layout.contentH),
             polys,
             styleOf:    (node) => (parts[partOf.get(node.id)!].layout.styleOf ?? defaultStyleOf)(node),
-            containers: [ ...boxes, ...innerBoxes ]
+            containers: [ ...boxes, ...innerBoxes ],
+            shapes:     parts.flatMap((part) => (part.layout.shapes ?? []).map((shape) =>
+                shiftShape(shape, part.dx, part.dy))),
+            marked,
+            bundled,
+            junctions:  parts.flatMap((part, k) => shift(part.layout.junctions ?? [], k)),
+            crowded:    parts.some((part) => part.layout.crowded === true)
         }
         return { layout: composed, bounds: boundsOf(composed, Array.from(partial.values())), partial }
     }

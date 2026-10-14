@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="20 5 1430 475" width="1430" height="475">
+<defs>
+<style>
+.gradia-3167da4d { fill: none; stroke: var(--gradia-color-edge-line, #999999); stroke-width: 3 }
+.gradia-6c7500cd { fill: var(--gradia-color-edge-line, #999999) }
+.gradia-c318c042 { fill: var(--gradia-color-node-regular-box, #e0f0ff); stroke: var(--gradia-color-node-regular-border, #c0d0e0); stroke-width: 4 }
+.gradia-d356e2cb { fill: none; stroke: var(--gradia-color-node-regular-name, #336699); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round }
+.gradia-f36ab1ca { font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; font-size: var(--gradia-size-font-node, 30px); font-weight: 600; text-anchor: middle; fill: var(--gradia-color-node-regular-name, #336699) }
+</style>
+<marker id="gradia-924be7e0adc5-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="21" markerHeight="21" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+<path d="M 0 1 L 9 5 L 0 9 z" class="gradia-6c7500cd"/>
+</marker>
+</defs>
+<path d="M 360 190 L 474 190" class="gradia-3167da4d" marker-end="url(#gradia-924be7e0adc5-arrow)"/>
+<path d="M 754 80 L 785 80 Q 805 80 805 100 L 805 146 Q 805 166 825 166 L 856 166" class="gradia-3167da4d" marker-end="url(#gradia-924be7e0adc5-arrow)"/>
+<path d="M 754 190 L 856 190" class="gradia-3167da4d" marker-end="url(#gradia-924be7e0adc5-arrow)"/>
+<path d="M 1096 178 L 1210 178" class="gradia-3167da4d" marker-end="url(#gradia-924be7e0adc5-arrow)"/>
+<path d="M 1210 202 L 1167 202 Q 1147 202 1147 222 L 1147 232 Q 1147 252 1127 252 L 431 252 Q 411 252 411 272 L 411 280 Q 411 300 391 300 L 360 300" class="gradia-3167da4d" marker-end="url(#gradia-924be7e0adc5-arrow)"/>
+<path d="M 1210 226 L 1179 226 Q 1159 226 1159 246 L 1159 256 Q 1159 276 1139 276 L 443 276 Q 423 276 423 296 L 423 390 Q 423 410 403 410 L 360 410" class="gradia-3167da4d" marker-end="url(#gradia-924be7e0adc5-arrow)"/>
+<rect x="40" y="140" width="320" height="100" rx="6" class="gradia-c318c042"/>
+<circle cx="200" cy="140" r="13" class="gradia-c318c042"/>
+<path d="M 200 133 m -3.5 0 a 3.5 3.5 0 1 0 7 0 a 3.5 3.5 0 1 0 -7 0 M 193 148 q 0 -8 7 -8 q 7 0 7 8" class="gradia-d356e2cb"/>
+<text x="200" y="200.8" class="gradia-f36ab1ca">Attendee</text>
+<rect x="474" y="40" width="280" height="80" rx="6" class="gradia-c318c042"/>
+<circle cx="614" cy="40" r="13" class="gradia-c318c042"/>
+<path d="M 607 33 h 14 v 10 h -14 z M 610 47 h 8 M 614 43 v 4" class="gradia-d356e2cb"/>
+<text x="614" y="90.8" class="gradia-f36ab1ca">Kiosk Terminal</text>
+<path d="M 614 154 A 40.6962576707078 40.6962576707078 0 0 1 684 158.8230854637602 A 30.688156605958774 30.688156605958774 0 0 1 735.2435565298214 172 A 15.077815602502309 15.077815602502309 0 0 1 754 190 A 15.077815602502309 15.077815602502309 0 0 1 735.2435565298214 208 A 30.688156605958774 30.688156605958774 0 0 1 684 221.1769145362398 A 40.6962576707078 40.6962576707078 0 0 1 614 226 A 40.6962576707078 40.6962576707078 0 0 1 544 221.1769145362398 A 30.688156605958774 30.688156605958774 0 0 1 492.7564434701786 208 A 15.077815602502309 15.077815602502309 0 0 1 474 190 A 15.077815602502309 15.077815602502309 0 0 1 492.7564434701786 172 A 30.688156605958774 30.688156605958774 0 0 1 544 158.8230854637602 A 40.6962576707078 40.6962576707078 0 0 1 614 154 z" class="gradia-c318c042"/>
+<text x="614" y="200.8" class="gradia-f36ab1ca">Edge CDN</text>
+<rect x="868" y="128" width="228" height="88" rx="6" class="gradia-c318c042"/>
+<rect x="862" y="134" width="228" height="88" rx="6" class="gradia-c318c042"/>
+<rect x="856" y="140" width="228" height="88" rx="6" class="gradia-c318c042"/>
+<text x="970" y="194.8" class="gradia-f36ab1ca">Proxy Pool</text>
+<path d="M 56 260 h 288 a 16 40 0 0 1 0 80 h -288 a 16 40 0 0 1 0 -80 z" class="gradia-c318c042"/>
+<path d="M 344 260 a 16 40 0 0 0 0 80" class="gradia-c318c042"/>
+<text x="192" y="310.8" class="gradia-f36ab1ca">Message Broker</text>
+<path d="M 40 374.2857142857143 a 160 14.285714285714286 0 0 1 320 0 v 71.42857142857143 a 160 14.285714285714286 0 0 1 -320 0 z" class="gradia-c318c042"/>
+<path d="M 40 374.2857142857143 a 160 14.285714285714286 0 0 0 320 0" class="gradia-c318c042"/>
+<text x="200" y="420.8" class="gradia-f36ab1ca">Event Database</text>
+<rect x="1210" y="152" width="220" height="100" rx="6" class="gradia-c318c042"/>
+<text x="1320" y="212.8" class="gradia-f36ab1ca">Service</text>
+</svg>

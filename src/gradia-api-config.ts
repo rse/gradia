@@ -35,6 +35,8 @@ export const configDefaults = {
     "color-edge-name":           "#333333",
     "color-edge-arity":          "#333333",
     "color-edge-halo":           "#ffffff",
+    "color-mark-violation":      "#cc3333",
+    "color-mark-warning":        "#e08a00",
     "size-font-node":            30,    /*  font size of node names                */
     "size-font-type":            16,    /*  font size of node types                */
     "size-font-prop":            22,    /*  font size of node properties           */
@@ -47,6 +49,7 @@ export const configDefaults = {
     "size-edge-corner-radius":   20,    /*  corner rounding radius of edges        */
     "size-edge-hop-radius":      8,     /*  radius of edge crossing hops           */
     "size-edge-track-gap":       12,    /*  offset between parallel edge routes    */
+    "size-edge-track-gap-min":   8,     /*  min offset of crowded parallel routes  */
     "size-edge-port-gap":        24,    /*  max separation of adjacent edge ports  */
     "group-box-padding":         30,    /*  inner padding of group boxes           */
     "group-box-gap":             40,    /*  vertical gap between group boxes       */
@@ -69,14 +72,41 @@ export const configDefaults = {
     "grid-gap-horizontal":       40,    /*  grid: horizontal gap between tiles     */
     "grid-gap-vertical":         20,    /*  grid: vertical gap between tiles       */
     "grid-node-width-equal":     true,  /*  grid: force equal width of node boxes  */
-    "grid-node-height-equal":    true   /*  grid: force equal height of node boxes */
+    "grid-node-height-equal":    true,  /*  grid: force equal height of node boxes */
+    "layout-row-cells":          8,     /*  layout: cells per row                  */
+    "layout-cell-bits":          8,     /*  layout: bits per cell (1 or 8)         */
+    "layout-cell-size":          44,    /*  layout: width and height of a cell     */
+    "layer-numbered":            false, /*  layer: number the layers top-down      */
+    "matrix-cell-size":          44,    /*  matrix: width and height of a cell     */
+    "sequence-message-gap":      56,    /*  sequence: vertical gap of the messages */
+    "legend":                    true,  /*  legend of the marks below a diagram    */
+
+    /*  the texts of the legend entries, with the placeholders "{row}"
+        and "{column}" (the rows and columns of a matrix, named by their
+        shared type, else by "legend-row" and "legend-column"), and
+        "{item}" and "{other}" (the side of a matrix carrying a mark and
+        the opposite side)  */
+    "legend-row":                "row",
+    "legend-column":             "column",
+    "legend-count":              "references from {row} to {column}",
+    "legend-trace":              "references between {row} and {column}",
+    "legend-cycle":              "cyclic dependency",
+    "legend-upward":             "dependency against the layering",
+    "legend-gap":                "{item} without any {other}",
+    "legend-indirect":           "{item} without a direct {other}, covered indirectly"
 }
 export type Config = typeof configDefaults
+
+/*  the textual configuration options, which are rendered as text
+    content instead of being embedded as CSS values  */
+export type ConfigText = "legend-row" | "legend-column" | "legend-count" | "legend-trace" |
+    "legend-cycle" | "legend-upward" | "legend-gap" | "legend-indirect"
 
 /*  the configuration options which are directly embedded into the
     generated SVG (and hence can alternatively be provided at display
     time through "--gradia-<option>" CSS custom properties)  */
-export type ConfigEmbedded = { [K in keyof Config]: Config[K] extends string ? K : never }[keyof Config]
+export type ConfigEmbedded = { [K in keyof Config]: K extends ConfigText ? never :
+    Config[K] extends string ? K : never }[keyof Config]
 
 /*  the font size options, which are embedded into the generated SVG,
     too, but which drive the layout as well and hence are embedded as
@@ -172,6 +202,24 @@ const fontsBuiltIn: Record<string, { file: string, weight: string }> = {
     }
 }
 
+/*  read a font file as base64, cached per file path (and revalidated
+    by the modification time and the size of the file), as every
+    rendered document embeds the very same font (a missing file is
+    read uncached, so it raises the very error of the read)  */
+const fontCache = new Map<string, { stamp: string, data: string }>()
+const fontData = (file: string): string => {
+    const stat = fs.statSync(file, { throwIfNoEntry: false })
+    if (stat === undefined)
+        return fs.readFileSync(file).toString("base64")
+    const stamp = `${stat.mtimeMs}:${stat.size}`
+    let   entry = fontCache.get(file)
+    if (entry === undefined || entry.stamp !== stamp) {
+        entry = { stamp, data: fs.readFileSync(file).toString("base64") }
+        fontCache.set(file, entry)
+    }
+    return entry.data
+}
+
 /*  resolve the configured font family: either a built-in font family, a
     plain font family name, or a path to a WOFF2 file (the content of
     the built-in family or the WOFF2 file optionally embedded as base64,
@@ -182,7 +230,7 @@ export const resolveFont = (config: Config): { family: string, embed?: string, w
         const builtIn = fontsBuiltIn[spec]
         if (config["font-embed"]) {
             const file = url.fileURLToPath(import.meta.resolve(builtIn.file))
-            return { family: spec, embed: fs.readFileSync(file).toString("base64"), weight: builtIn.weight }
+            return { family: spec, embed: fontData(file), weight: builtIn.weight }
         }
         else
             return { family: spec }
@@ -190,7 +238,7 @@ export const resolveFont = (config: Config): { family: string, embed?: string, w
     else if (spec.endsWith(".woff2")) {
         const family = path.basename(spec, ".woff2")
         if (config["font-embed"])
-            return { family, embed: fs.readFileSync(spec).toString("base64") }
+            return { family, embed: fontData(spec) }
         else
             return { family }
     }

@@ -16,17 +16,26 @@ import { renderSVG }                               from "./gradia-api-render-svg
 import { render as renderGraph }                   from "./gradia-api-type-graph.js"
 import { render as renderHub }                     from "./gradia-api-type-hub.js"
 import { render as renderGrid }                    from "./gradia-api-type-grid.js"
+import { render as renderLayout }                  from "./gradia-api-type-layout.js"
+import { render as renderLayer }                   from "./gradia-api-type-layer.js"
+import { render as renderMatrix }                  from "./gradia-api-type-matrix.js"
+import { render as renderSequence }                from "./gradia-api-type-sequence.js"
 
 /*  re-export the graph model and configuration companion types  */
 export type { Attr, Node, Edge, Graph }            from "./gradia-api-model.js"
 export type { Config }                             from "./gradia-api-config.js"
 
-/*  the supported diagram types, their renderers, and whether they let
-    the edges crossing a container boundary continue to the inner nodes  */
+/*  the supported diagram types, their renderers, whether they lay out
+    the members of a container, and whether they let the edges crossing
+    a container boundary continue to the inner nodes  */
 const renderers = {
-    graph: { render: renderGraph, gated: true  },
-    hub:   { render: renderHub,   gated: false },
-    grid:  { render: renderGrid,  gated: false }
+    graph:    { render: renderGraph,    nestable: true,  gated: true  },
+    hub:      { render: renderHub,      nestable: true,  gated: false },
+    grid:     { render: renderGrid,     nestable: true,  gated: false },
+    layout:   { render: renderLayout,   nestable: false, gated: false },
+    layer:    { render: renderLayer,    nestable: false, gated: false },
+    matrix:   { render: renderMatrix,   nestable: false, gated: false },
+    sequence: { render: renderSequence, nestable: false, gated: false }
 } satisfies Record<string, DiagramTypeSpec>
 export type DiagramType = keyof typeof renderers
 export const diagramTypes = Object.keys(renderers) as DiagramType[]
@@ -46,6 +55,12 @@ const parseTypeDirective = (input: string): DiagramType | undefined => {
     }
     return type
 }
+
+/*  the configuration options which enter the identifier seed of an SVG
+    document only once they deviate from their default value, as they
+    were introduced after the seed scheme, and the identifiers of all
+    diagrams not using them shall stay stable  */
+const seedLate = new Set<string>([ "size-edge-track-gap-min" ])
 
 /*  the supported output formats  */
 export const diagramFormats = [ "svg:standalone", "svg:embedded", "url:xml", "url:base64" ] as const
@@ -104,7 +119,7 @@ export class Gradia {
                         `"${edge.source}" --> "${edge.target}" is not a declared node`)
 
         /*  determine (and validate) the containment tree of the graph  */
-        const containment = containmentOf(graph, diagramTypes)
+        const containment = containmentOf(graph, diagramTypes.filter((t) => renderers[t].nestable))
 
         /*  lay out the graph model (with its containers as nested
             levels): either as a whole, or partitioned into its named
@@ -122,10 +137,12 @@ export class Gradia {
             configured options enter as their sorted key list only, as
             their values are already part of the layered configuration and
             merely their presence decides between a hard-coded CSS value
-            and a CSS custom property lookup)  */
+            and a CSS custom property lookup, and the late options only
+            once they deviate from their default value)  */
         const seed = JSON.stringify({
             type,
-            config,
+            config:   Object.fromEntries(Object.entries(config).filter(([ key, val ]) =>
+                !seedLate.has(key) || val !== configDefaults[key as keyof Config])),
             explicit: Object.keys(explicit).sort(),
             nodes:    Array.from(graph.nodes.values()),
             edges:    graph.edges

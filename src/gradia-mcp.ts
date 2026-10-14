@@ -41,6 +41,17 @@ component relationships, data flows, dependency graphs, and similar structures.
   described below.
 - "grid": a compact grid of tiles for an edge-less graph. The nodes are placed
   in declaration order onto a roughly square, row-major grid.
+- "layout": the cell layout of a binary structure (e.g. a message frame, a file
+  header, or a memory slot): every node is a field drawn as a run of cells
+  below a ruler and labeled below the cells.
+- "layer": a layered architecture: the layers (the "layer: <name>" attribute of
+  the nodes) stack top-down as bands, and an edge pointing upwards against the
+  layering is marked as a violation.
+- "matrix": a dependency structure matrix: the nodes are rows and columns, a
+  cell counts the edges from its row to its column, and the cycles are outlined
+  as blocks on the diagonal.
+- "sequence": a sequence diagram: the nodes are the participants on top of
+  their lifelines, and the edges are the messages, top-down in declaration order.
 
 ### Diagram Type Constraints
 
@@ -66,8 +77,98 @@ This second placement is rendered as a dashed "self" box, colored by the
 The "grid" type rejects the input with an error as soon as the graph contains
 at least one edge.
 
+The diagram type "layout" rejects the input with an error as soon as the
+graph contains at least one edge or one container. Every node is a field
+of the binary structure and has to carry the attributes "offset" and
+"size" (non-negative and positive integers, decimal or "0x" hexadecimal),
+both counted in cells of "layout-cell-bits" bits each, where a "size" of
+"*" denotes a variable size, drawn up to the end of its row and marked
+as continuing by a trailing "..." of its label. The fields are drawn in
+rows of "layout-row-cells" cells below a ruler of the cell numbers, a
+field exceeding its row continues in the next one, overlapping fields
+are rejected, and the cells between the fields are drawn as dashed gaps.
+A layout spans at most 4096 cells and "layout-row-cells" is at most
+256, as every cell becomes several elements of the drawing.
+Every field is labeled below its cells through a brace (or, for a single
+cell, a tick), where the labels of narrow neighboring fields stagger
+downwards, connected by a leader line. The optional attribute "value"
+shows a fixed value inside the cells: one character (code point) per
+cell, if it has exactly as many characters as the field has cells (e.g. the bits of a
+marker), else once across the merged cells of the field (e.g. a magic
+number). The attributes "url" (on the label) and "primary" (the primary
+cell colors) are honored, and the "group" attribute stacks several
+structures as group boxes, while all other attributes are ignored. The
+offset of every row is shown right beside it, in hexadecimal bytes
+(or in bits, where a row does not start on a byte boundary).
+
+The diagram type "layer" lays out a layered architecture and rejects
+the input with an error as soon as the graph contains a container. The
+attribute "layer: <name>" assigns a node to a layer, the layers stack
+top-down in the order of their first appearance as bands spanning the
+whole diagram (colored by the "color-container-*" options, the layer name
+left of its nodes), and the nodes of a layer fill its band
+left-to-right (wrapped beyond "graph-columns-max" nodes), while the nodes
+without a layer trail outside of any band. An edge pointing from a lower
+layer to a higher one, i.e. against the layering, is drawn dashed in the
+"color-mark-violation" color, as it marks a violation of the layering.
+The attribute "layer-group: <path>" assigns the layer of a node to nested
+groups ("/"-separated, outermost first, e.g. "Server/Broker"), which are
+drawn as columns left of the bands, spanning the bands of their layers,
+with their names running upwards (the layers of a group are kept
+together, and all nodes of a layer have to name the same path), and
+the option "layer-numbered" numbers the layers top-down. All node boxes
+take the width of the widest one and the boxes of a layer the height of
+the highest one, so the boxes line up across the layers.
+
+The diagram type "sequence" draws a sequence diagram and rejects the
+input with an error as soon as the graph contains a container: the nodes
+(in declaration order, or in the order of their "order" attributes) are
+the participants, drawn as regular node boxes side by side (all of the
+size of the largest one) on top of their dashed lifelines, and the edges
+are the messages, drawn as regular edges with their names and arities
+between the lifelines, top-down in declaration order, where an edge from
+a node to itself loops on its own lifeline. The option
+"sequence-message-gap" sets the vertical distance of the messages.
+
+The diagram type "matrix" draws a dependency structure matrix (DSM) and
+rejects the input with an error as soon as the graph contains a
+container. The nodes are both its rows and its columns (in declaration
+order, or in the order of their "order" attributes), the row and
+column headers carrying the node labels in boxes of the node box colors
+(linked through "url"), lying and upright. A matrix reads from a row to
+its columns: the cell of row X and column Y carries the number of edges
+from X to Y (their summed numeric arities), i.e. how often X depends on Y, the diagonal is shaded, and every cycle, i.e. every set of
+nodes reaching each other through their edges, is moved into
+consecutive rows and outlined as a dashed block on the diagonal, with
+the numbers of its edges in the "color-mark-violation" color.
+
+As soon as a node carries the attribute "axis: column", the "matrix" is a
+traceability matrix instead: the "axis: column" nodes are its columns and all
+other nodes its rows, a cell counts the edges between its row and its
+column in either direction (as a trace may be recorded on either side,
+e.g. a test case referencing the requirement it verifies), there is no
+diagonal and no cycle, and a row or column without any entry is marked
+as a gap by a header outlined dashed in the "color-mark-violation" color,
+or, if the node carries the attribute "trace: indirect" (as it relates to
+the other side indirectly only, e.g. a test case verifying a rule which
+constrains a requirement), in the "color-mark-warning" color.
+
+In both forms the type shared by all rows, and the one shared by all
+columns (their "type" attributes), become their titles in the corner
+above the row headers and left of the column headers.
+
+The diagram types marking violations or gaps ("layer" and "matrix") explain the
+marks actually shown in a legend below the diagram (plus, for a
+"matrix", the meaning of its cell numbers), which the "legend" option
+disables and the "legend-*" options reword (e.g. to localize them),
+where "{row}" and "{column}" stand for the row and column titles of a
+matrix, and "{item}" and "{other}" for the title of the marked side and
+the one of the other side (falling back to the texts of "legend-row"
+and "legend-column").
+
 The "graph" type imposes no such constraints and hence is the safe choice
-whenever the topology is not known to fit "hub" or "grid".
+whenever the topology is not known to fit "hub" or "grid" (and is no binary
+structure for "layout").
 
 ## Input Language
 
@@ -101,7 +202,7 @@ as <name>, terminals as "...", optional parts as [ ... ], repeatable parts as
     <directive>      ::= "#config" <whitespace> { <whitespace> } <option> <whitespace> { <whitespace> } ( <string> | <word> )
                        | "#type" <whitespace> { <whitespace> } <type>
     <option>         ::= <letter> { <letter> | <digit> | "-" }
-    <type>           ::= "graph" | "hub" | "grid"
+    <type>           ::= "graph" | "hub" | "grid" | "layout" | "layer" | "matrix" | "sequence"
     <word>           ::= <char> - <whitespace> { <char> - <whitespace> }
     <newline>        ::= "\\n"
     <whitespace>     ::= " " | "\\t" | "\\r"
@@ -137,8 +238,9 @@ as <name>, terminals as "...", optional parts as [ ... ], repeatable parts as
   following node, i.e., the chain is equivalent to "a --> b" and "b --> c".
 - The <edge-name> is rendered as the label of the edge and the <edge-arity> as
   its cardinality label.
-- Seven attribute keys are reserved and consumed by the renderer instead of
-  being displayed as a regular "<key>: <val>" line:
+- Eight attribute keys are reserved and consumed by the renderer instead of
+  being displayed as a regular "<key>: <val>" line (beside the ones the
+  individual diagram types reserve, see above):
   - "url: <url>" renders the node box as a hyperlink. Only relative URLs and
     the schemes "http", "https", and "mailto" are honored; any other URL is
     silently dropped and the node box then simply stays unlinked,
@@ -152,7 +254,8 @@ as <name>, terminals as "...", optional parts as [ ... ], repeatable parts as
   - "container: <type>" marks the node as a container whose members are laid
     out with the diagram type <type> ("graph", "hub", or "grid"), even if it
     has no members at all,
-  - "order: <number>" places the node explicitly (see below).
+  - "order: <number>" places the node explicitly (see below),
+  - "shape: <shape>" draws the node box with another outline (see below).
 - A "graph" (a "graph" container level, too) with at least one node carrying an
   "order" attribute is laid out in that explicit order instead of by the layered
   algorithm: the distinct order values become the rows, top-down in ascending
@@ -187,6 +290,14 @@ as <name>, terminals as "...", optional parts as [ ... ], repeatable parts as
   own primary node, and a "grid" container permits no edges among its members).
 - Use containers (not groups) to visualize zones, tiers, deployment units, or
   packages whose members are connected to the outside world.
+- The attribute "shape: <shape>" draws the node box with another
+  outline, keeping its colors and its text, where the outline claims
+  the additional room it needs around the text: "box" (the
+  default), "database" (a cylinder), "queue" (a lying cylinder), "cloud"
+  (a cloud), "stack" (the box stacked onto two copies of itself, for
+  several instances), "person" (a box with a person badge on its top
+  border), or "device" (a box with a device badge), where an unknown
+  shape is ignored.
 - All remaining attributes are displayed as "<key>: <val>" lines inside the node
   box.
 
@@ -214,13 +325,17 @@ over them. The recognized options, with their types and built-in defaults, are:
 
 ${configOptions}
 
-The "size-*", "group-*", "container-*", "graph-*", "hub-*", and "grid-*" options
-control the rendering geometry (canvas margin, node box sizing, edge routing,
-group and container box spacing, and the per-diagram-type layout) and take
+The "size-*", "group-*", "container-*", "graph-*", "hub-*", "grid-*",
+"layout-*", "layer-*", "matrix-*", and "sequence-*" options control the
+rendering geometry (canvas margin, node box sizing, edge routing, group and
+container box spacing, and the per-diagram-type layout) and take
 non-negative numbers, except the booleans "grid-node-width-equal" and
 "grid-node-height-equal", which force all node boxes of a "grid" diagram to
 the width of the widest one and to the height of the tallest one (a nested
-container box taking part in the width unification only).
+container box taking part in the width unification only), and
+"layer-numbered". The boolean "legend" enables the legend below a diagram
+marking violations or gaps, and the "legend-*" options are the non-empty
+texts of its entries.
 
 The "size-node-width-max" option additionally enables the word-wrapping of the
 node box texts: given a positive value, the node name, its type, and its
@@ -237,6 +352,11 @@ so that a few nodes still share a single row instead of being stacked, while
 "grid-columns-max" (default 4) caps it, so that larger diagrams grow in height
 only. The column count never exceeds the node count and the maximum always
 wins over the minimum.
+
+The "layout-row-cells", "layout-cell-bits", and "layout-cell-size" options
+control a "layout" diagram: the number of cells per row, the number of bits a
+cell stands for (usually 1 for bit fields or 8 for byte fields), and the width
+and height of a cell.
 
 The "font-family" and "color-*" options are embedded into the generated SVG:
 when such an option is not explicitly configured, the SVG instead references

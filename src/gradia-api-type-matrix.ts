@@ -1,0 +1,288 @@
+/*
+**  Gradia -- Object Graph Diagram Rendering
+**  Copyright (c) 2026 Dr. Ralf S. Engelschall <rse@engelschall.com>
+**  Distributed under MIT license <https://spdx.org/licenses/MIT.html>
+*/
+
+/*  internal dependencies  */
+import { Node, Graph }              from "./gradia-api-model.js"
+import { Config }                   from "./gradia-api-config.js"
+import { Layout, ASC, textWidth, fillTemplate }
+    from "./gradia-api-render-base.js"
+import { Shape, LegendEntry, textShape, shapeLayout, legendShapes }
+    from "./gradia-api-render-shape.js"
+import { LevelContext, rejectContainers }
+    from "./gradia-api-render-container.js"
+import { isPrimary, urlOf, byOrder, typeOf }
+    from "./gradia-api-render-node.js"
+
+/*  the geometry of the row headers  */
+const HEAD_PAD = 12   /*  horizontal padding inside a row header  */
+const HEAD_GAP = 8    /*  gap between the headers and the cells    */
+
+/*  determine the cycles of a graph: its strongly connected components
+    of more than one node (Tarjan, iteratively with an explicit work
+    stack, as a recursion would overflow the call stack on a long chain
+    of nodes), plus the nodes carrying a self-loop, each mapped onto the
+    number of its component  */
+const cyclesOf = (ids: string[], edges: { source: string, target: string }[]): Map<string, number> => {
+    const succ = new Map<string, string[]>(ids.map((id) => [ id, [] ]))
+    for (const edge of edges)
+        succ.get(edge.source)!.push(edge.target)
+    const idx   = new Map<string, number>()
+    const low   = new Map<string, number>()
+    const stack = new Array<string>()
+    const onStk = new Set<string>()
+    const comps = new Array<string[]>()
+    let counter = 0
+    const enter = (v: string) => {
+        idx.set(v, counter)
+        low.set(v, counter++)
+        stack.push(v)
+        onStk.add(v)
+    }
+    for (const root of ids) {
+        if (idx.has(root))
+            continue
+        enter(root)
+        const work = [ { v: root, k: 0 } ]
+        while (work.length > 0) {
+            const top  = work[work.length - 1]
+            const next = succ.get(top.v)!
+            if (top.k < next.length) {
+                /*  descend into the next unvisited successor  */
+                const w = next[top.k++]
+                if (!idx.has(w)) {
+                    enter(w)
+                    work.push({ v: w, k: 0 })
+                }
+                else if (onStk.has(w))
+                    low.set(top.v, Math.min(low.get(top.v)!, idx.get(w)!))
+                continue
+            }
+
+            /*  return from a node: hand its low link to its parent and
+                pop its component, if it is the root of one  */
+            work.pop()
+            if (work.length > 0) {
+                const parent = work[work.length - 1].v
+                low.set(parent, Math.min(low.get(parent)!, low.get(top.v)!))
+            }
+            if (low.get(top.v) === idx.get(top.v)) {
+                const comp = new Array<string>()
+                let w: string
+                do {
+                    w = stack.pop()!
+                    onStk.delete(w)
+                    comp.push(w)
+                } while (w !== top.v)
+                comps.push(comp)
+            }
+        }
+    }
+    const cycles = new Map<string, number>()
+    comps.forEach((comp, k) => {
+        if (comp.length > 1 || succ.get(comp[0])!.includes(comp[0]))
+            for (const id of comp)
+                cycles.set(id, k)
+    })
+    return cycles
+}
+
+/*  the special "axis" annotation (a node of the value "column" being
+    a column of a traceability matrix)  */
+const isColumn = (node: Node): boolean =>
+    node.attrs.findLast((attr) => attr.key === "axis")?.val === "column"
+
+/*  the special "trace" annotation (a node of the value "indirect" being
+    related to the other side of a traceability matrix indirectly only)  */
+const isIndirect = (node: Node): boolean =>
+    node.attrs.findLast((attr) => attr.key === "trace")?.val === "indirect"
+
+/*  lay out a graph model as a matrix, either as a dependency structure
+    matrix (DSM), if no node carries the attribute "axis: column", or
+    else as a traceability matrix. In a DSM the nodes (in declaration
+    order, or in the order of their "order" attributes, the ones without
+    one trailing, while the members of a cycle move up to its first
+    member, so every cycle forms a block on the diagonal) are both the
+    rows and the columns, and the cell of row X and column Y carries the
+    number of edges from X to Y (their summed numeric arities), i.e. a
+    matrix reads from a row to its columns, while the diagonal is shaded
+    and every cycle is outlined as a dashed block with the numbers of its
+    edges in the violation color, as a cyclic dependency defeats any
+    layering. In a traceability matrix the "axis: column" nodes are the
+    columns and all other nodes the rows, a cell counts the edges between
+    its row and its column in either direction (as a trace is recorded on
+    either side), and a row or column without any entry is marked as a
+    gap in the violation color, or, if it carries the attribute
+    "trace: indirect" (as it is related to the other side indirectly),
+    in the warning color. The row and column headers carry the
+    node labels in boxes of the node box colors, lying and upright, and
+    the type shared by all rows or all columns becomes their title in
+    the corner above the row and left of the column headers  */
+export const render = async (graph: Graph, config: Config, level: LevelContext = {}): Promise<Layout> => {
+    /*  ensure the graph carries no containers, as the rows are flat  */
+    const all = Array.from(graph.nodes.values())
+    rejectContainers("matrix", all, level)
+    const sorted = byOrder(all)
+    const traced = sorted.some((node) => isColumn(node))
+
+    /*  determine the rows and columns: in a DSM both are the nodes, with
+        the members of every cycle consecutive, in a traceability matrix
+        the two sets of nodes  */
+    const cycles = traced ? new Map<string, number>() : cyclesOf(sorted.map((node) => node.id), graph.edges)
+    const first  = new Map<number, number>()
+    sorted.forEach((node, i) => {
+        const k = cycles.get(node.id)
+        if (k !== undefined && !first.has(k))
+            first.set(k, i)
+    })
+    const rank   = (id: string, i: number) => {
+        const k = cycles.get(id)
+        return k !== undefined ? first.get(k)! : i
+    }
+    const nodes  = sorted.map((node, i) => ({ node, r: rank(node.id, i), i }))
+        .sort((a, b) => a.r - b.r || a.i - b.i).map(({ node }) => node)
+    const rows   = traced ? nodes.filter((node) => !isColumn(node)) : nodes
+    const cols   = traced ? nodes.filter((node) =>  isColumn(node)) : nodes
+    const rowOf  = new Map(rows.map((node, i) => [ node.id, i ]))
+    const colOf  = new Map(cols.map((node, i) => [ node.id, i ]))
+
+    /*  count the edges of every cell (summing the numeric arities, as a
+        derived edge may stand for several references), in a traceability
+        matrix regardless of their direction  */
+    const counts = new Map<number, number>()
+    const cellOf = (r: number, c: number) => r * cols.length + c
+    for (const edge of graph.edges) {
+        let [ r, c ] = [ rowOf.get(edge.source), colOf.get(edge.target) ]
+        if (traced && (r === undefined || c === undefined))
+            [ r, c ] = [ rowOf.get(edge.target), colOf.get(edge.source) ]
+        if (r === undefined || c === undefined)
+            continue
+        const arity = edge.arity !== undefined && /^\d+$/.test(edge.arity) ? Number(edge.arity) : 1
+        counts.set(cellOf(r, c), (counts.get(cellOf(r, c)) ?? 0) + arity)
+    }
+    const usedRows = new Set(Array.from(counts.keys(), (key) => Math.floor(key / cols.length)))
+    const usedCols = new Set(Array.from(counts.keys(), (key) => key % cols.length))
+
+    /*  resolve the configurable rendering geometry  */
+    const margin = config["size-canvas-margin"]
+    const cell   = Math.max(config["matrix-cell-size"], 1)
+    const fsName = config["size-font-prop"]
+    const fsNum  = config["size-font-type"]
+    const headOf = (list: Node[]) =>
+        Math.ceil(list.reduce((w, node) => Math.max(w, textWidth(node.name, fsName, true)), 0) + HEAD_PAD * 2)
+    /*  the titles of the rows and the columns: the type shared by all of
+        their nodes, if any  */
+    const titleOf = (list: Node[]): string | undefined => {
+        const types = new Set(list.map((node) => typeOf(node)))
+        const [ type ] = Array.from(types)
+        return types.size === 1 && type !== undefined && type !== "" ? type : undefined
+    }
+    const rowTitle = titleOf(rows)
+    const colTitle = titleOf(cols)
+    const titleW   = Math.max(textWidth(rowTitle ?? "", fsNum, true), textWidth(colTitle ?? "", fsNum, true))
+    const rowW   = Math.max(headOf(rows), Math.ceil(titleW + HEAD_PAD * 2))
+    const colH   = Math.max(headOf(cols), Math.ceil(fsNum * 4))
+    const x0     = margin + rowW + HEAD_GAP
+    const y0     = margin + colH + HEAD_GAP
+    const base   = (y: number, size: number) => y + cell / 2 + size * ASC
+
+    /*  generate the shapes: the column headers (upright boxes, the node
+        labels running upwards) and the row headers (the very same boxes
+        lying), both in the colors of the node boxes (a gap of a
+        traceability matrix outlined dashed in the violation color), and
+        the cells  */
+    const shapes: Shape[] = []
+    const gaps:   Shape[] = []
+    const header = (node: Node, x: number, y: number, w: number, h: number, upright: boolean,
+        gap: "color-mark-violation" | "color-mark-warning" | undefined) => {
+        const style = isPrimary(node) ? "primary" : "regular"
+        shapes.push({ kind: "rect", x, y, w, h, rx: 6, fill: `color-node-${style}-box`,
+            stroke: `color-node-${style}-border`, width: 2 })
+        if (gap !== undefined)
+            gaps.push({ kind: "rect", x, y, w, h, rx: 6, stroke: gap, width: 2, dash: "6 4" })
+        shapes.push(upright ?
+            textShape(x + cell / 2 + fsName * ASC, y + h - HEAD_PAD, node.name,
+                `color-node-${style}-name`, "size-font-prop", config, { bold: true, url: urlOf(node), upright }) :
+            textShape(x + HEAD_PAD, base(y, fsName), node.name,
+                `color-node-${style}-name`, "size-font-prop", config, { bold: true, url: urlOf(node) }))
+    }
+    /*  a row or column of a traceability matrix without any entry is a
+        gap, unless it is related to the other side indirectly  */
+    const markOf = (node: Node, used: boolean) =>
+        !traced || used ? undefined : isIndirect(node) ? "color-mark-warning" as const : "color-mark-violation" as const
+    const colMarks = cols.map((node, c) => markOf(node, usedCols.has(c)))
+    const rowMarks = rows.map((node, r) => markOf(node, usedRows.has(r)))
+    cols.forEach((node, c) => header(node, x0 + c * cell, margin, cell, colH, true,  colMarks[c]))
+    rows.forEach((node, r) => header(node, margin, y0 + r * cell, rowW, cell, false, rowMarks[r]))
+
+    /*  the titles in the corner above the row and left of the column
+        headers: the one of the rows above the row headers, the one of
+        the columns beside the column headers  */
+    if (rowTitle !== undefined)
+        shapes.push(textShape(margin + HEAD_PAD, margin + colH - HEAD_PAD, rowTitle,
+            "color-container-name", "size-font-type", config, { bold: true }))
+    if (colTitle !== undefined)
+        shapes.push(textShape(margin + rowW - HEAD_PAD, margin + HEAD_PAD + fsNum, colTitle,
+            "color-container-name", "size-font-type", config, { anchor: "end", bold: true }))
+
+    /*  the gap outlines lie above all headers, as the neighboring header
+        boxes would otherwise cover parts of them  */
+    shapes.push(...gaps)
+    for (let r = 0; r < rows.length; r++) {
+        for (let c = 0; c < cols.length; c++) {
+            const [ x, y ] = [ x0 + c * cell, y0 + r * cell ]
+            const count    = counts.get(cellOf(r, c))
+            const diagonal = !traced && r === c
+            const k        = cycles.get(rows[r].id)
+            const feedback = count !== undefined && k !== undefined && k === cycles.get(cols[c].id)
+            shapes.push({ kind: "rect", x, y, w: cell, h: cell,
+                fill:   diagonal ? "color-node-self-box" : count !== undefined ? "color-node-regular-box" : "color-container-box",
+                stroke: "color-container-border", width: 1 })
+            if (count !== undefined)
+                shapes.push(textShape(x + cell / 2, base(y, fsNum), String(count),
+                    feedback ? "color-mark-violation" : "color-node-regular-name", "size-font-type",
+                    config, { anchor: "middle", bold: true }))
+        }
+    }
+
+    /*  outline every cycle of a DSM as a dashed block on the diagonal
+        (its members being consecutive rows and columns)  */
+    const blocks = new Map<number, number[]>()
+    nodes.forEach((node, i) => {
+        const k = cycles.get(node.id)
+        if (k === undefined)
+            return
+        const members = blocks.get(k)
+        if (members === undefined)
+            blocks.set(k, [ i ])
+        else
+            members.push(i)
+    })
+    for (const members of blocks.values()) {
+        const [ x, y ] = [ x0 + members[0] * cell, y0 + members[0] * cell ]
+        const size     = members.length * cell
+        shapes.push({ kind: "rect", x, y, w: size, h: size,
+            stroke: "color-mark-violation", width: 3, dash: "10 6" })
+    }
+
+    /*  explain the visible marks in a legend below the matrix  */
+    const legend: LegendEntry[] = []
+    const [ rowName, colName ] = [ rowTitle ?? config["legend-row"], colTitle ?? config["legend-column"] ]
+    if (counts.size > 0)
+        legend.push({ swatch: "cell",  color: "color-node-regular-name",
+            text: fillTemplate(config[traced ? "legend-trace" : "legend-count"], { row: rowName, column: colName }) })
+    if (blocks.size > 0)
+        legend.push({ swatch: "block", color: "color-mark-violation",    text: config["legend-cycle"] })
+    for (const [ color, key ] of [ [ "color-mark-violation", "legend-gap" ], [ "color-mark-warning", "legend-indirect" ] ] as const) {
+        if (rowMarks.includes(color))
+            legend.push({ swatch: "box", color, text: fillTemplate(config[key], { item: rowName, other: colName }) })
+        if (colMarks.includes(color))
+            legend.push({ swatch: "box", color, text: fillTemplate(config[key], { item: colName, other: rowName }) })
+    }
+    shapes.push(...legendShapes(legend, margin, y0 + rows.length * cell + HEAD_GAP * 3, config))
+
+    /*  hand over the shapes for SVG rendering (no node boxes and edges)  */
+    return shapeLayout(shapes)
+}
