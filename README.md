@@ -14,7 +14,7 @@ About
 -----
 
 **Gradia** is a small API and CLI for rendering directed graphs,
-described in a concise textual input language, as SVG diagrams. Three
+described in a concise textual input language, as SVG diagrams. Four
 diagram types are supported which fit the scenario of visualizing object
 graphs:
 
@@ -23,6 +23,7 @@ graphs:
 - `hub`: a hub graph, placing one primary hub node between its input and
   output nodes.
 - `grid`: a compact grid of tiles for an edge-less graph.
+- `sequence`: a sequence diagram of participants and their messages.
 
 Examples
 --------
@@ -45,6 +46,10 @@ Here are examples of the three graph diagram renderings:
 
   ![container-sample](smp/container-sample.svg)
 
+- [sequence-sample](smp/sequence-sample.txt) (sequence diagram):
+
+  ![sequence-sample](smp/sequence-sample.svg)
+
 Playground
 ----------
 
@@ -63,7 +68,7 @@ Usage
 -----
 
 ```sh
-$ gradia [-t graph|hub|grid] [-f <format>] [-c <name>=<value>] -o <file>.svg <graph>.txt
+$ gradia [-t graph|hub|grid|sequence] [-f <format>] [-c <name>=<value>] -o <file>.svg <graph>.txt
 ```
 
 The diagram type is selected with the `-t` command-line option or, when
@@ -80,7 +85,7 @@ MCP Service
 -----------
 
 ```sh
-$ gradia --mcp [-t graph|hub|grid] [-f <format>] [-c <name>=<value>]
+$ gradia --mcp [-t graph|hub|grid|sequence] [-f <format>] [-c <name>=<value>]
 ```
 
 With the `-m`/`--mcp` option, **Gradia** instead runs as a [Model Context
@@ -147,7 +152,7 @@ separated by `|`.
 <directive>      ::= "#config" <whitespace> { <whitespace> } <option> <whitespace> { <whitespace> } ( <string> | <word> )
                    | "#type" <whitespace> { <whitespace> } <type>
 <option>         ::= <letter> { <letter> | <digit> | "-" }
-<type>           ::= "graph" | "hub" | "grid"
+<type>           ::= "graph" | "hub" | "grid" | "sequence"
 <word>           ::= <char> - <whitespace> { <char> - <whitespace> }
 <newline>        ::= "\n"
 <whitespace>     ::= " " | "\t" | "\r"
@@ -285,6 +290,11 @@ This second placement is rendered as a dashed "self" box, colored by the
 The diagram type `grid` rejects the input with an error as soon as the
 graph contains at least one edge.
 
+The diagram type `sequence` rejects the input with an error as soon as
+the graph contains a container. Its participants (the nodes) are ordered
+by declaration or by their `order` attributes, its messages (the edges)
+run top-down in declaration order, and a self-loop on its own lifeline.
+
 As the groups of a grouped graph, and the members of every container,
 are laid out individually with the selected (or, for a container, the
 annotated) diagram type, these constraints apply to every single group
@@ -296,10 +306,11 @@ group and every `hub` container needs its own primary node.
 
 ### Directives
 
-A `#type` directive sets the diagram type (`graph`, `hub`, or `grid`),
-which otherwise is settable through the `-t`/`--type` command-line
-option (which takes precedence). The last occurrence wins and an invalid
-type is silently ignored. Without both, the type defaults to `graph`.
+A `#type` directive sets the diagram type (`graph`, `hub`, `grid`, or
+`sequence`), which otherwise is settable through the `-t`/`--type`
+command-line option (which takes precedence). The last occurrence wins
+and an invalid type is silently ignored. Without both, the type defaults
+to `graph`.
 
 A `#config` directive sets one of the rendering options, which otherwise
 are settable through the corresponding `--config <option>=<value>`

@@ -41,6 +41,9 @@ component relationships, data flows, dependency graphs, and similar structures.
   described below.
 - "grid": a compact grid of tiles for an edge-less graph. The nodes are placed
   in declaration order onto a roughly square, row-major grid.
+- "sequence": a sequence diagram: the nodes are the participants on top of
+  their lifelines, and the edges are the messages, top-down in declaration
+  order. It rejects the input with an error if it contains a container.
 
 ### Diagram Type Constraints
 
@@ -101,7 +104,7 @@ as <name>, terminals as "...", optional parts as [ ... ], repeatable parts as
     <directive>      ::= "#config" <whitespace> { <whitespace> } <option> <whitespace> { <whitespace> } ( <string> | <word> )
                        | "#type" <whitespace> { <whitespace> } <type>
     <option>         ::= <letter> { <letter> | <digit> | "-" }
-    <type>           ::= "graph" | "hub" | "grid"
+    <type>           ::= "graph" | "hub" | "grid" | "sequence"
     <word>           ::= <char> - <whitespace> { <char> - <whitespace> }
     <newline>        ::= "\\n"
     <whitespace>     ::= " " | "\\t" | "\\r"
