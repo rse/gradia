@@ -1,0 +1,17 @@
+#type matrix
+
+app:     "Application"      [ type: Module, order: 1 ]
+http:    "HTTP Server"      [ type: Module, order: 2 ]
+router:  "Router"           [ type: Module, order: 3 ]
+json:    "JSON Codec"       [ type: Module, order: 4 ]
+log:     "Logging"          [ type: Module, order: 5 ]
+util:    "Utilities"        [ type: Module, order: 6, url: "https://example.com/util" ]
+
+app    --> http
+app    --> router
+app    -->[2] log
+http   --> json
+http   --> log
+router -->[4] util
+json   --> util
+log    --> util

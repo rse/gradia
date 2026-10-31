@@ -14,7 +14,7 @@ About
 -----
 
 **Gradia** is a small API and CLI for rendering directed graphs,
-described in a concise textual input language, as SVG diagrams. Four
+described in a concise textual input language, as SVG diagrams. Five
 diagram types are supported which fit the scenario of visualizing object
 graphs:
 
@@ -23,6 +23,8 @@ graphs:
 - `hub`: a hub graph, placing one primary hub node between its input and
   output nodes.
 - `grid`: a compact grid of tiles for an edge-less graph.
+- `matrix`: a dependency structure matrix, counting the edges between
+  its rows and columns and outlining its cycles.
 - `sequence`: a sequence diagram of participants and their messages.
 
 Examples
@@ -50,6 +52,10 @@ Here are examples of the graph diagram renderings:
 
   ![badge-sample](smp/badge-sample.svg)
 
+- [matrix-sample](smp/matrix-sample.txt) (dependency structure matrix):
+
+  ![matrix-sample](smp/matrix-sample.svg)
+
 - [sequence-sample](smp/sequence-sample.txt) (sequence diagram):
 
   ![sequence-sample](smp/sequence-sample.svg)
@@ -72,7 +78,7 @@ Usage
 -----
 
 ```sh
-$ gradia [-t graph|hub|grid|sequence] [-f <format>] [-c <name>=<value>] -o <file>.svg <graph>.txt
+$ gradia [-t graph|hub|grid|matrix|sequence] [-f <format>] [-c <name>=<value>] -o <file>.svg <graph>.txt
 ```
 
 The diagram type is selected with the `-t` command-line option or, when
@@ -89,7 +95,7 @@ MCP Service
 -----------
 
 ```sh
-$ gradia --mcp [-t graph|hub|grid|sequence] [-f <format>] [-c <name>=<value>]
+$ gradia --mcp [-t graph|hub|grid|matrix|sequence] [-f <format>] [-c <name>=<value>]
 ```
 
 With the `-m`/`--mcp` option, **Gradia** instead runs as a [Model Context
@@ -157,7 +163,7 @@ separated by `|`.
 <directive>      ::= "#config" <whitespace> { <whitespace> } <option> <whitespace> { <whitespace> } ( <string> | <word> )
                    | "#type" <whitespace> { <whitespace> } <type>
 <option>         ::= <letter> { <letter> | <digit> | "-" }
-<type>           ::= "graph" | "hub" | "grid" | "sequence"
+<type>           ::= "graph" | "hub" | "grid" | "matrix" | "sequence"
 <word>           ::= <char> - <whitespace> { <char> - <whitespace> }
 <newline>        ::= "\n"
 <whitespace>     ::= " " | "\t" | "\r"
@@ -216,7 +222,7 @@ separated by `|`.
   reject a kind other than `sync`, as well as a `duration` or `time`,
   with an error. Any other key is rejected with an error, too.
 
-- Nine attribute keys are reserved and consumed by the renderer instead
+- Ten attribute keys are reserved and consumed by the renderer instead
   of being displayed as a regular `<key>: <val>` line:
 
     - `url: <url>` renders the node box as a hyperlink. Only relative URLs
@@ -227,7 +233,12 @@ separated by `|`.
     - `primary: true` renders the node in the primary node colors
       (and, for diagram type `hub`, marks the single central hub node),
     - `group: <name>` places the node into the surrounding group box
-      `<name>`,
+      `<name>` (every group being laid out as a diagram of its own, the
+      groups stacked, and no edge running between them),
+    - `cluster: <path>` places the node into the nested clusters of the
+      `/`-separated path `<path>` within the one diagram, crossed freely
+      by the edges (for diagram type `matrix`: partitions of its rows and
+      columns), while the other diagram types ignore it,
     - `parent: <id>` nests the node into the container node `<id>` (a
       node which is implicitly declared if never referenced otherwise),
     - `container: <type>` marks the node as a container whose members
@@ -319,6 +330,37 @@ This second placement is rendered as a dashed "self" box, colored by the
 The diagram type `grid` rejects the input with an error as soon as the
 graph contains at least one edge.
 
+The diagram type `matrix` draws a dependency structure matrix (DSM) and
+rejects the input with an error as soon as the graph contains a
+container. The nodes are both its rows and its columns, their headers
+carrying the node labels (linked through `url`), all row headers as wide
+as the longest label and all column headers as high. The cell of row X
+and column Y counts the edges from X to Y (their summed numeric
+arities), and the diagonal is shaded. The nodes are ordered
+topologically, the sources of the edges before their targets (and the
+declaration order deciding among the independent ones), so all entries
+lie above the diagonal, except the ones of the cycles: every cycle is
+kept in consecutive rows and outlined as a dashed block on the diagonal,
+with the numbers of its edges closing it (the ones pointing back to an
+earlier or the same node, on or below the diagonal) in the
+`color-mark-violation` color. As soon as one node carries an `order`
+attribute, the nodes are instead ordered by these attributes (the nodes
+without one trailing). The clusters (see the `cluster` attribute) become
+partitions of the matrix: consecutive rows and columns (in order of
+first appearance of the clusters, the nodes without a cluster in the
+implied cluster `default`, and a `/`-separated cluster path nesting
+sub-clusters, kept together within their cluster, with one level of
+bands and blocks per nesting level), each ordered on its own, labeled by
+bands left of the rows and above the columns, and outlined as a block on
+the diagonal, while the edges between the clusters are counted outside
+these blocks (a cycle spanning several clusters is outlined per cluster,
+except a single member split off from the rest of its cycle, which only
+its counts mark). The type shared by all rows, and the one shared by all
+columns, become their titles in the corner. A node `badge` is drawn
+inside its headers, at the end their labels run towards (right of a row
+label, above a column label), with the headers widened to keep it clear
+of the longest label.
+
 The diagram type `sequence` rejects the input with an error as soon as
 the graph contains a container. Its participants (the nodes) are ordered
 by declaration or by their `order` attributes (left-to-right in ascending
@@ -375,11 +417,11 @@ group and every `hub` container needs its own primary node.
 
 ### Directives
 
-A `#type` directive sets the diagram type (`graph`, `hub`, `grid`, or
-`sequence`), which otherwise is settable through the `-t`/`--type`
-command-line option (which takes precedence). The last occurrence wins
-and an invalid type is silently ignored. Without both, the type defaults
-to `graph`.
+A `#type` directive sets the diagram type (`graph`, `hub`, `grid`,
+`matrix`, or `sequence`), which otherwise is settable through the
+`-t`/`--type` command-line option (which takes precedence). The last
+occurrence wins and an invalid type is silently ignored. Without both,
+the type defaults to `graph`.
 
 A `#config` directive sets one of the rendering options, which otherwise
 are settable through the corresponding `--config <option>=<value>`
@@ -417,6 +459,7 @@ size-font-type             16           grid-gap-horizontal        40
 size-font-prop             22           grid-gap-vertical          20
 size-font-edge             16           grid-node-width-equal      true
 size-font-arity            16           grid-node-height-equal     true
+color-mark-violation       #cc3333
 ```
 
 The `size-*`, `group-*`, `container-*`, `graph-*`, `hub-*`, and

@@ -416,15 +416,20 @@ const renderOutline = (badge: NodeBadge | undefined, multi: number, x: number, y
     const dash  = style.dash !== undefined ? ` stroke-dasharray="${escapeXML(style.dash)}"` : ""
     const parts = (multi > 0 ? [ multi, multi / 2, 0 ] : [ 0 ]).map((d) =>
         `<rect x="${x + d}" y="${y + d}" width="${w - multi}" height="${h - multi}" rx="6" class="${cls}"${dash}/>`)
-    if (badge !== undefined) {
-        /*  the icons are drawn for a badge radius of 17, so they scale
-            with the badge to keep their room around them  */
-        const [ bx, by ] = [ x + BADGE_X + BADGE_R, y ]
-        parts.push(`<circle cx="${bx}" cy="${by}" r="${BADGE_R}" class="${cls}"${dash}/>`,
-            `<g transform="translate(${bx} ${by}) scale(${Math.round(BADGE_R / 17 * 1000) / 1000})">`,
-            ...renderIcon(badge, style, styler), "</g>")
-    }
+    if (badge !== undefined)
+        parts.push(...renderBadge(badge, x + BADGE_X + BADGE_R, y, style, styler))
     return parts
+}
+
+/*  generate the SVG fragments of a badge centered on the given point, in
+    the colors of a node box (the icons are drawn for a badge radius of
+    17, so they scale with the badge to keep their room around them)  */
+const renderBadge = (badge: NodeBadge, bx: number, by: number, style: NodeStyle, styler: Styler): string[] => {
+    const cls  = styler.box(style.fill, style.stroke, 4)
+    const dash = style.dash !== undefined ? ` stroke-dasharray="${escapeXML(style.dash)}"` : ""
+    return [ `<circle cx="${bx}" cy="${by}" r="${BADGE_R}" class="${cls}"${dash}/>`,
+        `<g transform="translate(${bx} ${by}) scale(${Math.round(BADGE_R / 17 * 1000) / 1000})">`,
+        ...renderIcon(badge, style, styler), "</g>" ]
 }
 
 /*  generate the SVG fragments for a single node box (a node with a
@@ -771,13 +776,20 @@ const renderContainer = (c: ContainerBox, styler: Styler, config: Config): strin
 }
 
 /*  generate the SVG fragment for a single free-standing shape  */
-const renderShape = (shape: Shape, styler: Styler): string =>
-    shape.kind === "text" ?
-        `<text x="${shape.x}" y="${shape.y}"${shape.anchor === "end" ? " text-anchor=\"end\"" : ""} ` +
-        `class="${styler.text(shape.fill, shape.size, { halo: true })}">${escapeXML(shape.text)}</text>` :
-        `<path d="M ${shape.x} ${shape.y} ${shape.d}" class="${shape.fill !== undefined ?
+const renderShape = (shape: Shape, styler: Styler): string => {
+    if (shape.kind === "badge")
+        return renderBadge(shape.badge, shape.x, shape.y, shape.style, styler).join("")
+    if (shape.kind === "path")
+        return `<path d="M ${shape.x} ${shape.y} ${shape.d}" class="${shape.fill !== undefined ?
             styler.box(shape.fill, shape.stroke, shape.width) : styler.line(shape.stroke, shape.width)}"` +
-        `${shape.dash !== undefined ? ` stroke-dasharray="${escapeXML(shape.dash)}"` : ""}/>`
+            `${shape.dash !== undefined ? ` stroke-dasharray="${escapeXML(shape.dash)}"` : ""}/>`
+    const turn = shape.upright === true ? ` transform="rotate(-90 ${shape.x} ${shape.y})"` : ""
+    const text = `<text x="${shape.x}" y="${shape.y}"${turn}${shape.anchor !== "start" ? ` text-anchor="${shape.anchor}"` : ""} ` +
+        `class="${styler.text(shape.fill, shape.size, { bold: shape.bold, halo: shape.halo !== false })}">` +
+        `${escapeXML(shape.text)}</text>`
+    return shape.url === undefined ? text :
+        `<a href="${escapeXML(shape.url)}" xlink:href="${escapeXML(shape.url)}">${text}</a>`
+}
 
 /*  render a laid out graph into an SVG document (the seed determines the
     identifier prefix of the document, see "idPrefix" above)  */

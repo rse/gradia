@@ -1,0 +1,23 @@
+#type matrix
+
+web:      "Web Client"        [ type: Component, cluster: Frontend, badge: browser ]
+mobile:   "Mobile App"        [ type: Component, cluster: Frontend, badge: mobile ]
+gateway:  "API Gateway"       [ type: Component, cluster: Backend,  badge: api, primary: true ]
+orders:   "Order Service"     [ type: Component, cluster: Backend/Services,  badge: service ]
+billing:  "Billing Service"   [ type: Component, cluster: Backend/Services,  badge: service ]
+events:   "Event Bus"         [ type: Component, cluster: Backend/Msg,       badge: queue ]
+repo:     "Order Repository"  [ type: Component, cluster: Data,     badge: database ]
+ledger:   "Ledger Store"      [ type: Component, cluster: Data,     badge: database ]
+
+web      --> gateway
+mobile   --> gateway
+mobile   --> web
+gateway  --> orders
+gateway  --> billing
+orders   -->[3] repo
+orders   --> events
+billing  --> ledger
+billing  --> events
+events   --> orders
+events   --> billing
+ledger   --> events

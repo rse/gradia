@@ -22,6 +22,16 @@ ChangeLog
 -   FEATURE [code, othr]: add the node attributes "badge" (renders a badge icon on the node) and
     "multiple" (renders the node as a stack of nodes), with the new "smp/badge-sample" sample.
 
+-   FEATURE [code, othr]: add the diagram type "matrix", a dependency structure matrix (DSM) whose
+    rows and columns are both the nodes and whose cells count the edges between them (summing
+    numeric arities): the nodes are ordered topologically (or by their "order" attributes), every
+    cycle is kept in consecutive rows and outlined as a dashed block on the diagonal, with the
+    counts of its edges closing it in the new "color-mark-violation" color, the clusters of the
+    new node attribute "cluster" (nested through "/"-separated cluster paths) become partitions of
+    the matrix, and node badges are drawn inside the headers, plus the free-standing "badge" shape
+    and the bold, linked, centered, and upright texts and rectangles of the "shapes", and the new
+    "smp/matrix-*" samples.
+
 -   IMPROVEMENT [code]: bundle the edges of crowded channels and gutters (whose parallel tracks do
     not fit at the full "size-edge-track-gap") instead of squeezing their tracks into one grey bar:
     the edges of the same name leading to the same target node side with the same arity, or else

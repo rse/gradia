@@ -41,6 +41,17 @@ component relationships, data flows, dependency graphs, and similar structures.
   described below.
 - "grid": a compact grid of tiles for an edge-less graph. The nodes are placed
   in declaration order onto a roughly square, row-major grid.
+- "matrix": a dependency structure matrix: the nodes are both the rows and the
+  columns, a cell counts the edges from its row to its column, and the cycles
+  are outlined as blocks on the diagonal, the counts of their edges closing
+  them (on or below the diagonal) in the "color-mark-violation" color. The
+  nodes are ordered topologically (sources before targets, so only the entries
+  of cycles lie below the diagonal), or by their "order" attributes if one
+  node carries one. The "cluster" attribute partitions the matrix (consecutive
+  rows and columns, labeled and outlined as blocks on the diagonal, a
+  "/"-separated cluster path nesting sub-clusters). A node "badge" is drawn
+  inside its row and column headers, at the end of their labels. It rejects
+  the input with an error if it contains a container.
 - "sequence": a sequence diagram: the nodes are the participants on top of
   their lifelines, left-to-right in declaration order or in ascending order of
   their "order" attributes (the nodes without one following), and the edges
@@ -123,7 +134,7 @@ as <name>, terminals as "...", optional parts as [ ... ], repeatable parts as
     <directive>      ::= "#config" <whitespace> { <whitespace> } <option> <whitespace> { <whitespace> } ( <string> | <word> )
                        | "#type" <whitespace> { <whitespace> } <type>
     <option>         ::= <letter> { <letter> | <digit> | "-" }
-    <type>           ::= "graph" | "hub" | "grid" | "sequence"
+    <type>           ::= "graph" | "hub" | "grid" | "matrix" | "sequence"
     <word>           ::= <char> - <whitespace> { <char> - <whitespace> }
     <newline>        ::= "\\n"
     <whitespace>     ::= " " | "\\t" | "\\r"
@@ -166,7 +177,7 @@ as <name>, terminals as "...", optional parts as [ ... ], repeatable parts as
   with arbitrary texts. Only the "sequence" type renders them, while the other
   types reject a kind other than "sync", as well as a "duration" or "time",
   with an error. Any other key is rejected with an error, too.
-- Nine attribute keys are reserved and consumed by the renderer instead of
+- Ten attribute keys are reserved and consumed by the renderer instead of
   being displayed as a regular "<key>: <val>" line:
   - "url: <url>" renders the node box as a hyperlink. Only relative URLs and
     the schemes "http", "https", and "mailto" are honored; any other URL is
@@ -175,7 +186,13 @@ as <name>, terminals as "...", optional parts as [ ... ], repeatable parts as
   - "primary: true" renders the node in the primary node colors (and, for the
     diagram type "hub", marks the single central hub node). The value has to
     be the literal string "true",
-  - "group: <name>" places the node into the surrounding group box <name>,
+  - "group: <name>" places the node into the surrounding group box <name>
+    (every group being laid out as a diagram of its own, the groups stacked,
+    and no edge running between them),
+  - "cluster: <path>" places the node into the nested clusters of the
+    "/"-separated path <path> within the one diagram, crossed freely by the
+    edges (for the diagram type "matrix": partitions of its rows and columns),
+    while the other diagram types ignore it,
   - "parent: <id>" nests the node into the container node <id> (a node which
     is implicitly declared if never referenced otherwise),
   - "container: <type>" marks the node as a container whose members are laid

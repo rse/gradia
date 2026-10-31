@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="20 20 525 525" width="525" height="525">
+<defs>
+<style>
+.gradia-3167da4d { fill: none; stroke: var(--gradia-color-edge-line, #999999); stroke-width: 3 }
+.gradia-6c7500cd { fill: var(--gradia-color-edge-line, #999999) }
+.gradia-613ab0f0 { fill: var(--gradia-color-node-regular-box, #e0f0ff); stroke: var(--gradia-color-node-regular-border, #c0d0e0); stroke-width: 2 }
+.gradia-831be281 { fill: var(--gradia-color-node-self-box, #e0e0e0); stroke: var(--gradia-color-container-border, #a0a0a0); stroke-width: 1 }
+.gradia-063da071 { fill: var(--gradia-color-node-regular-box, #e0f0ff); stroke: var(--gradia-color-container-border, #a0a0a0); stroke-width: 1 }
+.gradia-de61de06 { fill: var(--gradia-color-container-box, #f6f6f6); stroke: var(--gradia-color-container-border, #a0a0a0); stroke-width: 1 }
+.gradia-8f5f281a { fill: none; stroke: var(--gradia-color-mark-violation, #cc3333); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round }
+.gradia-8f91fa3b { font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; font-size: var(--gradia-size-font-prop, 22px); font-weight: 600; fill: var(--gradia-color-node-regular-name, #336699) }
+.gradia-5f52a16d { font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; font-size: var(--gradia-size-font-type, 16px); font-weight: 600; fill: var(--gradia-color-container-name, #666666) }
+.gradia-c8482516 { font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; font-size: var(--gradia-size-font-type, 16px); font-weight: 600; fill: var(--gradia-color-node-regular-name, #336699) }
+.gradia-f7e4690f { font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; font-size: var(--gradia-size-font-type, 16px); font-weight: 600; fill: var(--gradia-color-mark-violation, #cc3333) }
+</style>
+<marker id="gradia-8a925c975529-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="21" markerHeight="21" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+<path d="M 0 1 L 9 5 L 0 9 z" class="gradia-6c7500cd"/>
+</marker>
+</defs>
+<path d="M 173 40 m 6 0 h 32 a 6 6 0 0 1 6 6 v 113 a 6 6 0 0 1 -6 6 h -32 a 6 6 0 0 1 -6 -6 v -113 a 6 6 0 0 1 6 -6 z" class="gradia-613ab0f0"/>
+<path d="M 217 40 m 6 0 h 32 a 6 6 0 0 1 6 6 v 113 a 6 6 0 0 1 -6 6 h -32 a 6 6 0 0 1 -6 -6 v -113 a 6 6 0 0 1 6 -6 z" class="gradia-613ab0f0"/>
+<path d="M 261 40 m 6 0 h 32 a 6 6 0 0 1 6 6 v 113 a 6 6 0 0 1 -6 6 h -32 a 6 6 0 0 1 -6 -6 v -113 a 6 6 0 0 1 6 -6 z" class="gradia-613ab0f0"/>
+<path d="M 305 40 m 6 0 h 32 a 6 6 0 0 1 6 6 v 113 a 6 6 0 0 1 -6 6 h -32 a 6 6 0 0 1 -6 -6 v -113 a 6 6 0 0 1 6 -6 z" class="gradia-613ab0f0"/>
+<path d="M 349 40 m 6 0 h 32 a 6 6 0 0 1 6 6 v 113 a 6 6 0 0 1 -6 6 h -32 a 6 6 0 0 1 -6 -6 v -113 a 6 6 0 0 1 6 -6 z" class="gradia-613ab0f0"/>
+<path d="M 393 40 m 6 0 h 32 a 6 6 0 0 1 6 6 v 113 a 6 6 0 0 1 -6 6 h -32 a 6 6 0 0 1 -6 -6 v -113 a 6 6 0 0 1 6 -6 z" class="gradia-613ab0f0"/>
+<path d="M 437 40 m 6 0 h 32 a 6 6 0 0 1 6 6 v 113 a 6 6 0 0 1 -6 6 h -32 a 6 6 0 0 1 -6 -6 v -113 a 6 6 0 0 1 6 -6 z" class="gradia-613ab0f0"/>
+<path d="M 481 40 m 6 0 h 32 a 6 6 0 0 1 6 6 v 113 a 6 6 0 0 1 -6 6 h -32 a 6 6 0 0 1 -6 -6 v -113 a 6 6 0 0 1 6 -6 z" class="gradia-613ab0f0"/>
+<path d="M 40 173 m 6 0 h 113 a 6 6 0 0 1 6 6 v 32 a 6 6 0 0 1 -6 6 h -113 a 6 6 0 0 1 -6 -6 v -32 a 6 6 0 0 1 6 -6 z" class="gradia-613ab0f0"/>
+<path d="M 40 217 m 6 0 h 113 a 6 6 0 0 1 6 6 v 32 a 6 6 0 0 1 -6 6 h -113 a 6 6 0 0 1 -6 -6 v -32 a 6 6 0 0 1 6 -6 z" class="gradia-613ab0f0"/>
+<path d="M 40 261 m 6 0 h 113 a 6 6 0 0 1 6 6 v 32 a 6 6 0 0 1 -6 6 h -113 a 6 6 0 0 1 -6 -6 v -32 a 6 6 0 0 1 6 -6 z" class="gradia-613ab0f0"/>
+<path d="M 40 305 m 6 0 h 113 a 6 6 0 0 1 6 6 v 32 a 6 6 0 0 1 -6 6 h -113 a 6 6 0 0 1 -6 -6 v -32 a 6 6 0 0 1 6 -6 z" class="gradia-613ab0f0"/>
+<path d="M 40 349 m 6 0 h 113 a 6 6 0 0 1 6 6 v 32 a 6 6 0 0 1 -6 6 h -113 a 6 6 0 0 1 -6 -6 v -32 a 6 6 0 0 1 6 -6 z" class="gradia-613ab0f0"/>
+<path d="M 40 393 m 6 0 h 113 a 6 6 0 0 1 6 6 v 32 a 6 6 0 0 1 -6 6 h -113 a 6 6 0 0 1 -6 -6 v -32 a 6 6 0 0 1 6 -6 z" class="gradia-613ab0f0"/>
+<path d="M 40 437 m 6 0 h 113 a 6 6 0 0 1 6 6 v 32 a 6 6 0 0 1 -6 6 h -113 a 6 6 0 0 1 -6 -6 v -32 a 6 6 0 0 1 6 -6 z" class="gradia-613ab0f0"/>
+<path d="M 40 481 m 6 0 h 113 a 6 6 0 0 1 6 6 v 32 a 6 6 0 0 1 -6 6 h -113 a 6 6 0 0 1 -6 -6 v -32 a 6 6 0 0 1 6 -6 z" class="gradia-613ab0f0"/>
+<path d="M 173 173 h 44 v 44 h -44 z" class="gradia-831be281"/>
+<path d="M 217 173 h 44 v 44 h -44 z" class="gradia-063da071"/>
+<path d="M 261 173 h 44 v 44 h -44 z" class="gradia-de61de06"/>
+<path d="M 305 173 h 44 v 44 h -44 z" class="gradia-de61de06"/>
+<path d="M 349 173 h 44 v 44 h -44 z" class="gradia-de61de06"/>
+<path d="M 393 173 h 44 v 44 h -44 z" class="gradia-063da071"/>
+<path d="M 437 173 h 44 v 44 h -44 z" class="gradia-de61de06"/>
+<path d="M 481 173 h 44 v 44 h -44 z" class="gradia-de61de06"/>
+<path d="M 173 217 h 44 v 44 h -44 z" class="gradia-de61de06"/>
+<path d="M 217 217 h 44 v 44 h -44 z" class="gradia-831be281"/>
+<path d="M 261 217 h 44 v 44 h -44 z" class="gradia-063da071"/>
+<path d="M 305 217 h 44 v 44 h -44 z" class="gradia-063da071"/>
+<path d="M 349 217 h 44 v 44 h -44 z" class="gradia-de61de06"/>
+<path d="M 393 217 h 44 v 44 h -44 z" class="gradia-de61de06"/>
+<path d="M 437 217 h 44 v 44 h -44 z" class="gradia-de61de06"/>
+<path d="M 481 217 h 44 v 44 h -44 z" class="gradia-063da071"/>
+<path d="M 173 261 h 44 v 44 h -44 z" class="gradia-de61de06"/>
+<path d="M 217 261 h 44 v 44 h -44 z" class="gradia-de61de06"/>
+<path d="M 261 261 h 44 v 44 h -44 z" class="gradia-831be281"/>
+<path d="M 305 261 h 44 v 44 h -44 z" class="gradia-de61de06"/>
+<path d="M 349 261 h 44 v 44 h -44 z" class="gradia-063da071"/>
+<path d="M 393 261 h 44 v 44 h -44 z" class="gradia-de61de06"/>
+<path d="M 437 261 h 44 v 44 h -44 z" class="gradia-de61de06"/>
+<path d="M 481 261 h 44 v 44 h -44 z" class="gradia-de61de06"/>
+<path d="M 173 305 h 44 v 44 h -44 z" class="gradia-de61de06"/>
+<path d="M 217 305 h 44 v 44 h -44 z" class="gradia-de61de06"/>
+<path d="M 261 305 h 44 v 44 h -44 z" class="gradia-063da071"/>
+<path d="M 305 305 h 44 v 44 h -44 z" class="gradia-831be281"/>
+<path d="M 349 305 h 44 v 44 h -44 z" class="gradia-de61de06"/>
+<path d="M 393 305 h 44 v 44 h -44 z" class="gradia-de61de06"/>
+<path d="M 437 305 h 44 v 44 h -44 z" class="gradia-de61de06"/>
+<path d="M 481 305 h 44 v 44 h -44 z" class="gradia-063da071"/>
+<path d="M 173 349 h 44 v 44 h -44 z" class="gradia-de61de06"/>
+<path d="M 217 349 h 44 v 44 h -44 z" class="gradia-de61de06"/>
+<path d="M 261 349 h 44 v 44 h -44 z" class="gradia-de61de06"/>
+<path d="M 305 349 h 44 v 44 h -44 z" class="gradia-063da071"/>
+<path d="M 349 349 h 44 v 44 h -44 z" class="gradia-831be281"/>
+<path d="M 393 349 h 44 v 44 h -44 z" class="gradia-de61de06"/>
+<path d="M 437 349 h 44 v 44 h -44 z" class="gradia-de61de06"/>
+<path d="M 481 349 h 44 v 44 h -44 z" class="gradia-de61de06"/>
+<path d="M 173 393 h 44 v 44 h -44 z" class="gradia-de61de06"/>
+<path d="M 217 393 h 44 v 44 h -44 z" class="gradia-de61de06"/>
+<path d="M 261 393 h 44 v 44 h -44 z" class="gradia-de61de06"/>
+<path d="M 305 393 h 44 v 44 h -44 z" class="gradia-de61de06"/>
+<path d="M 349 393 h 44 v 44 h -44 z" class="gradia-de61de06"/>
+<path d="M 393 393 h 44 v 44 h -44 z" class="gradia-831be281"/>
+<path d="M 437 393 h 44 v 44 h -44 z" class="gradia-063da071"/>
+<path d="M 481 393 h 44 v 44 h -44 z" class="gradia-de61de06"/>
+<path d="M 173 437 h 44 v 44 h -44 z" class="gradia-de61de06"/>
+<path d="M 217 437 h 44 v 44 h -44 z" class="gradia-de61de06"/>
+<path d="M 261 437 h 44 v 44 h -44 z" class="gradia-de61de06"/>
+<path d="M 305 437 h 44 v 44 h -44 z" class="gradia-de61de06"/>
+<path d="M 349 437 h 44 v 44 h -44 z" class="gradia-de61de06"/>
+<path d="M 393 437 h 44 v 44 h -44 z" class="gradia-063da071"/>
+<path d="M 437 437 h 44 v 44 h -44 z" class="gradia-831be281"/>
+<path d="M 481 437 h 44 v 44 h -44 z" class="gradia-063da071"/>
+<path d="M 173 481 h 44 v 44 h -44 z" class="gradia-de61de06"/>
+<path d="M 217 481 h 44 v 44 h -44 z" class="gradia-de61de06"/>
+<path d="M 261 481 h 44 v 44 h -44 z" class="gradia-de61de06"/>
+<path d="M 305 481 h 44 v 44 h -44 z" class="gradia-de61de06"/>
+<path d="M 349 481 h 44 v 44 h -44 z" class="gradia-de61de06"/>
+<path d="M 393 481 h 44 v 44 h -44 z" class="gradia-de61de06"/>
+<path d="M 437 481 h 44 v 44 h -44 z" class="gradia-de61de06"/>
+<path d="M 481 481 h 44 v 44 h -44 z" class="gradia-831be281"/>
+<path d="M 261 261 h 132 v 132 h -132 z" class="gradia-8f5f281a" stroke-dasharray="10 6"/>
+<path d="M 393 393 h 88 v 88 h -88 z" class="gradia-8f5f281a" stroke-dasharray="10 6"/>
+<text x="202.7" y="153" transform="rotate(-90 202.7 153)" class="gradia-8f91fa3b">Checkout</text>
+<text x="246.7" y="153" transform="rotate(-90 246.7 153)" class="gradia-8f91fa3b">Cart</text>
+<text x="290.7" y="153" transform="rotate(-90 290.7 153)" class="gradia-8f91fa3b">Catalog</text>
+<text x="334.7" y="153" transform="rotate(-90 334.7 153)" class="gradia-8f91fa3b">Pricing</text>
+<text x="378.7" y="153" transform="rotate(-90 378.7 153)" class="gradia-8f91fa3b">Stock</text>
+<text x="422.7" y="153" transform="rotate(-90 422.7 153)" class="gradia-8f91fa3b">Payment</text>
+<text x="466.7" y="153" transform="rotate(-90 466.7 153)" class="gradia-8f91fa3b">Invoice</text>
+<text x="510.7" y="153" transform="rotate(-90 510.7 153)" class="gradia-8f91fa3b">Common</text>
+<text x="52" y="202.7" class="gradia-8f91fa3b">Checkout</text>
+<text x="52" y="246.7" class="gradia-8f91fa3b">Cart</text>
+<text x="52" y="290.7" class="gradia-8f91fa3b">Catalog</text>
+<text x="52" y="334.7" class="gradia-8f91fa3b">Pricing</text>
+<text x="52" y="378.7" class="gradia-8f91fa3b">Stock</text>
+<text x="52" y="422.7" class="gradia-8f91fa3b">Payment</text>
+<text x="52" y="466.7" class="gradia-8f91fa3b">Invoice</text>
+<text x="52" y="510.7" class="gradia-8f91fa3b">Common</text>
+<text x="52" y="153" class="gradia-5f52a16d">Package</text>
+<text x="153" y="68" text-anchor="end" class="gradia-5f52a16d">Package</text>
+<text x="239" y="200.6" text-anchor="middle" class="gradia-c8482516">1</text>
+<text x="415" y="200.6" text-anchor="middle" class="gradia-c8482516">3</text>
+<text x="283" y="244.6" text-anchor="middle" class="gradia-c8482516">1</text>
+<text x="327" y="244.6" text-anchor="middle" class="gradia-c8482516">2</text>
+<text x="503" y="244.6" text-anchor="middle" class="gradia-c8482516">1</text>
+<text x="371" y="288.6" text-anchor="middle" class="gradia-c8482516">1</text>
+<text x="283" y="332.6" text-anchor="middle" class="gradia-f7e4690f">1</text>
+<text x="503" y="332.6" text-anchor="middle" class="gradia-c8482516">1</text>
+<text x="327" y="376.6" text-anchor="middle" class="gradia-f7e4690f">1</text>
+<text x="459" y="420.6" text-anchor="middle" class="gradia-c8482516">1</text>
+<text x="415" y="464.6" text-anchor="middle" class="gradia-f7e4690f">1</text>
+<text x="503" y="464.6" text-anchor="middle" class="gradia-c8482516">1</text>
+</svg>

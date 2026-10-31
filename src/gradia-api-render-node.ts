@@ -55,10 +55,18 @@ export const orderOf = (node: Node): number | undefined => {
     return Number.isFinite(num) ? num : undefined
 }
 
+/*  the special "cluster" annotation (the "/"-separated path of the nested
+    clusters a node belongs to within the one diagram, outermost first,
+    for the diagram types drawing clusters, and ignored by the others)  */
+export const clusterOf = (node: Node): string[] | undefined => {
+    const val = node.attrs.findLast((attr) => attr.key === "cluster")?.val
+    return val?.split("/").map((name) => name.trim()).filter((name) => name !== "")
+}
+
 /*  the special attributes consumed by the renderers instead of being
     rendered as node box text lines  */
 const ATTRS_SPECIAL = new Set([ "url", "type", "primary", "group", "parent", "container", "order",
-    "badge", "multiple" ])
+    "badge", "multiple", "cluster" ])
 
 /*  the special "badge" annotation (the icon in a badge on the top border
     of the node box, an unknown value being ignored)  */
