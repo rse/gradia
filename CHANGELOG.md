@@ -2,13 +2,14 @@
 ChangeLog
 =========
 
-1.4.5 (2026-10-27)
+1.5.0 (2026-10-31)
 ------------------
 
 -   FEATURE [code, othr]: add the diagram type "sequence" (participants on top of dashed
     lifelines, messages top-down in declaration order, self messages looping on their lifeline),
     based on free-standing "shapes" of a "Layout", the new "color-node-lifeline" option, and the
-    "nestable" flag of the diagram type registry (contributed by Matthias Brusdeylins in PR #8).
+    "nestable" flag of the diagram type registry, plus a sequence diagram example in the playground
+    (contributed by Matthias Brusdeylins in PR #8).
 
 -   FEATURE [code, othr]: add edge attributes "{ kind: sync|async|return }" after the target node,
     rendered by the "sequence" diagram type as message kinds (hollow arrow head for asynchronous
@@ -17,6 +18,9 @@ ChangeLog
 
 -   FEATURE [infr, othr]: add a small Broadcast based regression test suite (the "smp/broadcast.d"
     diagrams plus the "regression-before", "regression-after", and "regression-clean" targets).
+
+-   FEATURE [code, othr]: add the node attributes "badge" (renders a badge icon on the node) and
+    "multiple" (renders the node as a stack of nodes), with the new "smp/badge-sample" sample.
 
 -   IMPROVEMENT [code]: bundle the edges of crowded channels and gutters (whose parallel tracks do
     not fit at the full "size-edge-track-gap") instead of squeezing their tracks into one grey bar:
@@ -34,6 +38,9 @@ ChangeLog
 -   IMPROVEMENT [code]: in diagrams with crowded channels or gutters, bridge the closely spaced
     crossings of a segment with one flat bridge instead of one wide arc (merging the hops whenever
     the flat piece between them would be shorter than two hops), as they would turn into a wavy line.
+
+-   IMPROVEMENT [code, othr]: draw the segments shared by bundled edges only once, instead of
+    overpainting them once per edge.
 
 1.4.4 (2026-10-27)
 ------------------
