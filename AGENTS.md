@@ -46,6 +46,8 @@ participants, their lifelines, and their messages).
         layout via the Dagre algorithm of `@antv/layout`)
     -   `src/gradia-api-type-hub.ts`: the `hub` diagram type (hub graph layout)
     -   `src/gradia-api-type-grid.ts`: the `grid` diagram type (compact grid layout)
+    -   `src/gradia-api-type-layer.ts`: the `layer` diagram type (a uniform
+        `graph`, its layers drawn as bands and its violations marked)
     -   `src/gradia-api-type-matrix.ts`: the `matrix` diagram type (the
         headers and cells of a dependency structure matrix, as shapes)
     -   `src/gradia-api-type-sequence.ts`: the `sequence` diagram type

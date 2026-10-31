@@ -117,9 +117,11 @@ export interface ContainerBox {
 /*  the laid out graph handed over for SVG generation (the optional
     "bundled" flags run parallel to the edges and mark the ones sharing
     a track, composing by concatenation exactly like the edges, the
-    optional "crowded" flag marks a layout with crowded channels/gutters,
-    and the optional "centered" flag one keeping its edge names centered
-    on their routes instead of in front of their arrow heads)  */
+    optional "marked" flags likewise mark the edges violating their
+    diagram type (e.g. its layering), the optional "crowded" flag marks a
+    layout with crowded channels/gutters, and the optional "centered"
+    flag one keeping its edge names centered on their routes instead of
+    in front of their arrow heads)  */
 export interface Layout {
     nodes:       Node[]
     edges:       Edge[]
@@ -133,6 +135,7 @@ export interface Layout {
     groups?:     GroupBox[]
     containers?: ContainerBox[]
     shapes?:     Shape[]
+    marked?:     boolean[]
     bundled?:    boolean[]
     crowded?:    boolean
     centered?:   boolean

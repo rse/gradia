@@ -41,6 +41,14 @@ component relationships, data flows, dependency graphs, and similar structures.
   described below.
 - "grid": a compact grid of tiles for an edge-less graph. The nodes are placed
   in declaration order onto a roughly square, row-major grid.
+- "layer": a layered architecture: the layers (the "layer: <name>" attribute of
+  the nodes) stack top-down as bands, and an edge pointing upwards against the
+  layering is drawn dashed in the "color-mark-violation" color. The attribute
+  "cluster: <path>" assigns the layer to nested clusters ("/"-separated,
+  outermost first), drawn as columns left of the bands, and the option
+  "layer-numbered" numbers the layers. The layers determine the order of the
+  rows, so an "order" attribute is ignored. It rejects the input with an error
+  if it contains a container.
 - "matrix": a dependency structure matrix: the nodes are both the rows and the
   columns, a cell counts the edges from its row to its column, and the cycles
   are outlined as blocks on the diagonal, the counts of their edges closing
@@ -134,7 +142,7 @@ as <name>, terminals as "...", optional parts as [ ... ], repeatable parts as
     <directive>      ::= "#config" <whitespace> { <whitespace> } <option> <whitespace> { <whitespace> } ( <string> | <word> )
                        | "#type" <whitespace> { <whitespace> } <type>
     <option>         ::= <letter> { <letter> | <digit> | "-" }
-    <type>           ::= "graph" | "hub" | "grid" | "matrix" | "sequence"
+    <type>           ::= "graph" | "hub" | "grid" | "layer" | "matrix" | "sequence"
     <word>           ::= <char> - <whitespace> { <char> - <whitespace> }
     <newline>        ::= "\\n"
     <whitespace>     ::= " " | "\\t" | "\\r"
@@ -191,8 +199,9 @@ as <name>, terminals as "...", optional parts as [ ... ], repeatable parts as
     and no edge running between them),
   - "cluster: <path>" places the node into the nested clusters of the
     "/"-separated path <path> within the one diagram, crossed freely by the
-    edges (for the diagram type "matrix": partitions of its rows and columns),
-    while the other diagram types ignore it,
+    edges (for the diagram type "matrix": partitions of its rows and columns,
+    for the diagram type "layer": groups of its layers), while the other
+    diagram types ignore it,
   - "parent: <id>" nests the node into the container node <id> (a node which
     is implicitly declared if never referenced otherwise),
   - "container: <type>" marks the node as a container whose members are laid

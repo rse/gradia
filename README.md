@@ -14,7 +14,7 @@ About
 -----
 
 **Gradia** is a small API and CLI for rendering directed graphs,
-described in a concise textual input language, as SVG diagrams. Five
+described in a concise textual input language, as SVG diagrams. Six
 diagram types are supported which fit the scenario of visualizing object
 graphs:
 
@@ -23,6 +23,8 @@ graphs:
 - `hub`: a hub graph, placing one primary hub node between its input and
   output nodes.
 - `grid`: a compact grid of tiles for an edge-less graph.
+- `layer`: a layered architecture, stacking its layers as bands and
+  marking the edges pointing upwards against the layering.
 - `matrix`: a dependency structure matrix, counting the edges between
   its rows and columns and outlining its cycles.
 - `sequence`: a sequence diagram of participants and their messages.
@@ -52,6 +54,10 @@ Here are examples of the graph diagram renderings:
 
   ![badge-sample](smp/badge-sample.svg)
 
+- [layer-sample](smp/layer-sample.txt) (layered architecture):
+
+  ![layer-sample](smp/layer-sample.svg)
+
 - [matrix-sample](smp/matrix-sample.txt) (dependency structure matrix):
 
   ![matrix-sample](smp/matrix-sample.svg)
@@ -78,7 +84,7 @@ Usage
 -----
 
 ```sh
-$ gradia [-t graph|hub|grid|matrix|sequence] [-f <format>] [-c <name>=<value>] -o <file>.svg <graph>.txt
+$ gradia [-t graph|hub|grid|layer|matrix|sequence] [-f <format>] [-c <name>=<value>] -o <file>.svg <graph>.txt
 ```
 
 The diagram type is selected with the `-t` command-line option or, when
@@ -95,7 +101,7 @@ MCP Service
 -----------
 
 ```sh
-$ gradia --mcp [-t graph|hub|grid|matrix|sequence] [-f <format>] [-c <name>=<value>]
+$ gradia --mcp [-t graph|hub|grid|layer|matrix|sequence] [-f <format>] [-c <name>=<value>]
 ```
 
 With the `-m`/`--mcp` option, **Gradia** instead runs as a [Model Context
@@ -163,7 +169,7 @@ separated by `|`.
 <directive>      ::= "#config" <whitespace> { <whitespace> } <option> <whitespace> { <whitespace> } ( <string> | <word> )
                    | "#type" <whitespace> { <whitespace> } <type>
 <option>         ::= <letter> { <letter> | <digit> | "-" }
-<type>           ::= "graph" | "hub" | "grid" | "matrix" | "sequence"
+<type>           ::= "graph" | "hub" | "grid" | "layer" | "matrix" | "sequence"
 <word>           ::= <char> - <whitespace> { <char> - <whitespace> }
 <newline>        ::= "\n"
 <whitespace>     ::= " " | "\t" | "\r"
@@ -238,7 +244,8 @@ separated by `|`.
     - `cluster: <path>` places the node into the nested clusters of the
       `/`-separated path `<path>` within the one diagram, crossed freely
       by the edges (for diagram type `matrix`: partitions of its rows and
-      columns), while the other diagram types ignore it,
+      columns, for diagram type `layer`: groups of its layers), while the
+      other diagram types ignore it,
     - `parent: <id>` nests the node into the container node `<id>` (a
       node which is implicitly declared if never referenced otherwise),
     - `container: <type>` marks the node as a container whose members
@@ -330,6 +337,28 @@ This second placement is rendered as a dashed "self" box, colored by the
 The diagram type `grid` rejects the input with an error as soon as the
 graph contains at least one edge.
 
+The diagram type `layer` lays out a layered architecture and rejects
+the input with an error as soon as the graph contains a container. The
+attribute `layer: <name>` assigns a node to a layer, the layers stack
+top-down in the order of their first appearance as bands spanning the
+whole diagram (colored by the `color-container-*` options, the layer
+name left of its nodes), and the nodes of a layer fill its band
+left-to-right (wrapped beyond `graph-columns-max` nodes), while the
+nodes without a layer trail outside of any band. An edge pointing from
+a lower layer to a higher one, i.e. against the layering, is drawn
+dashed in the `color-mark-violation` color. The attribute
+`cluster: <path>` assigns the layer of a node to nested clusters
+(`/`-separated, outermost first, e.g. `Server/Broker`), which are drawn
+as columns left of the bands, spanning the bands of their layers, with
+their names running upwards (the layers of a cluster are kept together,
+all nodes of a layer have to name the same path, and the edges may
+freely cross the clusters), and the boolean
+option `layer-numbered` numbers the layers top-down. All node boxes take
+the width of the widest one and the boxes of a layer the height of the
+highest one, and the boxes of a layer stay aligned in its band. The
+layers determine the order of the rows, so an `order` attribute of a
+node is ignored.
+
 The diagram type `matrix` draws a dependency structure matrix (DSM) and
 rejects the input with an error as soon as the graph contains a
 container. The nodes are both its rows and its columns, their headers
@@ -418,8 +447,8 @@ group and every `hub` container needs its own primary node.
 ### Directives
 
 A `#type` directive sets the diagram type (`graph`, `hub`, `grid`,
-`matrix`, or `sequence`), which otherwise is settable through the
-`-t`/`--type` command-line option (which takes precedence). The last
+`layer`, `matrix`, or `sequence`), which otherwise is settable through
+the `-t`/`--type` command-line option (which takes precedence). The last
 occurrence wins and an invalid type is silently ignored. Without both,
 the type defaults to `graph`.
 
@@ -459,7 +488,7 @@ size-font-type             16           grid-gap-horizontal        40
 size-font-prop             22           grid-gap-vertical          20
 size-font-edge             16           grid-node-width-equal      true
 size-font-arity            16           grid-node-height-equal     true
-color-mark-violation       #cc3333
+color-mark-violation       #cc3333      layer-numbered             false
 ```
 
 The `size-*`, `group-*`, `container-*`, `graph-*`, `hub-*`, and

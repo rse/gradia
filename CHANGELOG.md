@@ -32,6 +32,14 @@ ChangeLog
     and the bold, linked, centered, and upright texts and rectangles of the "shapes", and the new
     "smp/matrix-*" samples.
 
+-   FEATURE [code, othr]: add the diagram type "layer", a layered architecture whose layers (the
+    node attribute "layer") stack top-down as bands, laid out as a uniform "graph" (all boxes of
+    one width, the boxes of a layer of one height and aligned, all gutters of one height), where
+    every edge pointing upwards against the layering is drawn dashed in the "color-mark-violation"
+    color (never bundled with the other edges), the "cluster" attribute (nested through
+    "/"-separated cluster paths) groups the layers into columns left of the bands, and the new
+    option "layer-numbered" numbers the layers, plus the new "smp/layer-*" samples.
+
 -   IMPROVEMENT [code]: bundle the edges of crowded channels and gutters (whose parallel tracks do
     not fit at the full "size-edge-track-gap") instead of squeezing their tracks into one grey bar:
     the edges of the same name leading to the same target node side with the same arity, or else
