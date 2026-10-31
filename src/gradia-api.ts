@@ -60,7 +60,8 @@ const parseTypeDirective = (input: string): DiagramType | undefined => {
 
 /*  the options entering the identifier seed only once deviating from
     their default, keeping the identifiers of all older diagrams stable  */
-const seedLate = new Set<string>([ "color-mark-violation", "mark-violation", "layer-numbered", "slice-numbered" ])
+const seedLate = new Set<string>([ "color-mark-violation", "mark-violation", "layer-numbered", "slice-numbered",
+    "sequence-column-gap", "sequence-message-gap" ])
 
 /*  the supported output formats  */
 export const diagramFormats = [ "svg:standalone", "svg:embedded", "url:xml", "url:base64" ] as const

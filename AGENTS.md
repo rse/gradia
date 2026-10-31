@@ -145,7 +145,7 @@ their own declarations.
 
 The rendering options (`font-family`, `font-embed`, the `color-*`
 family, the numeric geometry families `size-*`, `group-*`,
-`container-*`, `graph-*`, `hub-*`, and `grid-*`, and the booleans
+`container-*`, `graph-*`, `hub-*`, `grid-*`, and `sequence-*`, and the booleans
 `grid-node-width-equal`, `grid-node-height-equal`, `mark-violation`,
 `layer-numbered`, and `slice-numbered`) are set through the repeatable
 `--config <name>=<value>` command-line option, or through `#config

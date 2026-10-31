@@ -627,16 +627,19 @@ size-font-type             16           grid-gap-horizontal        40
 size-font-prop             22           grid-gap-vertical          20
 size-font-edge             16           grid-node-width-equal      true
 size-font-arity            16           grid-node-height-equal     true
-color-mark-violation       #cc3333      mark-violation             true
+color-mark-violation       #cc3333      sequence-column-gap        60
+                                        sequence-message-gap       56
+                                        mark-violation             true
                                         layer-numbered             true
                                         slice-numbered             false
 ```
 
-The `size-*`, `group-*`, `container-*`, `graph-*`, `hub-*`, and
-`grid-*` options control the rendering geometry (text font sizes, canvas
-margin, node box sizing, edge routing, group and container box spacing,
-and the per-diagram-type layout) and take non-negative numbers, except
-the booleans `grid-node-width-equal` and `grid-node-height-equal`.
+The `size-*`, `group-*`, `container-*`, `graph-*`, `hub-*`, `grid-*`,
+and `sequence-*` options control the rendering geometry (text font
+sizes, canvas margin, node box sizing, edge routing, group and container
+box spacing, and the per-diagram-type layout) and take non-negative
+numbers, except the booleans `grid-node-width-equal` and
+`grid-node-height-equal`.
 
 The boolean `mark-violation` option controls whether the diagram types
 `matrix`, `layer`, and `slice` mark their violations at all (in the
@@ -728,6 +731,14 @@ column (or top-aligned within their row). A nested container box takes
 part in the width unification only, as its height is the one of its
 content: it never grows to the height of the tallest tile of its row,
 but keeps its row as tall as itself.
+
+The `sequence-column-gap` and `sequence-message-gap` options control the
+spacing of a `sequence` diagram: the former is the minimum horizontal
+gap between two neighboring participant boxes, the latter the vertical
+gap between two consecutive messages. Every pair of neighboring
+lifelines is spaced on its own, i.e., it is widened beyond that minimum
+only as far as the names of the messages between them demand, so a
+single long message name does not widen the whole diagram.
 
 The `font-family` and `color-*` options are embedded directly into the
 generated SVG. When such an option is *not* explicitly configured, the

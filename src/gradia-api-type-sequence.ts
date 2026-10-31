@@ -15,8 +15,6 @@ import { LevelContext, rejectContainers }
 import { measureNodes, orderOf }    from "./gradia-api-render-node.js"
 
 /*  the geometry of the lifelines and the messages  */
-const COLUMN_GAP  = 60   /*  minimum gap between two participant boxes   */
-const MESSAGE_GAP = 56   /*  vertical gap between two messages           */
 const LOOP_H      = 40   /*  height of the loop of a self message        */
 const LOOP_AIR    = 24   /*  extra width of the loop of a self message   */
 const TAIL        = 32   /*  length of a lifeline below the last message */
@@ -56,30 +54,42 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
     rejectContainers("sequence", nodes, level)
 
     /*  measure the participant boxes, unified onto the size of the
-        largest one, and space the lifelines evenly, wide enough for the
-        widest box and for every message name (centered, it keeps clear
-        of the arity label set back from its arrow head, a creation ends
-        already at the side of the box it creates, and a message spanning
-        several columns shares its need among them)  */
+        largest one, and space every pair of neighboring lifelines on its
+        own, wide enough for the widest box and for the names of the
+        messages between them (centered, a name keeps clear of the arity
+        label set back from its arrow head, a creation ends already at the
+        side of the box it creates, a self message needs the gap right of
+        its lifeline, and a message spanning several gaps widens the ones
+        it spans evenly, the shorter messages first, until their sum fits)  */
     const { boxW, boxH, contentH } = measureNodes(nodes, config, () => config["size-node-height-scale"] / 2)
     const margin = config["size-canvas-margin"]
+    const colGap = config["sequence-column-gap"]
+    const msgGap = config["sequence-message-gap"]
     const widest = nodes.reduce((w, node) => Math.max(w, boxW.get(node.id)!), 0)
     const column = new Map(nodes.map((node, i) => [ node.id, i ]))
-    const label  = graph.edges.reduce((w, edge) => {
+    const gaps   = nodes.slice(1).map(() => widest + colGap)
+    const needs  = gaps.length === 0 ? [] : graph.edges.map((edge) => {
         const name  = textWidth(edge.name ?? "", config["size-font-edge"])
         const arity = edge.name !== undefined && edge.arity !== undefined ?
             2 * (ARITY_OFF + textWidth(edge.arity, config["size-font-arity"]) + ARITY_GAP) : 0
         const box   = edge.kind === "create" ? widest / 2 : 0
-        const span  = Math.max(1, Math.abs(column.get(edge.source)! - column.get(edge.target)!))
-        return Math.max(w, (name + arity + box + COLUMN_GAP * 1.5) / span)
-    }, 0)
-    const step   = Math.max(widest + COLUMN_GAP, label)
+        const [ a, b ] = [ column.get(edge.source)!, column.get(edge.target)! ]
+        const from  = Math.min(Math.min(a, b), gaps.length - 1)
+        return { from, to: Math.max(Math.max(a, b), from + 1), need: name + arity + box + colGap * 1.5 }
+    }).sort((p, q) => (p.to - p.from) - (q.to - q.from))
+    for (const { from, to, need } of needs) {
+        const sum = gaps.slice(from, to).reduce((s, g) => s + g, 0)
+        if (sum < need)
+            for (let k = from; k < to; k++)
+                gaps[k] += (need - sum) / (to - from)
+    }
     const headH  = nodes.reduce((h, node) => Math.max(h, boxH.get(node.id)!), 0)
     for (const node of nodes) {
         boxW.set(node.id, widest)
         boxH.set(node.id, headH)
     }
-    const xOf = new Map(nodes.map((node, i) => [ node.id, margin + widest / 2 + i * step ]))
+    const xs  = gaps.reduce((list, g) => [ ...list, list[list.length - 1] + g ], [ margin + widest / 2 ])
+    const xOf = new Map(nodes.map((node, i) => [ node.id, xs[i] ]))
     const cy  = margin + headH / 2
 
     /*  validate the life cycle of the participants: a participant is
@@ -207,14 +217,14 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
     const edges  = new Array<Edge>()
     const polys  = new Array<Poly>()
     const timing = graph.edges.map(() => ({ y: 0, y2: 0, dir: 1 }))
-    let y = margin + headH + MESSAGE_GAP
+    let y = margin + headH + msgGap
     graph.edges.forEach((edge, i) => {
         const kind = kindOf(edge)
         const self = edge.source === edge.target
         if (kind === "destroy" && self) {
             timing[i] = { y, y2: y, dir: 1 }
             destroy(edge.target, y)
-            y += MESSAGE_GAP
+            y += msgGap
             return
         }
         if (kind === "create")
@@ -262,13 +272,13 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
         }
         else
             polys.push([ [ sx, y ], [ tx, y ] ])
-        y += MESSAGE_GAP + (kind === "create" ? headH / 2 : 0)
+        y += msgGap + (kind === "create" ? headH / 2 : 0)
     })
 
     /*  draw the lifelines below the participant boxes (until their
         destruction), on top of them the activation bars, the outer ones
         first, and finally the crosses of the destructions  */
-    const end    = y - MESSAGE_GAP + TAIL
+    const end    = y - msgGap + TAIL
     const shapes: Shape[] = nodes.map((node) => {
         const [ top, bottom ] = [ starts.get(node.id)!, ends.get(node.id) ?? end ]
         return pathShape(xOf.get(node.id)!, top, `v ${bottom - top}`, [ -1, 0, 1, bottom - top ],

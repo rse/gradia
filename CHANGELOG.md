@@ -63,6 +63,12 @@ ChangeLog
     label, below a column label) instead of behind them, with all labels aligned, while every
     badge gets a thinner border and is sized relative to the font of its label.
 
+-   IMPROVEMENT [code]: render "sequence" diagrams more compact: space every pair of neighboring
+    lifelines on its own, as far as the names of the messages between them demand (instead of all
+    lifelines by the demand of the longest name), and add the options "sequence-column-gap"
+    (default "60") and "sequence-message-gap" (default "56") for the minimum gap between the
+    participant boxes and the vertical gap between the messages.
+
 -   BUGFIX [code]: in a "matrix" diagram, outline the part of a cycle within a cluster only if it
     holds at least one edge among its own members, as an empty dashed block suggested a local cycle
     which only closes through other clusters.

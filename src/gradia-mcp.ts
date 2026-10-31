@@ -293,13 +293,16 @@ over them. The recognized options, with their types and built-in defaults, are:
 
 ${configOptions}
 
-The "size-*", "group-*", "container-*", "graph-*", "hub-*", and "grid-*" options
-control the rendering geometry (canvas margin, node box sizing, edge routing,
-group and container box spacing, and the per-diagram-type layout) and take
-non-negative numbers, except the booleans "grid-node-width-equal" and
-"grid-node-height-equal", which force all node boxes of a "grid" diagram to
-the width of the widest one and to the height of the tallest one (a nested
-container box taking part in the width unification only).
+The "size-*", "group-*", "container-*", "graph-*", "hub-*", "grid-*", and
+"sequence-*" options control the rendering geometry (canvas margin, node box
+sizing, edge routing, group and container box spacing, and the
+per-diagram-type layout) and take non-negative numbers, except the booleans
+"grid-node-width-equal" and "grid-node-height-equal", which force all node
+boxes of a "grid" diagram to the width of the widest one and to the height of
+the tallest one (a nested container box taking part in the width unification
+only). The "sequence-column-gap" and "sequence-message-gap" options set the
+minimum gap between neighboring participants and the vertical gap between
+messages of a "sequence" diagram, so lower values render it more compact.
 
 The boolean "mark-violation" option controls whether the diagram types
 "matrix", "layer", and "slice" mark their violations at all (in the
