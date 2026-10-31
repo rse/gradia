@@ -21,20 +21,25 @@ diagram of participants, their lifelines, and their messages).
     -   `src/gradia-mcp.ts`: the MCP service on stdio (the
         `gradia_render` tool, wrapping the API `render` method)
     -   `src/gradia-api.ts`: the API facade class `Gradia` (static
-        methods `parse`, `generate`, and the combined `render`), wiring
-        parser, configuration, group partitioning, container nesting,
-        the per-type renderers, and the SVG output, plus the re-exported
-        companion types (`Graph`, `Node`, `Edge`, `Attr`, `Config`)
-    -   `src/gradia-api-model.ts`: the graph model types (`Attr`, `Node`, `Edge`, `Graph`)
+        methods `parse`, `generate`, and the combined `render`, plus the
+        static `config` of the option defaults), wiring parser,
+        configuration, group partitioning, container nesting, the
+        per-type renderers, and the SVG output, plus the re-exported
+        companion types (`Graph`, `Node`, `Edge`, `EdgeKind`, `Attr`,
+        `Config`)
+    -   `src/gradia-api-model.ts`: the graph model types (`Attr`, `Node`,
+        `Edge`, `EdgeKind`, `Graph`) and the list `edgeKinds`
     -   `src/gradia-api-parser.ts`: the input language parser, producing the graph model
     -   `src/gradia-api-config.ts`: the rendering options (defaults,
-        in-input directive parsing, font resolution)
+        validation, in-input directive parsing, CSS value resolution,
+        font resolution)
     -   `src/gradia-api-render-base.ts`: shared rendering geometry/font
         constants, text width measurement, and text word-wrapping
     -   `src/gradia-api-render-shape.ts`: the free-standing `Shape`
         primitives a diagram type draws beside its node boxes and edges
     -   `src/gradia-api-render-node.ts`: node box text line breaking,
-        measurement, and styling helpers
+        measurement, and styling helpers, plus the accessors of the
+        reserved node attributes (e.g. `order`, `cluster`, `badge`)
     -   `src/gradia-api-render-edge.ts`: edge routing (port/track
         assignment, polyline simplification, hop computation, SVG path
         generation)
@@ -47,7 +52,9 @@ diagram of participants, their lifelines, and their messages).
         edges
     -   `src/gradia-api-render-svg.ts`: the final SVG document generation from a `Layout`
     -   `src/gradia-api-type-graph.ts`: the `graph` diagram type (layered
-        layout via the Dagre algorithm of `@antv/layout`)
+        layout via the Dagre algorithm of `@antv/layout`, explicit `order`
+        layout, and the uniform, optionally transposed, lane layout
+        underlying `layer` and `slice`)
     -   `src/gradia-api-type-hub.ts`: the `hub` diagram type (hub graph layout)
     -   `src/gradia-api-type-grid.ts`: the `grid` diagram type (compact grid layout)
     -   `src/gradia-api-type-layer.ts`: the `layer` diagram type (a uniform
@@ -65,13 +72,16 @@ diagram of participants, their lifelines, and their messages).
     regression test diagrams (`broadcast.d/*.txt`, the non-trivial
     diagrams of the SpecBook "broadcast" sample specification)
 -   `dst/`: the compiled output (`bin` `gradia` is `dst/gradia-cli.js`,
-    the browser UMD bundle of the API is `dst/gradia-api.umd.js`)
+    the `main` API module is `dst/gradia-api.js` with its typings
+    `dst/gradia-api.d.ts`, and the browser UMD bundle of the API is
+    `dst/gradia-api.umd.js`)
     -- never edit it; it is regenerated
 
 ## Build System
 
 Build orchestration uses `@rse/stx`, not plain npm scripts. The only npm
-script is `npm start`, which invokes stx with `etc/stx.conf`:
+script is `npm start` (besides the `prepublishOnly` hook running `npm
+start build`), which invokes stx with `etc/stx.conf`:
 
 ```
 npm start build         # lint + build-cmd + build-web
@@ -93,8 +103,11 @@ No test target is defined.
 ## CLI Command
 
 ```
-gradia [-t graph|hub|grid|layer|slice|matrix|sequence] [-f <format>] [-c <name>=<value>] [-o <file>.svg] <graph>.txt
+gradia [-t graph|hub|grid|layer|slice|matrix|sequence] [-f <format>] [-c <name>=<value>] -o <file>.svg <graph>.txt
 ```
+
+Both the `-o`/`--output` option and the input file argument are
+required, except in MCP service mode (see below).
 
 The output format is `svg:standalone` (a standalone SVG/XML document,
 the default), `svg:embedded` (the SVG without the `<?xml?>` declaration,
@@ -120,14 +133,21 @@ All identifiers inside the generated SVG are namespaced with a
 `gradia-<uuid>-` prefix, derived per rendered document, so that multiple
 diagrams can be embedded into one and the same document without
 colliding in the DOM-global identifier namespace. The `<uuid>` is the
-Base16 form of a UUID v5 (via `pure-uuid`) over everything which
-determines the rendered output -- the diagram type, the layered
-configuration, and the graph model -- so regenerating an unchanged
-diagram yields a byte-identical SVG.
+first 12 digits of the Base16 form of a UUID v5 (via `pure-uuid`, under
+a Gradia-specific namespace) over everything which determines the
+rendered output -- the diagram type, the layered configuration (the
+options of the `seedLate` set only once deviating from their default,
+keeping the identifiers of older diagrams stable), the keys of the
+explicitly configured options, and the graph model -- so regenerating
+an unchanged diagram yields a byte-identical SVG. The CSS classes are
+likewise named `gradia-<digest>`, with the first 8 such digits over
+their own declarations.
 
 The rendering options (`font-family`, `font-embed`, the `color-*`
-family, and the numeric geometry families `size-*`, `group-*`,
-`graph-*`, `hub-*`, and `grid-*`) are set through the repeatable
+family, the numeric geometry families `size-*`, `group-*`,
+`container-*`, `graph-*`, `hub-*`, and `grid-*`, and the booleans
+`grid-node-width-equal`, `grid-node-height-equal`, `mark-violation`,
+`layer-numbered`, and `slice-numbered`) are set through the repeatable
 `--config <name>=<value>` command-line option, or through `#config
 <option> <value>` directives inside the input, except `font-embed` and
 WOFF2 file paths, which are command-line-only, as the input is treated

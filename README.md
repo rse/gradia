@@ -174,7 +174,7 @@ separated by `|`.
 <comment>        ::= "#" { <char> - <newline> }
 <directive>      ::= "#config" <whitespace> { <whitespace> } <option> <whitespace> { <whitespace> } ( <string> | <word> )
                    | "#type" <whitespace> { <whitespace> } <type>
-<option>         ::= <letter> { <letter> | <digit> | "-" }
+<option>         ::= <lowercase-letter> { <lowercase-letter> | <digit> | "-" }
 <type>           ::= "graph" | "hub" | "grid" | "layer" | "slice" | "matrix" | "sequence"
 <word>           ::= <char> - <whitespace> { <char> - <whitespace> }
 <newline>        ::= "\n"
@@ -216,6 +216,10 @@ separated by `|`.
   same node and merge their label and attributes into it, with later
   values overriding earlier ones for the same attribute key.
 
+- A node id must not contain the NUL character (U+0000), as it is
+  reserved for internal use: the diagram type `hub`, and every diagram
+  containing a container, reject such an id with an error.
+
 - Nodes which are never part of an `<edge>` are rendered free-standing.
 
 - In a chain `a --> b --> c`, each `<edge>` connects its immediately
@@ -240,25 +244,33 @@ separated by `|`.
     - `url: <url>` renders the node box as a hyperlink. Only relative URLs
       and the schemes `http`, `https`, and `mailto` are honored; any other
       URL is silently dropped and the node box then simply stays unlinked,
+
     - `type: <name>` renders `<name>` as a smaller text above the node
       label inside the node box,
+
     - `primary: true` renders the node in the primary node colors
       (and, for diagram type `hub`, marks the single central hub node),
+
     - `group: <name>` places the node into the surrounding group box
       `<name>` (every group being laid out as a diagram of its own, the
       groups stacked, and no edge running between them),
+
     - `cluster: <path>` places the node into the nested clusters of the
       `/`-separated path `<path>` within the one diagram, crossed freely
       by the edges (for diagram type `matrix`: partitions of its rows and
       columns, for diagram type `layer`: groups of its layers, for
       diagram type `slice`: groups of its slices), while the other diagram
       types ignore it,
+
     - `parent: <id>` nests the node into the container node `<id>` (a
       node which is implicitly declared if never referenced otherwise),
+
     - `container: <type>` marks the node as a container whose members
       are laid out with the diagram type `<type>` (`graph`, `hub`, or
       `grid`), even if it has no members at all,
+
     - `order: <number>` places the node explicitly (see below),
+
     - `badge: <icon>` draws a round badge with an icon on the top border
       of the node box, near its left end: `person`, `team` (two persons),
       `bot` (a robot head), `device` (a monitor), `mobile` (a phone),
@@ -269,11 +281,15 @@ separated by `|`.
       `mail` (an envelope), `communication` (two-way arrows), `clock`,
       `security` (a shield), `cloud`, or `network` (three linked nodes),
       an unknown icon being ignored,
+
     - `multiple: true` draws the node box as several instances: the
       front box with two copies behind it, offset towards the
       bottom-right.
 
   Both `badge` and `multiple` are ignored on a container node.
+  Additionally, the diagram types `layer` and `slice` consume the
+  attribute `layer: <name>` and `slice: <name>`, respectively (see
+  below), while all other diagram types display them as regular lines.
 
 - A `graph` (a `graph` container level, too) with at least one node
   carrying an `order` attribute is laid out in that explicit order
@@ -314,16 +330,43 @@ separated by `|`.
 - All remaining attributes are displayed as `<key>: <val>` lines inside
   the node box.
 
-### Diagram Type Constraints
+### Diagram Types
+
+#### Common Rules
+
+- **Groups and containers**: the groups of a grouped graph, and the
+  members of every container, are laid out individually with the
+  selected (or, for a container, the annotated) diagram type. Hence the
+  constraints of a diagram type apply to every single group and
+  container level.
+
+- **Boundary-crossing edges**: an edge crossing a container boundary
+  counts at the level it is lifted to. The boundary-crossing edges of a
+  `graph` container additionally count inside it, from the boundary to
+  the inner node.
+
+- **Containers**: only the diagram types `graph`, `hub`, and `grid` lay
+  out the members of a container. The diagram types `layer`, `slice`,
+  `matrix`, and `sequence` reject the input with an error as soon as
+  the graph contains a container.
+
+- **Violations**: the diagram types `layer`, `slice`, and `matrix` mark
+  their violations in the `color-mark-violation` color, unless the
+  option `mark-violation` is `false`.
+
+#### Diagram Type `graph`
 
 The diagram type `graph` imposes no constraints on the topology: it
 accepts self-loops and free-standing nodes alike, and hence is the safe
 choice whenever the topology is not known to fit `hub` or `grid`.
 
+#### Diagram Type `hub`
+
 The diagram type `hub` rejects the input with an error unless all of the
 following conditions hold:
 
-- Exactly one node carries the attribute `primary: true`.
+- Exactly one node carries the attribute `primary: true`. Hence every
+  group and every `hub` container needs its own primary node.
 
 - Every edge either points to or originates from that primary node. An
   edge between two non-primary nodes is rejected.
@@ -331,161 +374,207 @@ following conditions hold:
 - Every non-primary node is an input or an output of the primary node,
   i.e., no node is free-standing.
 
-A node which is both an input and an output of the primary node is placed
-twice, once in the input column and once in the output column. The second
-placement is rendered as a dashed "ghost" box, colored by the
-`color-node-ghost-*` options.
+Two special placements extend the layout:
 
-A self-loop on the primary node is unrolled: the primary node is placed a
-second time on top of the output column, as the target of the self-loop.
-This second placement is rendered as a dashed "self" box, colored by the
-(darker grey) `color-node-self-*` options.
+- **Ghost**: a node which is both an input and an output of the primary
+  node is placed twice, once in the input column and once in the output
+  column. The second placement is rendered as a dashed "ghost" box,
+  colored by the `color-node-ghost-*` options.
+
+- **Self**: a self-loop on the primary node is unrolled: the primary
+  node is placed a second time on top of the output column, as the
+  target of the self-loop. This second placement is rendered as a dashed
+  "self" box, colored by the (darker grey) `color-node-self-*` options.
+
+#### Diagram Type `grid`
 
 The diagram type `grid` rejects the input with an error as soon as the
 graph contains at least one edge.
 
-The diagram type `layer` lays out a layered architecture and rejects
-the input with an error as soon as the graph contains a container. The
-attribute `layer: <name>` assigns a node to a layer, the layers stack
-top-down in the order of their first appearance as bands spanning the
-whole diagram (colored by the `color-container-*` options, the layer
-name left of its nodes), and the nodes of a layer fill its band
-left-to-right (wrapped beyond `graph-columns-max` nodes), while the
-nodes without a layer trail outside of any band. An edge pointing from
-a lower layer to a higher one, i.e. against the layering, is drawn
-dashed in the `color-mark-violation` color. The attribute
-`cluster: <path>` assigns the layer of a node to nested clusters
-(`/`-separated, outermost first, e.g. `Server/Broker`), which are drawn
-as columns left of the bands, spanning the bands of their layers, with
-their names running upwards (the layers of a cluster are kept together,
-all nodes of a layer have to name the same path, and the edges may
-freely cross the clusters), and the boolean
-option `layer-numbered` numbers the layers bottom-up (by default, as
-every layer builds on the ones below it). All node boxes take
-the width of the widest one and the boxes of a layer the height of the
-highest one, and the boxes of a layer stay aligned in its band. The
-layers determine the order of the rows, so an `order` attribute of a
-node is ignored.
+#### Diagram Type `layer`
 
-The diagram type `slice` is the companion of the diagram type `layer`:
-it lays out a sliced architecture and rejects the input with an error
-as soon as the graph contains a container. The attribute
-`slice: <name>` assigns a node to a slice, the slices line up
-left-to-right in the order of their first appearance as bands spanning
-the whole diagram (colored by the `color-container-*` options, the slice
-name above its nodes, and never wrapped, regardless of
-`graph-columns-max`), and the nodes of a slice stack top-down in its
-band in declaration order (never wrapped), while the nodes without a
-slice trail outside of any band. An edge pointing from a right slice
-back to a left one is drawn dashed in the `color-mark-violation` color
-if it closes a direct cycle, i.e., if any edge points from that left
-slice to the right one (transitive cycles are not checked). The
-attribute `cluster: <path>` assigns the slice of a node to nested
-clusters, which are drawn as rows above the bands, spanning the bands
-of their slices (with the same rules as for the diagram type `layer`),
-and the boolean option `slice-numbered` numbers the slices
-left-to-right. All node boxes take the width of the widest one and the
-boxes of a row the height of the highest one, and the channels between
-the bands widen until the edges within a slice stay inside its band.
-The slices determine the order of the columns, so an `order` attribute
-of a node is ignored.
+The diagram type `layer` lays out a layered architecture:
 
-The diagram type `matrix` draws a dependency structure matrix (DSM) and
-rejects the input with an error as soon as the graph contains a
-container. The nodes are both its rows and its columns, their headers
-carrying the node labels (linked through `url`), all row headers as wide
-as the longest label and all column headers as high. The cell of row X
-and column Y counts the edges from X to Y (their summed numeric
-arities), and the diagonal is shaded. The nodes are ordered
-topologically, the sources of the edges before their targets (and the
-declaration order deciding among the independent ones), so all entries
-lie above the diagonal, except the ones of the cycles: every cycle is
-kept in consecutive rows and outlined as a dashed block on the diagonal,
-with the numbers of its edges closing it (the ones pointing back to an
-earlier or the same node, on or below the diagonal) in the
-`color-mark-violation` color. As soon as one node carries an `order`
-attribute, the nodes are instead ordered by these attributes (the nodes
-without one trailing). The clusters (see the `cluster` attribute) become
-partitions of the matrix: consecutive rows and columns (in order of
-first appearance of the clusters, the nodes without a cluster in the
-implied cluster `default`, and a `/`-separated cluster path nesting
-sub-clusters, kept together within their cluster, with one level of
-bands and blocks per nesting level), each ordered on its own, labeled by
-bands left of the rows and above the columns, and outlined as a block on
-the diagonal, while the edges between the clusters are counted outside
-these blocks (a cycle spanning several clusters is outlined per cluster,
-except a single member split off from the rest of its cycle, which only
-its counts mark). The type shared by all rows, and the one shared by all
-columns, become their titles in the corner. A node `badge` is drawn
-inside its headers, at the end their labels run towards (right of a row
-label, above a column label), with the headers widened to keep it clear
-of the longest label.
+- **Layers**: the attribute `layer: <name>` assigns a node to a layer.
+  The layers stack top-down in the order of their first appearance, as
+  bands spanning the whole diagram (colored by the `color-container-*`
+  options, the layer name left of its nodes).
 
-The diagram type `sequence` rejects the input with an error as soon as
-the graph contains a container. Its participants (the nodes) are ordered
-by declaration or by their `order` attributes (left-to-right in ascending
-order, the nodes without one following), its messages (the edges) run
-top-down in declaration order, and a message from a participant to
-itself loops on its own lifeline. The dashed lifelines are colored by
-the `color-node-lifeline` option.
+- **Nodes**: the nodes of a layer fill its band left-to-right (wrapped
+  beyond `graph-columns-max` nodes), while the nodes without a layer
+  trail outside of any band. The layers determine the order of the
+  rows, so an `order` attribute of a node is ignored.
 
-The `kind` of an edge selects the kind of its message: a synchronous
-call (`sync`, the default) is drawn as a solid line with a filled arrow
-head, an asynchronous message (`async`) as a solid line with a hollow
-arrow head, and a return (`return`) as a dashed line with a hollow arrow
-head. A return answers the latest still unanswered synchronous call
-from its sender back to its receiver, and such an answered call
-activates its callee until its return, drawn as an activation bar on
-top of the lifeline (nested and shifted to the right for a call
-arriving at an already active participant). A caller without an
-activation of its own gets an implicit one, held until all of its calls
-have returned. Unanswered calls and asynchronous messages activate
-nothing. The activation bars are colored like the regular node boxes.
+- **Boxes**: all node boxes take the width of the widest one and the
+  boxes of a layer the height of the highest one, and the boxes of a
+  layer stay aligned in its band.
 
-A creation (`create`) is drawn as a dashed line with a hollow arrow
-head, ending at the box of the participant it creates, which is placed
-onto that message instead of the top row, with its lifeline starting
-below it. A creation counts as a call, i.e., a return answering it
-activates the created participant. A destruction (`destroy`) is drawn
-as a solid line with a filled arrow head, ending at a cross on the
-lifeline of its receiver, which ends there (together with all of its
-activations). A destruction from a participant to itself is drawn as
-its cross only (without its name and arity). A participant can only be
-created by the first message it takes part in, and cannot take part in
-any message after its destruction, otherwise the input is rejected with
-an error.
+- **Violations**: an edge pointing from a lower layer to a higher one,
+  i.e., against the layering, is drawn dashed in the
+  `color-mark-violation` color.
 
-A `duration` of a call (or creation) is a duration constraint up to
-its return, drawn as a bracket beside the lifeline of the caller (on
-the side facing away from the callee), spanning from the call to the
-arrival of the return answering it, with the given text beside it. A
-call without such a return cannot carry a `duration`, otherwise the
-input is rejected with an error. A `time` of any message is a time
-constraint or observation at its start, drawn as the given text beside
-the lifeline of its sender (on the side facing away from its receiver).
-Both texts are drawn exactly as given, e.g., `"{0..200ms}"` or
-`"t=now"`.
+- **Clusters**: the attribute `cluster: <path>` assigns the layer of a
+  node to nested clusters (`/`-separated, outermost first, e.g.
+  `Server/Broker`). They are drawn as columns left of the bands,
+  spanning the bands of their layers, with their names running upwards.
+  The layers of a cluster are kept together, all nodes of a layer have
+  to name the same path (otherwise the input is rejected with an
+  error), and the edges may freely cross the clusters.
 
-As the groups of a grouped graph, and the members of every container,
-are laid out individually with the selected (or, for a container, the
-annotated) diagram type, these constraints apply to every single group
-and container level, with the edges crossing a container boundary
-counting at the level they are lifted to (the boundary-crossing edges of
-a `graph` container additionally count inside it, from the boundary to
-the inner node). For the type `hub` this especially means that every
-group and every `hub` container needs its own primary node.
+- **Numbering**: the boolean option `layer-numbered` numbers the layers
+  bottom-up (by default, as every layer builds on the ones below it).
+
+#### Diagram Type `slice`
+
+The diagram type `slice` is the companion of the diagram type `layer`
+and lays out a sliced architecture:
+
+- **Slices**: the attribute `slice: <name>` assigns a node to a slice.
+  The slices line up left-to-right in the order of their first
+  appearance, as bands spanning the whole diagram (colored by the
+  `color-container-*` options, the slice name above its nodes), and are
+  never wrapped, regardless of `graph-columns-max`.
+
+- **Nodes**: the nodes of a slice stack top-down in its band in
+  declaration order (never wrapped), while the nodes without a slice
+  trail outside of any band. The slices determine the order of the
+  columns, so an `order` attribute of a node is ignored.
+
+- **Boxes**: all node boxes take the width of the widest one and the
+  boxes of a row the height of the highest one. The channels between
+  the bands widen (within a few re-layouts) until the edges within a
+  slice stay inside its band.
+
+- **Violations**: an edge pointing from a right slice back to a left
+  one is drawn dashed in the `color-mark-violation` color if it closes
+  a direct cycle, i.e., if any edge points from that left slice to the
+  right one. Transitive cycles are not checked.
+
+- **Clusters**: the attribute `cluster: <path>` assigns the slice of a
+  node to nested clusters, which are drawn as rows above the bands,
+  spanning the bands of their slices (with the same rules as for the
+  diagram type `layer`).
+
+- **Numbering**: the boolean option `slice-numbered` numbers the slices
+  left-to-right.
+
+#### Diagram Type `matrix`
+
+The diagram type `matrix` draws a dependency structure matrix (DSM):
+
+- **Headers**: the nodes are both its rows and its columns, their
+  headers carrying the node labels (linked through `url`), all row
+  headers as wide as the longest label and all column headers as high.
+  The type shared by all rows, and the one shared by all columns, become
+  their titles in the corner.
+
+- **Badges**: a node `badge` is drawn inside its headers, at the end
+  their labels run towards (right of a row label, above a column
+  label), with the headers widened to keep it clear of the longest
+  label.
+
+- **Cells**: the cell of row X and column Y counts the edges from X to
+  Y (an edge whose arity is a plain non-negative integer counting as
+  that number, every other edge as one), and the diagonal is shaded.
+
+- **Order**: the nodes are ordered topologically, the sources of the
+  edges before their targets (and the declaration order deciding among
+  the independent ones), so all entries lie above the diagonal, except
+  the ones of the cycles. As soon as one node carries an `order`
+  attribute, the nodes are instead ordered by these attributes (the
+  nodes without one trailing, and the members of a cycle still kept
+  consecutive).
+
+- **Violations**: every cycle is kept in consecutive rows and outlined
+  as a dashed block on the diagonal, with the numbers of its edges
+  closing it (the ones pointing back to an earlier or the same node, on
+  or below the diagonal) in the `color-mark-violation` color.
+
+- **Clusters**: the clusters (see the `cluster` attribute) become
+  partitions of the matrix: consecutive rows and columns, each ordered
+  on its own, labeled by bands left of the rows and above the columns,
+  and outlined as a block on the diagonal. The clusters follow the
+  order of their first appearance, the nodes without a cluster belong
+  to the implied cluster `default`, and a `/`-separated cluster path
+  nests sub-clusters, kept together within their cluster, with one
+  level of bands and blocks per nesting level.
+
+- **Cross-cluster edges**: the edges between the clusters are counted
+  outside the cluster blocks. A cycle spanning several clusters is
+  outlined per cluster, except a single member split off from the rest
+  of its cycle, which only its counts mark.
+
+#### Diagram Type `sequence`
+
+The diagram type `sequence` draws a sequence diagram:
+
+- **Participants**: the participants (the nodes) are ordered by
+  declaration or by their `order` attributes (left-to-right in
+  ascending order, the nodes without one following). The dashed
+  lifelines are colored by the `color-node-lifeline` option.
+
+- **Messages**: the messages (the edges) run top-down in declaration
+  order, and a message from a participant to itself loops on its own
+  lifeline. The `kind` of an edge selects the kind of its message: a
+  synchronous call (`sync`, the default) is drawn as a solid line with
+  a filled arrow head, an asynchronous message (`async`) as a solid
+  line with a hollow arrow head, and a return (`return`) as a dashed
+  line with a hollow arrow head.
+
+- **Activations**: a return answers the latest still unanswered
+  synchronous call from its sender back to its receiver, and such an
+  answered call activates its callee until its return, drawn as an
+  activation bar on top of the lifeline (nested and shifted to the
+  right for a call arriving at an already active participant). A caller
+  without an activation of its own gets an implicit one, held until all
+  of its calls have returned. Unanswered calls and asynchronous
+  messages activate nothing. The activation bars are colored like the
+  regular node boxes.
+
+- **Creations**: a creation (`create`) is drawn as a dashed line with a
+  hollow arrow head, ending at the box of the participant it creates,
+  which is placed onto that message instead of the top row, with its
+  lifeline starting below it. A creation counts as a call, i.e., a
+  return answering it activates the created participant.
+
+- **Destructions**: a destruction (`destroy`) is drawn as a solid line
+  with a filled arrow head, ending at a cross on the lifeline of its
+  receiver, which ends there (together with all of its activations). A
+  destruction from a participant to itself is drawn as its cross only
+  (without its name and arity).
+
+- **Lifecycle**: a participant can only be created by the first message
+  it takes part in, and cannot take part in any message after its
+  destruction, otherwise the input is rejected with an error.
+
+- **Durations**: a `duration` of a call (or creation) is a duration
+  constraint up to its return, drawn as a bracket beside the lifeline
+  of the caller (on the side facing away from the callee), spanning
+  from the call to the arrival of the return answering it, with the
+  given text beside it. A call without such a return cannot carry a
+  `duration`, otherwise the input is rejected with an error.
+
+- **Times**: a `time` of any message is a time constraint or
+  observation at its start, drawn as the given text beside the lifeline
+  of its sender (on the side facing away from its receiver).
+
+Both texts of `duration` and `time` are drawn exactly as given, e.g.,
+`"{0..200ms}"` or `"t=now"`.
 
 ### Directives
 
 A `#type` directive sets the diagram type (`graph`, `hub`, `grid`,
 `layer`, `slice`, `matrix`, or `sequence`), which otherwise is settable
-through the `-t`/`--type` command-line option (which takes precedence). The last
-occurrence wins and an invalid type is silently ignored. Without both,
-the type defaults to `graph`.
+through the `-t`/`--type` command-line option (which takes precedence).
+The last occurrence wins and an invalid type is silently ignored.
+Without both, the type defaults to `graph`.
 
 A `#config` directive sets one of the rendering options, which otherwise
 are settable through the corresponding `--config <option>=<value>`
-command-line options (`font-embed` being command-line only, see below).
+command-line options (`font-embed` being command-line only, see below),
+which take precedence. A directive with an unknown option or an invalid
+value is silently ignored, while the command-line option rejects it
+with an error.
 The recognized options, and their default values, are:
 
 ```
