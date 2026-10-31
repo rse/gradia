@@ -5,14 +5,15 @@
 */
 
 /*  internal dependencies  */
-import { Node, Edge, Graph }        from "./gradia-api-model.js"
+import { Edge, Graph }              from "./gradia-api-model.js"
 import { Config }                   from "./gradia-api-config.js"
 import { Layout, FS_GROUP, textWidth }
     from "./gradia-api-render-base.js"
 import { Shape, textShape, rectShape } from "./gradia-api-render-shape.js"
 import { LevelContext, rejectContainers, boundsOf }
     from "./gradia-api-render-container.js"
-import { clusterOf }                from "./gradia-api-render-node.js"
+import { bandsOf, clusterRuns, fitLabel }
+    from "./gradia-api-render-cluster.js"
 import { render as renderGraph }    from "./gradia-api-type-graph.js"
 
 /*  the gap between two neighboring slice bands, the margin of a band
@@ -24,21 +25,6 @@ const CLUSTER_GAP = 8    /*  gap between the cluster rows        */
 const CLUSTER_PAD = 8    /*  padding along a cluster row name    */
 const NUMBER_R    = 13   /*  radius of the circle of a number    */
 const WIDEN_MAX   = 4    /*  max re-layouts widening channels    */
-
-/*  the special "slice" annotation (the name of the slice of a node)  */
-const sliceOf = (node: Node): string | undefined =>
-    node.attrs.findLast((attr) => attr.key === "slice")?.val
-
-/*  shrink a name to fit the given room (but at most to 60% of its font,
-    beyond which the name is cut off with an ellipsis instead)  */
-const fitName = (name: string, room: number): { label: string, fs: number } => {
-    const fs  = Math.max(Math.min(FS_GROUP, room / Math.max(textWidth(name, 1, true), 1)),
-        Math.round(FS_GROUP * 0.6))
-    let label = name
-    while (label.length > 1 && textWidth(label, fs, true) > room)
-        label = `${label.slice(0, -2)}…`
-    return { label, fs }
-}
 
 /*  lay out a graph model as a sliced architecture: the slices, in the
     order of their first appearance, become bands side-by-side
@@ -54,49 +40,7 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
         the slices of a cluster kept together (at the position of the first
         appearance of the cluster, on every nesting level), and lay out
         every slice as one explicitly ordered column of a "graph"  */
-    const pathOf = new Map<string, string[]>()
-    for (const node of nodes) {
-        const slice = sliceOf(node)
-        if (slice === undefined)
-            continue
-        const path = pathOf.get(slice)
-        const own  = clusterOf(node) ?? []
-        if (path === undefined)
-            pathOf.set(slice, own)
-        else if (path.join("/") !== own.join("/")) {
-            const show = (p: string[]) => p.length > 0 ? `cluster "${p.join("/")}"` : "no cluster"
-            throw new Error(`node "${node.id}" places slice "${slice}" into ${show(own)}, ` +
-                `unlike ${show(path)} of its other nodes`)
-        }
-    }
-    type Tree = Map<string, Tree>
-    const tree: Tree = new Map()
-    for (const [ slice, path ] of pathOf) {
-        let t = tree
-        for (const name of path) {
-            if (!t.has(`g:${name}`))
-                t.set(`g:${name}`, new Map())
-            t = t.get(`g:${name}`)!
-        }
-        t.set(`s:${slice}`, new Map())
-    }
-    const flat = (t: Tree): string[] =>
-        Array.from(t).flatMap(([ key, sub ]) => key.startsWith("s:") ? [ key.slice(2) ] : flat(sub))
-    const slices  = flat(tree)
-    const index   = new Map(slices.map((name, i) => [ name, i ]))
-    const indexOf = (id: string): number | undefined => {
-        const node = graph.nodes.get(id)
-        const name = node !== undefined ? sliceOf(node) : undefined
-        return name !== undefined ? index.get(name) : undefined
-    }
-    const ordered: Graph = {
-        nodes: new Map(nodes.map((node) => [ node.id, {
-            ...node,
-            attrs: [ ...node.attrs.filter((attr) => ![ "slice", "cluster", "order" ].includes(attr.key)),
-                ...(sliceOf(node) !== undefined ? [ { key: "order", val: String(index.get(sliceOf(node)!)) } ] : []) ]
-        } ])),
-        edges: graph.edges
-    }
+    const { names: slices, indexOf, ordered, parts } = bandsOf(graph, nodes, "slice")
 
     /*  an edge pointing from a right slice back to a left one violates the
         slicing if it closes a direct cycle, i.e., if any edge points from
@@ -202,8 +146,7 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
         const mid = top + pad + headH / 2
         shapes.push(rectShape(x1, top, x2 - x1, bottom - top, "color-container-border", 2,
             undefined, "color-container-box", 12))
-        const { label, fs } = fitName(name, x2 - x1 - 2 * CLUSTER_PAD - numberW)
-        const w     = textWidth(label, fs, true)
+        const { label, fs, w } = fitLabel(name, x2 - x1 - 2 * CLUSTER_PAD - numberW, FS_GROUP, 0.6, true)
         const start = (x1 + x2) / 2 - (numberW + w) / 2
         if (numbered) {
             const nfs = config["size-font-type"]
@@ -218,29 +161,17 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
 
     /*  draw every cluster of slices as a row above the bands, nested
         clusters further down, spanning the bands of its slices, with its
-        name centered (shrunk or cut off to fit, see "fitName")  */
-    const depth = slices.reduce((d, slice) => Math.max(d, pathOf.get(slice)!.length), 0)
-    for (let k = 0; k < depth; k++) {
+        name centered (shrunk to fit, but at most to 60% of its font, beyond
+        which the name is cut off with an ellipsis instead)  */
+    const { depth, runs } = clusterRuns(parts)
+    for (const { level: k, name, from, to } of runs) {
         const y = top - (depth - k) * (CLUSTER_H + CLUSTER_GAP)
-        let start = 0
-        while (start < slices.length) {
-            const path = pathOf.get(slices[start])!
-            if (path.length <= k) {
-                start++
-                continue
-            }
-            const key = path.slice(0, k + 1).join("/")
-            let end = start
-            while (end + 1 < slices.length && pathOf.get(slices[end + 1])!.slice(0, k + 1).join("/") === key)
-                end++
-            const [ x1, x2 ] = [ x1Of(start), x2Of(end) ]
-            const { label, fs } = fitName(path[k], x2 - x1 - 2 * CLUSTER_PAD)
-            shapes.push(rectShape(x1, y, x2 - x1, CLUSTER_H, "color-container-border", 2,
-                undefined, "color-container-box", 12))
-            shapes.push(textShape((x1 + x2) / 2, y + CLUSTER_H / 2, label, "middle", textWidth(label, fs, true),
-                "color-container-name", fs, fs, { bold: true, halo: false }))
-            start = end + 1
-        }
+        const [ x1, x2 ] = [ x1Of(from), x2Of(to - 1) ]
+        const { label, fs, w } = fitLabel(name, x2 - x1 - 2 * CLUSTER_PAD, FS_GROUP, 0.6, true)
+        shapes.push(rectShape(x1, y, x2 - x1, CLUSTER_H, "color-container-border", 2,
+            undefined, "color-container-box", 12))
+        shapes.push(textShape((x1 + x2) / 2, y + CLUSTER_H / 2, label, "middle", w,
+            "color-container-name", fs, fs, { bold: true, halo: false }))
     }
 
     /*  hand over the laid out graph with the bands and the violations  */

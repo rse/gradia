@@ -5,14 +5,15 @@
 */
 
 /*  internal dependencies  */
-import { Node, Edge, Graph }        from "./gradia-api-model.js"
+import { Edge, Graph }              from "./gradia-api-model.js"
 import { Config }                   from "./gradia-api-config.js"
 import { Layout, FS_GROUP, textWidth }
     from "./gradia-api-render-base.js"
 import { Shape, textShape, rectShape } from "./gradia-api-render-shape.js"
 import { LevelContext, rejectContainers, boundsOf }
     from "./gradia-api-render-container.js"
-import { clusterOf }                from "./gradia-api-render-node.js"
+import { bandsOf, clusterRuns, fitLabel }
+    from "./gradia-api-render-cluster.js"
 import { render as renderGraph, loopRise }
     from "./gradia-api-type-graph.js"
 
@@ -24,10 +25,6 @@ const CLUSTER_W   = 40   /*  width of a cluster column            */
 const CLUSTER_GAP = 8    /*  gap between the cluster columns      */
 const CLUSTER_PAD = 8    /*  padding along a cluster column name  */
 const NUMBER_R    = 13   /*  radius of the circle of a number     */
-
-/*  the special "layer" annotation (the name of the layer of a node)  */
-const layerOf = (node: Node): string | undefined =>
-    node.attrs.findLast((attr) => attr.key === "layer")?.val
 
 /*  lay out a graph model as a layered architecture: the layers, in the
     order of their first appearance, become bands stacked top-down, and
@@ -43,49 +40,7 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
         the layers of a cluster kept together (at the position of the first
         appearance of the cluster, on every nesting level), and lay out
         every layer as one explicitly ordered row of a "graph"  */
-    const pathOf = new Map<string, string[]>()
-    for (const node of nodes) {
-        const layer = layerOf(node)
-        if (layer === undefined)
-            continue
-        const path = pathOf.get(layer)
-        const own  = clusterOf(node) ?? []
-        if (path === undefined)
-            pathOf.set(layer, own)
-        else if (path.join("/") !== own.join("/")) {
-            const show = (p: string[]) => p.length > 0 ? `cluster "${p.join("/")}"` : "no cluster"
-            throw new Error(`node "${node.id}" places layer "${layer}" into ${show(own)}, ` +
-                `unlike ${show(path)} of its other nodes`)
-        }
-    }
-    type Tree = Map<string, Tree>
-    const tree: Tree = new Map()
-    for (const [ layer, path ] of pathOf) {
-        let t = tree
-        for (const name of path) {
-            if (!t.has(`g:${name}`))
-                t.set(`g:${name}`, new Map())
-            t = t.get(`g:${name}`)!
-        }
-        t.set(`l:${layer}`, new Map())
-    }
-    const flat = (t: Tree): string[] =>
-        Array.from(t).flatMap(([ key, sub ]) => key.startsWith("l:") ? [ key.slice(2) ] : flat(sub))
-    const layers = flat(tree)
-    const index   = new Map(layers.map((name, i) => [ name, i ]))
-    const indexOf = (id: string): number | undefined => {
-        const node = graph.nodes.get(id)
-        const name = node !== undefined ? layerOf(node) : undefined
-        return name !== undefined ? index.get(name) : undefined
-    }
-    const ordered: Graph = {
-        nodes: new Map(nodes.map((node) => [ node.id, {
-            ...node,
-            attrs: [ ...node.attrs.filter((attr) => ![ "layer", "cluster", "order" ].includes(attr.key)),
-                ...(layerOf(node) !== undefined ? [ { key: "order", val: String(index.get(layerOf(node)!)) } ] : []) ]
-        } ])),
-        edges: graph.edges
-    }
+    const { names: layers, indexOf, ordered, parts } = bandsOf(graph, nodes, "layer")
 
     /*  an edge pointing from a lower layer to a higher one violates the
         layering (an edge within a layer or towards a lower one is fine),
@@ -164,33 +119,15 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
         name running upwards (shrunk to fit a column of few bands, but at
         most to 60% of its font, beyond which the name is cut off with an
         ellipsis instead)  */
-    const depth = layers.reduce((d, layer) => Math.max(d, pathOf.get(layer)!.length), 0)
-    for (let k = 0; k < depth; k++) {
+    const { depth, runs } = clusterRuns(parts)
+    for (const { level: k, name, from, to } of runs) {
         const x = left - (depth - k) * (CLUSTER_W + CLUSTER_GAP)
-        let start = 0
-        while (start < layers.length) {
-            const path = pathOf.get(layers[start])!
-            if (path.length <= k) {
-                start++
-                continue
-            }
-            const key = path.slice(0, k + 1).join("/")
-            let end = start
-            while (end + 1 < layers.length && pathOf.get(layers[end + 1])!.slice(0, k + 1).join("/") === key)
-                end++
-            const [ y1, y2 ] = [ y1Of(start), y2Of(end) ]
-            const room = y2 - y1 - 2 * CLUSTER_PAD
-            const fs   = Math.max(Math.min(FS_GROUP, room / Math.max(textWidth(path[k], 1, true), 1)),
-                Math.round(FS_GROUP * 0.6))
-            let label  = path[k]
-            while (label.length > 1 && textWidth(label, fs, true) > room)
-                label = `${label.slice(0, -2)}…`
-            shapes.push(rectShape(x, y1, CLUSTER_W, y2 - y1, "color-container-border", 2,
-                undefined, "color-container-box", 12))
-            shapes.push(textShape(x + CLUSTER_W / 2, (y1 + y2) / 2, label, "middle", textWidth(label, fs, true),
-                "color-container-name", fs, fs, { bold: true, halo: false, upright: true }))
-            start = end + 1
-        }
+        const [ y1, y2 ] = [ y1Of(from), y2Of(to - 1) ]
+        const { label, fs, w } = fitLabel(name, y2 - y1 - 2 * CLUSTER_PAD, FS_GROUP, 0.6, true)
+        shapes.push(rectShape(x, y1, CLUSTER_W, y2 - y1, "color-container-border", 2,
+            undefined, "color-container-box", 12))
+        shapes.push(textShape(x + CLUSTER_W / 2, (y1 + y2) / 2, label, "middle", w,
+            "color-container-name", fs, fs, { bold: true, halo: false, upright: true }))
     }
 
     /*  hand over the laid out graph with the bands and the violations  */

@@ -5,7 +5,7 @@
 */
 
 /*  internal dependencies  */
-import { Poly }             from "./gradia-api-render-base.js"
+import { Poly, Layout }     from "./gradia-api-render-base.js"
 
 /*  drop duplicate and collinear intermediate points of a polyline  */
 export const simplifyPoly = (pts: Poly): Poly => {
@@ -347,5 +347,34 @@ export const pointAt = (poly: Poly, fraction: number): { x: number, y: number, h
         want -= lens[k]
     }
     return { x: poly[0][0], y: poly[0][1], horizontal: true }
+}
+
+/*  the non-rectangular outline of a node: its radius, and the reach of
+    the outline from the node center at the given offset across it  */
+export interface Outline { r: number, reach: (d: number) => number }
+
+/*  copy the polylines of a layout, with the edge ends attaching to a node
+    of a non-rectangular outline drawn up to that outline, along their
+    final segments (horizontal at a west or east side port, vertical at a
+    north side one)  */
+export const insetPolys = (layout: Layout, outlineOf: (id: string) => Outline | undefined): Poly[] => {
+    const inset = (poly: Poly, end: number, prev: number, id: string): void => {
+        const outline = poly.length >= 2 ? outlineOf(id) : undefined
+        if (outline === undefined)
+            return
+        const [ x,  y  ] = poly[end]
+        const [ px, py ] = poly[prev]
+        const [ dx, dy ] = [ x - layout.cx(id), y - layout.cy(id) ]
+        if (py === y && Math.abs(dy) < outline.r)
+            poly[end] = [ layout.cx(id) + Math.sign(dx) * outline.reach(dy), y ]
+        else if (px === x && Math.abs(dx) < outline.r)
+            poly[end] = [ x, layout.cy(id) + Math.sign(dy) * outline.reach(dx) ]
+    }
+    return layout.polys.map((poly, i): Poly => {
+        const pts: Poly = poly.map(([ x, y ]) => [ x, y ])
+        inset(pts, pts.length - 1, pts.length - 2, layout.edges[i].target)
+        inset(pts, 0, 1, layout.edges[i].source)
+        return pts
+    })
 }
 

@@ -52,6 +52,12 @@ export const portGapOf = (edges: Edge[], sides: { s: Side, t: Side }[], config: 
         arrived.has(`${id}:${side}`) ? arrival : gap)
 }
 
+/*  the number of the edge ends of a node on its busier side, the
+    outgoing or the incoming one, for sizing a fixed-size node box  */
+export const endsOf = (edges: Edge[], id: string): number =>
+    Math.max(edges.filter((edge) => edge.source === id).length,
+        edges.filter((edge) => edge.target === id).length)
+
 /*  an edge endpoint (the source or the target of an edge) attaching
     to a node side  */
 interface PortRef {

@@ -57,14 +57,15 @@ scheduled by the critical path method, marking its critical path).
         measurement, and styling helpers, plus the accessors of the
         reserved node attributes (e.g. `order`, `cluster`, `badge`, `mark`)
     -   `src/gradia-api-render-port.ts`: the edge attachment ports
-        (port gap determination and port distribution along the node
-        sides)
+        (port gap determination, port distribution along the node
+        sides, and the edge end count of a node's busier side)
     -   `src/gradia-api-render-track.ts`: the parallel tracks of the
         edges within a channel or gutter (crossing-minimizing track
         order, track packing, and bundling of crowded channels/gutters)
     -   `src/gradia-api-render-path.ts`: the edge polylines and their SVG
         paths (polyline simplification, hop computation, bundle junctions
-        and pieces, and SVG path generation)
+        and pieces, SVG path generation, and the
+        insetting of the edge ends to a non-rectangular node outline)
     -   `src/gradia-api-render-group.ts`: group partitioning of the
         graph and composition of the per-group layouts
     -   `src/gradia-api-render-container.ts`: container nesting
@@ -72,6 +73,10 @@ scheduled by the critical path method, marking its critical path).
         recursive per-level layout with container placeholders and
         boundary gate nodes, and the stitching of the boundary-crossing
         edges
+    -   `src/gradia-api-render-cluster.ts`: the nested clusters of the
+        `layer`, `slice`, `matrix`, and `gantt` diagram types (cluster
+        ordering, the cluster runs per nesting level, and label fitting),
+        plus the band determination shared by `layer` and `slice`
     -   `src/gradia-api-render-label.ts`: the collision-free placement
         of the edge name and arity labels (spatial area index, label
         placer, candidate positions) and their SVG fragments, plus the

@@ -8,11 +8,12 @@
 import { Node, Edge, Graph }            from "./gradia-api-model.js"
 import { Config }                       from "./gradia-api-config.js"
 import { componentsOf }                 from "./gradia-api-algo.js"
-import { Poly, NodeShape, NodeStyle, Layout, REGION_GAP, REGION_HEAD, REGION_PAD }
+import { NodeShape, NodeStyle, Layout, REGION_GAP, REGION_HEAD, REGION_PAD }
     from "./gradia-api-render-base.js"
 import { defaultStyleOf, markOf, shapeRadius, shapeReach, containerHead, type NodeMark }
     from "./gradia-api-render-node.js"
-import { PORT_PAD }                     from "./gradia-api-render-port.js"
+import { PORT_PAD, endsOf }             from "./gradia-api-render-port.js"
+import { insetPolys }                   from "./gradia-api-render-path.js"
 import { transitionOf }                 from "./gradia-api-render-label.js"
 import { LevelContext, Containment }    from "./gradia-api-render-container.js"
 import { render as renderGraph }        from "./gradia-api-type-graph.js"
@@ -377,36 +378,20 @@ export const render = async (input: Graph, config: Config, level: LevelContext =
         if (shape === undefined || fixedSize.has(node.id))
             continue
         shapes.set(node.id, shape)
-        const ends = Math.max(graph.edges.filter((edge) => edge.source === node.id).length,
-            graph.edges.filter((edge) => edge.target === node.id).length)
         fixedSize.set(node.id, shape === "fork" || shape === "join" ?
-            { w: SHAPE_SIZE[shape], h: Math.max(40, ends * config["size-edge-port-gap"] + PORT_PAD) } :
+            { w: SHAPE_SIZE[shape], h: Math.max(40, endsOf(graph.edges, node.id) * config["size-edge-port-gap"] + PORT_PAD) } :
             { w: SHAPE_SIZE[shape], h: SHAPE_SIZE[shape] })
     }
     const layout = await renderGraph(graph, cfg, { ...level, fixedSize }, undefined, true)
 
     /*  draw the edge ends attaching to a pseudo-state up to the outline of
-        its shape, along their final segments (horizontal at a west or east
-        side port, vertical at a north side one)  */
-    const inset = (poly: Poly, end: number, prev: number, id: string): void => {
+        its shape  */
+    const polys = insetPolys(layout, (id) => {
         const shape = shapes.get(id)
-        if (shape === undefined || poly.length < 2)
-            return
+        if (shape === undefined)
+            return undefined
         const a = Math.min(layout.boxW.get(id)!, layout.boxH.get(id)!) / 2
-        const r = shapeRadius(shape, a)
-        const [ x,  y  ] = poly[end]
-        const [ px, py ] = poly[prev]
-        const [ dx, dy ] = [ x - layout.cx(id), y - layout.cy(id) ]
-        if (py === y && Math.abs(dy) < r)
-            poly[end] = [ layout.cx(id) + Math.sign(dx) * shapeReach(shape, a, dy), y ]
-        else if (px === x && Math.abs(dx) < r)
-            poly[end] = [ x, layout.cy(id) + Math.sign(dy) * shapeReach(shape, a, dx) ]
-    }
-    const polys = layout.polys.map((poly, i): Poly => {
-        const pts: Poly = poly.map(([ x, y ]) => [ x, y ])
-        inset(pts, pts.length - 1, pts.length - 2, layout.edges[i].target)
-        inset(pts, 0, 1, layout.edges[i].source)
-        return pts
+        return { r: shapeRadius(shape, a), reach: (d) => shapeReach(shape, a, d) }
     })
 
     /*  draw the pseudo-states as their shapes, in the pseudo-state colors,

@@ -8,10 +8,11 @@
 import { Node, Edge, Graph }            from "./gradia-api-model.js"
 import { Config }                       from "./gradia-api-config.js"
 import { componentsOf }                 from "./gradia-api-algo.js"
-import { Poly, NodeStyle, Layout }      from "./gradia-api-render-base.js"
+import { NodeStyle, Layout }            from "./gradia-api-render-base.js"
 import { defaultStyleOf, markOf, placeLines, placeRadius, PLACE_RING, type NodeMark }
     from "./gradia-api-render-node.js"
-import { PORT_PAD }                     from "./gradia-api-render-port.js"
+import { PORT_PAD, endsOf }             from "./gradia-api-render-port.js"
+import { insetPolys }                   from "./gradia-api-render-path.js"
 import { LevelContext, Containment, rejectContainers }
     from "./gradia-api-render-container.js"
 import { render as renderGraph }        from "./gradia-api-type-graph.js"
@@ -525,36 +526,20 @@ export const render = async (input: Graph, config: Config, level: LevelContext =
         ports clear of their top and bottom  */
     const fixedSize = new Map<string, { w: number, h: number }>(level.fixedSize)
     for (const [ id, n ] of tokens) {
-        const ends = Math.max(graph.edges.filter((edge) => edge.source === id).length,
-            graph.edges.filter((edge) => edge.target === id).length)
-        const d    = Math.ceil(Math.max(config["size-font-prop"] * 3,
+        const d = Math.ceil(Math.max(config["size-font-prop"] * 3,
             (placeRadius(placeLines(nodes.get(id)!, n, capacity.get(id), config)) +
                 (sinks.has(id) ? PLACE_RING : 0)) * 2,
-            (ends - 1) * config["size-edge-port-gap"] * 1.5 + PORT_PAD))
+            (endsOf(graph.edges, id) - 1) * config["size-edge-port-gap"] * 1.5 + PORT_PAD))
         fixedSize.set(id, { w: d, h: d })
     }
     const layout = await renderGraph(graph, config, { ...level, fixedSize, backward }, undefined, true)
 
-    /*  draw the arc ends attaching to a place up to its circle, along their
-        final segments (horizontal at a west or east side port, vertical at
-        a north side one)  */
-    const inset = (poly: Poly, end: number, prev: number, id: string): void => {
-        if (!tokens.has(id) || poly.length < 2)
-            return
+    /*  draw the arc ends attaching to a place up to its circle  */
+    const polys = insetPolys(layout, (id) => {
+        if (!tokens.has(id))
+            return undefined
         const r = layout.boxW.get(id)! / 2
-        const [ x,  y  ] = poly[end]
-        const [ px, py ] = poly[prev]
-        const [ dx, dy ] = [ x - layout.cx(id), y - layout.cy(id) ]
-        if (py === y && Math.abs(dy) < r)
-            poly[end] = [ layout.cx(id) + Math.sign(dx) * Math.sqrt(r * r - dy * dy), y ]
-        else if (px === x && Math.abs(dx) < r)
-            poly[end] = [ x, layout.cy(id) + Math.sign(dy) * Math.sqrt(r * r - dx * dx) ]
-    }
-    const polys = layout.polys.map((poly, i): Poly => {
-        const pts: Poly = poly.map(([ x, y ]) => [ x, y ])
-        inset(pts, pts.length - 1, pts.length - 2, layout.edges[i].target)
-        inset(pts, 0, 1, layout.edges[i].source)
-        return pts
+        return { r, reach: (d) => Math.sqrt(r * r - d * d) }
     })
 
     /*  draw the places as circles with their tokens and capacities, in the

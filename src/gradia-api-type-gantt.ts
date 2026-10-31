@@ -12,6 +12,8 @@ import { Shape, pathShape, textShape, rectShape, badgeShape }
     from "./gradia-api-render-shape.js"
 import { LevelContext, rejectContainers }
     from "./gradia-api-render-container.js"
+import { ClusterPart, clusterOrder, clusterRuns, fitLabel }
+    from "./gradia-api-render-cluster.js"
 import { defaultStyleOf, urlOf, orderOf, typeOf, badgeOf, clusterOf, badgeRadius }
     from "./gradia-api-render-node.js"
 
@@ -173,47 +175,15 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
         return path.length > 0 ? path : [ "default" ]
     }
     const nameOf  = (node: Node) => pathOf(node).join("/")
-    type Tree = Map<string, Tree>
-    const tree: Tree = new Map()
-    for (const node of sorted) {
-        let t = tree
-        for (const name of pathOf(node)) {
-            if (!t.has(`g:${name}`))
-                t.set(`g:${name}`, new Map())
-            t = t.get(`g:${name}`)!
-        }
-        if (!t.has(`l:${nameOf(node)}`))
-            t.set(`l:${nameOf(node)}`, new Map())
-    }
-    const flat = (t: Tree): string[] =>
-        Array.from(t).flatMap(([ key, sub ]) => key.startsWith("l:") ? [ key.slice(2) ] : flat(sub))
     const rows: Node[] = []
-    const parts: { path: string[], from: number, to: number }[] = []
-    for (const name of flat(tree)) {
+    const parts: ClusterPart[] = []
+    for (const name of clusterOrder(sorted.map((node) => [ nameOf(node), pathOf(node) ]))) {
         const members = sorted.filter((node) => nameOf(node) === name)
         parts.push({ path: pathOf(members[0]), from: rows.length, to: rows.length + members.length })
         rows.push(...members)
     }
     const rowOf = new Map(rows.map((node, i) => [ node.id, i ]))
-
-    /*  the clusters on every nesting level: the runs of consecutive parts
-        sharing the cluster path up to that level  */
-    const depth    = parts.reduce((d, part) => Math.max(d, part.path.length), 0)
-    const clusters: { level: number, name: string, from: number, to: number }[] = []
-    for (let k = 0; k < depth; k++) {
-        for (let i = 0; i < parts.length;) {
-            if (parts[i].path.length <= k) {
-                i++
-                continue
-            }
-            const key = parts[i].path.slice(0, k + 1).join("/")
-            let j = i
-            while (j + 1 < parts.length && parts[j + 1].path.slice(0, k + 1).join("/") === key)
-                j++
-            clusters.push({ level: k, name: parts[i].path[k], from: parts[i].from, to: parts[j].to })
-            i = j + 1
-        }
-    }
+    const { depth, runs: clusters } = clusterRuns(parts)
 
     /*  resolve the configurable rendering geometry (with the cluster bands
         left of the row headers, and the time axis above the chart)  */
@@ -307,14 +277,10 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
     for (const { level, name, from, to } of clusters) {
         const off  = margin + level * (BAND + HEAD_GAP)
         const size = (to - from) * ROW
-        const room = size - 2 * BAND_PAD
-        const fs   = Math.max(Math.min(fsNum, room / Math.max(textWidth(name, 1), 1)), Math.round(fsNum * 0.7))
-        let label  = name
-        while (label.length > 1 && textWidth(label, fs) > room)
-            label = `${label.slice(0, -2)}…`
+        const { label, fs, w } = fitLabel(name, size - 2 * BAND_PAD, fsNum, 0.7)
         shapes.push(rectShape(off, y0 + from * ROW, BAND, size, "color-group-border", 2, undefined,
             "color-group-box", 6))
-        shapes.push(textShape(off + BAND / 2, y0 + from * ROW + size / 2, label, "middle", textWidth(label, fs),
+        shapes.push(textShape(off + BAND / 2, y0 + from * ROW + size / 2, label, "middle", w,
             "color-group-name", fs, fs, { halo: false, upright: true }))
     }
 
