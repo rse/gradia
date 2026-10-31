@@ -9,7 +9,8 @@ import { Node, Edge, Graph }                       from "./gradia-api-model.js"
 import { Config }                                  from "./gradia-api-config.js"
 import { Poly, NodeStyle, Layout, ARITY_OFF, textWidth, arrowRoom, stubRoom, extentOf }
     from "./gradia-api-render-base.js"
-import { isPrimary, measureNodes, defaultStyleOf } from "./gradia-api-render-node.js"
+import { isPrimary, measureNodes, defaultStyleOf, badgeExtent }
+    from "./gradia-api-render-node.js"
 import { LevelContext }                            from "./gradia-api-render-container.js"
 import { Side, TrackUser, simplifyPoly, assignPorts, assignTracks, portGapOf, PORT_PAD }
     from "./gradia-api-render-edge.js"
@@ -208,20 +209,22 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
         column and the output nodes in the third column (each stack
         vertically centered), and place the center node in the second
         column at the vertical center of the canvas, where an outer node
-        keeps its lane clear of the inner nodes above and below it  */
+        keeps its lane clear of the inner nodes above and below it, and
+        every box the badge on its top border clear of the box above it  */
     const stackY = new Map<string, number>()
     const stack  = (list: Node[]): number => {
         let [ innerB, outerB, laneB, bottom ] = [ -Infinity, -Infinity, -Infinity, 0 ]
         for (const node of list) {
             const h = boxH.get(node.id)!
+            const b = badgeExtent(node)
             let   y = h / 2
             if (outerSet.has(node.id)) {
-                y      = Math.max(y, outerB + gap + h / 2, innerB + laneOf(node.id))
+                y      = Math.max(y, outerB + gap + b + h / 2, innerB + laneOf(node.id))
                 outerB = y + h / 2
                 laneB  = y + laneOf(node.id)
             }
             else {
-                y      = Math.max(y, innerB + gap + h / 2, laneB + h / 2)
+                y      = Math.max(y, innerB + gap + b + h / 2, laneB + b + h / 2)
                 innerB = y + h / 2
             }
             stackY.set(node.id, y)

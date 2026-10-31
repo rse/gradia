@@ -57,7 +57,32 @@ export const orderOf = (node: Node): number | undefined => {
 
 /*  the special attributes consumed by the renderers instead of being
     rendered as node box text lines  */
-const ATTRS_SPECIAL = new Set([ "url", "type", "primary", "group", "parent", "container", "order" ])
+const ATTRS_SPECIAL = new Set([ "url", "type", "primary", "group", "parent", "container", "order",
+    "badge", "multiple" ])
+
+/*  the special "badge" annotation (the icon in a badge on the top border
+    of the node box, an unknown value being ignored)  */
+const nodeBadges = [ "person", "team", "bot", "device", "mobile", "browser", "service", "function",
+    "api", "code", "package", "database", "cache", "queue", "document", "mail", "communication", "clock",
+    "security", "cloud", "network" ] as const
+export type NodeBadge = typeof nodeBadges[number]
+export const BADGE_R = 13.5 /*  radius of the badge on the top border of a box      */
+export const BADGE_X = 15   /*  gap between the left end of a box and its badge     */
+export const badgeOf = (node: Node): NodeBadge | undefined => {
+    const val = node.attrs.findLast((attr) => attr.key === "badge")?.val
+    return nodeBadges.find((badge) => badge === val)
+}
+
+/*  the special "multiple" annotation (the node box drawn as a front box
+    with copies behind it, offset towards the bottom-right)  */
+export const MULTI_OFF = 16  /*  offset of the rearmost copy behind the front box  */
+export const isMultiple = (node: Node): boolean =>
+    node.attrs.findLast((attr) => attr.key === "multiple")?.val === "true"
+
+/*  the extent a node occupies above its box: the upper half of its
+    badge plus some clearance  */
+export const badgeExtent = (node: Node): number =>
+    badgeOf(node) !== undefined ? BADGE_R + 2 : 0
 
 /*  split the attributes rendered as text lines from the special ones  */
 export const attrsOfNode = (node: Node): Attr[] =>
@@ -166,8 +191,13 @@ export const measureNodes = (
         const h = MIN_H(config) + (lines.name.length - 1) * NAME_H(config) +
             lines.type.length * TYPE_H(config) +
             (lines.attrs.length > 0 ? ATTR_P + (lines.attrs.length - 1) * ATTR_H(config) + ATTR_B : 0)
-        boxW.set(node.id, Math.max(config["size-node-width-min"], Math.ceil(w) + PAD_W * 2))
-        boxH.set(node.id, Math.max(h, Math.ceil(h * scaleOf(node))))
+        const bw = Math.max(config["size-node-width-min"], Math.ceil(w) + PAD_W * 2)
+        const bh = Math.max(h, Math.ceil(h * scaleOf(node)))
+
+        /*  a multiple node claims the room of the copies behind its front box  */
+        const multi = isMultiple(node) ? MULTI_OFF : 0
+        boxW.set(node.id, bw + multi)
+        boxH.set(node.id, bh + multi)
         contentH.set(node.id, h)
     }
     return { boxW, boxH, contentH }

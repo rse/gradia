@@ -1,0 +1,47 @@
+#type graph
+
+user:      "Attendee"            [ badge: person ]
+staff:     "Venue Staff"         [ badge: team ]
+assistant: "Chat Assistant"      [ badge: bot ]
+kiosk:     "Kiosk Terminal"      [ badge: device ]
+app:       "Mobile App"          [ badge: mobile ]
+web:       "Web Shop"            [ badge: browser ]
+cdn:       "Edge CDN"            [ badge: cloud ]
+lan:       "Venue Network"       [ badge: network ]
+gateway:   "API Gateway"         [ badge: api ]
+auth:      "Identity Provider"   [ badge: security ]
+tickets:   "Ticket Service"      [ multiple: true, badge: service ]
+pricing:   "Pricing Library"     [ badge: package ]
+rules:     "Pricing Rules"       [ badge: code ]
+sessions:  "Session Cache"       [ badge: cache ]
+db:        "Event Database"      [ badge: database ]
+broker:    "Message Broker"      [ badge: queue ]
+sync:      "Partner Sync"        [ badge: communication ]
+scheduler: "Reminder Scheduler"  [ badge: clock ]
+workers:   "Worker Pool"         [ multiple: true ]
+thumbs:    "Thumbnail Function"  [ badge: function ]
+mailer:    "Mail Relay"          [ badge: mail ]
+reports:   "Sales Report"        [ badge: document ]
+
+user      --> app
+user      --> web
+staff     --> kiosk
+app       --> cdn
+web       --> cdn
+kiosk     --> lan
+assistant --> gateway
+cdn       --> gateway
+lan       --> gateway
+gateway   --> auth
+gateway   --> tickets
+tickets   --> pricing
+pricing   --> rules
+tickets   --> sessions
+tickets   --> db
+tickets   --> broker
+scheduler --> broker
+broker    --> workers
+broker    --> sync
+workers   --> thumbs
+workers   --> mailer
+workers   --> reports

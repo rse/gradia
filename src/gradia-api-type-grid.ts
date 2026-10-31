@@ -5,11 +5,11 @@
 */
 
 /*  internal dependencies  */
-import { Node, Graph }           from "./gradia-api-model.js"
-import { Config }                from "./gradia-api-config.js"
-import { measureNodes, orderOf } from "./gradia-api-render-node.js"
-import { Layout }                from "./gradia-api-render-base.js"
-import { LevelContext }          from "./gradia-api-render-container.js"
+import { Node, Graph }                         from "./gradia-api-model.js"
+import { Config }                              from "./gradia-api-config.js"
+import { measureNodes, orderOf, badgeExtent }  from "./gradia-api-render-node.js"
+import { Layout }                              from "./gradia-api-render-base.js"
+import { LevelContext }                        from "./gradia-api-render-container.js"
 
 /*  lay out an edge-less graph model as a compact grid of tiles (for a
     containment level: with the container placeholders at their fixed
@@ -57,17 +57,20 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
         few nodes still share a row, and capped at the configured maximum
         of columns and the node count, so larger graphs grow only in
         height), with each column as wide as its widest tile and each
-        row as tall as its tallest tile, and each tile left-aligned
-        within its column and top-aligned within its row  */
+        row as tall as its tallest tile (plus the room of the badges on
+        its top borders), and each tile left-aligned within its column
+        and top-aligned within its row  */
     const cols      = Math.max(Math.min(Math.max(Math.ceil(Math.sqrt(nodes.length)), minCols),
         maxCols, nodes.length), 1)
     const rows      = Math.ceil(nodes.length / cols)
     const colWidth  = Array.from({ length: cols }, () => 0)
     const rowHeight = Array.from({ length: rows }, () => 0)
+    const rowRise   = Array.from({ length: rows }, () => 0)
     nodes.forEach((node, i) => {
         const [ c, r ] = [ i % cols, Math.floor(i / cols) ]
         colWidth[c]  = Math.max(colWidth[c],  boxW.get(node.id)!)
         rowHeight[r] = Math.max(rowHeight[r], boxH.get(node.id)!)
+        rowRise[r]   = Math.max(rowRise[r],   badgeExtent(node))
     })
     const colLX: number[] = []
     let x = margin
@@ -78,8 +81,8 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
     const rowTY: number[] = []
     let y = margin
     for (let r = 0; r < rows; r++) {
-        rowTY.push(y)
-        y += rowHeight[r] + gapV
+        rowTY.push(y + rowRise[r])
+        y += rowRise[r] + rowHeight[r] + gapV
     }
     const nodeCX = new Map<string, number>()
     const nodeCY = new Map<string, number>()

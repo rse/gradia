@@ -46,6 +46,10 @@ Here are examples of the graph diagram renderings:
 
   ![container-sample](smp/container-sample.svg)
 
+- [badge-sample](smp/badge-sample.txt) (node badges and multiple nodes):
+
+  ![badge-sample](smp/badge-sample.svg)
+
 - [sequence-sample](smp/sequence-sample.txt) (sequence diagram):
 
   ![sequence-sample](smp/sequence-sample.svg)
@@ -212,7 +216,7 @@ separated by `|`.
   reject a kind other than `sync`, as well as a `duration` or `time`,
   with an error. Any other key is rejected with an error, too.
 
-- Seven attribute keys are reserved and consumed by the renderer instead
+- Nine attribute keys are reserved and consumed by the renderer instead
   of being displayed as a regular `<key>: <val>` line:
 
     - `url: <url>` renders the node box as a hyperlink. Only relative URLs
@@ -229,7 +233,22 @@ separated by `|`.
     - `container: <type>` marks the node as a container whose members
       are laid out with the diagram type `<type>` (`graph`, `hub`, or
       `grid`), even if it has no members at all,
-    - `order: <number>` places the node explicitly (see below).
+    - `order: <number>` places the node explicitly (see below),
+    - `badge: <icon>` draws a round badge with an icon on the top border
+      of the node box, near its left end: `person`, `team` (two persons),
+      `bot` (a robot head), `device` (a monitor), `mobile` (a phone),
+      `browser` (a window), `service` (a gear), `function` (a lambda),
+      `api` (a ball and socket), `code` (angle brackets with a slash),
+      `package` (a cube), `database` (an upright cylinder), `cache` (a
+      lightning bolt), `queue` (a lying cylinder), `document` (a page),
+      `mail` (an envelope), `communication` (two-way arrows), `clock`,
+      `security` (a shield), `cloud`, or `network` (three linked nodes),
+      an unknown icon being ignored,
+    - `multiple: true` draws the node box as several instances: the
+      front box with two copies behind it, offset towards the
+      bottom-right.
+
+  Both `badge` and `multiple` are ignored on a container node.
 
 - A `graph` (a `graph` container level, too) with at least one node
   carrying an `order` attribute is laid out in that explicit order
