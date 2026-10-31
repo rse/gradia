@@ -22,11 +22,14 @@ export type GateSide = "in" | "out"
     level with: the fixed box sizes of the container placeholders and
     the (zero-sized) gate nodes, the vertical port offsets (from the box
     center) fixed for the edge ends attaching to a container placeholder
-    at the position of its inner gate, and the gate nodes themselves  */
+    at the position of its inner gate, the gate nodes themselves, and the
+    edges to lay out as pointing backwards (e.g. the arcs of a Petri net
+    returning to its initially marked places)  */
 export interface LevelContext {
     fixedSize?: Map<string, { w: number, h: number }>
     fixedPort?: (edge: number, role: "s" | "t") => number | undefined
     gates?:     Map<string, GateSide>
+    backward?:  Set<Edge>
 }
 
 /*  reject the containers for a diagram type laying out a flat graph

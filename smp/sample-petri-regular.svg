@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="20 20 1615 285" width="1615" height="285">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="20 20 1600 316" width="1600" height="316">
 <defs>
 <style>
 .gradia-3167da4d { fill: none; stroke: var(--gradia-color-edge-line, #999999); stroke-width: 3 }
@@ -21,67 +21,67 @@
 <circle cx="5" cy="5" r="4.2" class="gradia-fe3664c6"/>
 </marker>
 </defs>
-<path d="M 141.12481002995636 83 L 179.5 83 Q 188 83 188 91.5 L 188 91.5 Q 188 100 196.5 100 L 240 100" class="gradia-3167da4d" marker-end="url(#gradia-45a2d848df30-arrow)"/>
-<path d="M 386 100 L 466 100" class="gradia-3167da4d" marker-end="url(#gradia-45a2d848df30-arrow)"/>
-<path d="M 586 100 L 611.5 100 Q 620 100 620 91.5 L 620 91.5 Q 620 83 628.5 83 L 666 83" class="gradia-3167da4d" marker-end="url(#gradia-45a2d848df30-arrow)"/>
-<path d="M 666 117 L 649 117 Q 632 117 632 134 L 632 152 Q 632 172 612 172 L 220 172 Q 200 172 200 152 L 200 137 Q 200 117 180 117 L 141.12481002995636 117" class="gradia-3167da4d" marker-end="url(#gradia-45a2d848df30-arrow)"/>
-<path d="M 812 83 L 894.8573504987776 83" class="gradia-3167da4d" marker-end="url(#gradia-45a2d848df30-arrow)"/>
-<path d="M 894.8573504987776 117 L 812 117" class="gradia-3167da4d" marker-end="url(#gradia-45a2d848df30-disc)"/>
-<path d="M 996 100 L 1021.5 100 Q 1030 100 1030 91.5 L 1030 91.5 Q 1030 83 1038.5 83 L 1076 83" class="gradia-3167da4d" marker-end="url(#gradia-45a2d848df30-arrow)"/>
-<path d="M 157.5412895232632 207.5 L 176.25 207.5 Q 188 207.5 188 195.75 L 188 195.75 Q 188 184 199.75 184 L 1022 184 Q 1042 184 1042 164 L 1042 134 Q 1042 117 1059 117 L 1076 117" class="gradia-3167da4d" marker-end="url(#gradia-45a2d848df30-arrow)"/>
-<path d="M 1196 100 L 1276 100" class="gradia-3167da4d" marker-end="url(#gradia-45a2d848df30-arrow)"/>
-<path d="M 1384 100 L 1464 100" class="gradia-3167da4d" marker-end="url(#gradia-45a2d848df30-arrow)"/>
-<path d="M 1464 134 L 1444 134 Q 1424 134 1424 154 L 1424 176 Q 1424 196 1404 196 L 232 196 Q 212 196 212 216 L 212 221.5 Q 212 241.5 192 241.5 L 157.5412895232632 241.5" class="gradia-3167da4d" marker-end="url(#gradia-45a2d848df30-arrow)"/>
+<path d="M 125.62481002995636 100 L 209 100" class="gradia-3167da4d" marker-end="url(#gradia-45a2d848df30-arrow)"/>
+<path d="M 355 100 L 435 100" class="gradia-3167da4d" marker-end="url(#gradia-45a2d848df30-arrow)"/>
+<path d="M 555 100 L 580.5 100 Q 589 100 589 91.5 L 589 91.5 Q 589 83 597.5 83 L 635 83" class="gradia-3167da4d" marker-end="url(#gradia-45a2d848df30-arrow)"/>
+<path d="M 635 117 L 618 117 Q 601 117 601 134 L 601 158 Q 601 178 581 178 L 189 178 Q 169 178 169 158 L 169 154 Q 169 134 149 134 L 125.62481002995636 134" class="gradia-3167da4d" marker-end="url(#gradia-45a2d848df30-arrow)"/>
+<path d="M 781 83 L 871.8573504987776 83" class="gradia-3167da4d" marker-end="url(#gradia-45a2d848df30-arrow)"/>
+<path d="M 871.8573504987776 117 L 781 117" class="gradia-3167da4d" marker-end="url(#gradia-45a2d848df30-disc)"/>
+<path d="M 973 100 L 1000.5 100 Q 1009 100 1009 91.5 L 1009 91.5 Q 1009 83 1017.5 83 L 1061 83" class="gradia-3167da4d" marker-end="url(#gradia-45a2d848df30-arrow)"/>
+<path d="M 978.5412895232632 239 L 1001 239 Q 1021 239 1021 219 L 1021 137 Q 1021 117 1041 117 L 1061 117" class="gradia-3167da4d" marker-end="url(#gradia-45a2d848df30-arrow)"/>
+<path d="M 1181 100 L 1261 100" class="gradia-3167da4d" marker-end="url(#gradia-45a2d848df30-arrow)"/>
+<path d="M 1369 100 L 1449 100" class="gradia-3167da4d" marker-end="url(#gradia-45a2d848df30-arrow)"/>
+<path d="M 1449 134 L 1429 134 Q 1409 134 1409 154 L 1409 158 Q 1409 178 1389 178 L 1053 178 Q 1033 178 1033 198 L 1033 253 Q 1033 273 1013 273 L 978.5412895232632 273" class="gradia-3167da4d" marker-end="url(#gradia-45a2d848df30-arrow)"/>
 <g>
 <title>tokens: 1 initially, at most 1</title>
-<circle cx="100" cy="100" r="44.5" class="gradia-0fe5af00"/>
-<text x="100" y="91.92" class="gradia-ae50cbbc">Idle</text>
-<circle cx="100" cy="113" r="5.5" class="gradia-257c0f21"/>
-</g>
-<g>
-<title>live (can always fire again)</title>
-<rect x="240" y="68.5" width="146" height="63" rx="6" class="gradia-c318c042"/>
-<text x="313" y="110.8" class="gradia-f36ab1ca">Produce</text>
-</g>
-<g>
-<title>tokens: 0 initially, at most 1</title>
-<circle cx="526" cy="100" r="60" class="gradia-0fe5af00"/>
-<text x="526" y="107.92" class="gradia-ae50cbbc">Produced</text>
-</g>
-<g>
-<title>live (can always fire again)</title>
-<rect x="666" y="61" width="146" height="78" rx="6" class="gradia-c318c042"/>
-<text x="739" y="110.8" class="gradia-f36ab1ca">Deliver</text>
-</g>
-<g>
-<title>tokens: 0 initially, at most 4</title>
-<circle cx="944" cy="100" r="52" class="gradia-0fe5af00"/>
-<text x="944" y="96.92" class="gradia-ae50cbbc">Buffer</text>
-<text x="944" y="118.76" class="gradia-4540d812">K = 4</text>
+<circle cx="84.5" cy="117" r="44.5" class="gradia-0fe5af00"/>
+<text x="84.5" y="108.92" class="gradia-ae50cbbc">Idle</text>
+<circle cx="84.5" cy="130" r="5.5" class="gradia-257c0f21"/>
 </g>
 <g>
 <title>tokens: 2 initially, at most 2</title>
-<circle cx="100" cy="224.5" r="60" class="gradia-0fe5af00"/>
-<text x="100" y="216.42" class="gradia-ae50cbbc">Waiting</text>
-<circle cx="91.75" cy="237.5" r="5.5" class="gradia-257c0f21"/>
-<circle cx="108.25" cy="237.5" r="5.5" class="gradia-257c0f21"/>
+<circle cx="921" cy="256" r="60" class="gradia-0fe5af00"/>
+<text x="921" y="247.92" class="gradia-ae50cbbc">Waiting</text>
+<circle cx="912.75" cy="269" r="5.5" class="gradia-257c0f21"/>
+<circle cx="929.25" cy="269" r="5.5" class="gradia-257c0f21"/>
 </g>
 <g>
 <title>live (can always fire again)</title>
-<rect x="1076" y="61" width="120" height="78" rx="6" class="gradia-c318c042"/>
-<text x="1136" y="110.8" class="gradia-f36ab1ca">Fetch</text>
+<rect x="209" y="68.5" width="146" height="63" rx="6" class="gradia-c318c042"/>
+<text x="282" y="110.8" class="gradia-f36ab1ca">Produce</text>
+</g>
+<g>
+<title>tokens: 0 initially, at most 1</title>
+<circle cx="495" cy="100" r="60" class="gradia-0fe5af00"/>
+<text x="495" y="107.92" class="gradia-ae50cbbc">Produced</text>
+</g>
+<g>
+<title>live (can always fire again)</title>
+<rect x="635" y="61" width="146" height="78" rx="6" class="gradia-c318c042"/>
+<text x="708" y="110.8" class="gradia-f36ab1ca">Deliver</text>
+</g>
+<g>
+<title>tokens: 0 initially, at most 4</title>
+<circle cx="921" cy="100" r="52" class="gradia-0fe5af00"/>
+<text x="921" y="96.92" class="gradia-ae50cbbc">Buffer</text>
+<text x="921" y="118.76" class="gradia-4540d812">K = 4</text>
+</g>
+<g>
+<title>live (can always fire again)</title>
+<rect x="1061" y="61" width="120" height="78" rx="6" class="gradia-c318c042"/>
+<text x="1121" y="110.8" class="gradia-f36ab1ca">Fetch</text>
 </g>
 <g>
 <title>tokens: 0 initially, at most 2</title>
-<circle cx="1330" cy="100" r="54" class="gradia-0fe5af00"/>
-<text x="1330" y="107.92" class="gradia-ae50cbbc">Fetched</text>
+<circle cx="1315" cy="100" r="54" class="gradia-0fe5af00"/>
+<text x="1315" y="107.92" class="gradia-ae50cbbc">Fetched</text>
 </g>
 <g>
 <title>live (can always fire again)</title>
-<rect x="1464" y="67.5" width="151" height="99" rx="6" class="gradia-c318c042"/>
-<text x="1539.5" y="111.8" class="gradia-f36ab1ca">Process</text>
-<text x="1539.5" y="141" class="gradia-db0a45a0">delay: 5ms</text>
+<rect x="1449" y="67.5" width="151" height="99" rx="6" class="gradia-c318c042"/>
+<text x="1524.5" y="111.8" class="gradia-f36ab1ca">Process</text>
+<text x="1524.5" y="141" class="gradia-db0a45a0">delay: 5ms</text>
 </g>
-<text x="866.6973504987776" y="76" class="gradia-a09eb644">2</text>
-<text x="840.16" y="110" class="gradia-a09eb644">3</text>
+<text x="843.6973504987776" y="76" class="gradia-a09eb644">2</text>
+<text x="809.16" y="110" class="gradia-a09eb644">3</text>
 </svg>

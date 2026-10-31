@@ -783,7 +783,10 @@ The diagram type `petri` draws a Petri net (a place/transition net).
   minimum node box width (`size-node-width-min`) of `120` instead of
   `220` and a minimum channel width (`graph-channel-width-min`) of `80`
   instead of `24` (unless configured), and every arc drawn on its own
-  (never bundled).
+  (never bundled). The layout starts at the tokens: the flow reads
+  left-to-right from the initially marked places (and the transitions
+  without input places), while the arcs returning to them point
+  backwards, so the layout is independent of the declaration order.
 
 - **Places**: a place is drawn as a circle in the `color-node-place-*`
   colors around its name (lighter than a node name, in the smaller

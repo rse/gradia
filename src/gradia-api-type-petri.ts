@@ -546,7 +546,19 @@ export const render = async (input: Graph, config: Config, level: LevelContext =
         twoway.add(edge)
         dropped.add(twin)
     })
-    const graph: Graph = { nodes, edges: input.edges.filter((edge) => !dropped.has(edge)) }
+    /*  start the layout at the tokens: lay out the arcs returning to the
+        initially marked places as pointing backwards, and hand over these
+        places and the transitions without input places first (otherwise in
+        declaration order), as the layered layout breaks the remaining cycles
+        of the net through a depth-first search over the nodes in their
+        order, so the flow reads from the tokens onwards  */
+    const edges    = input.edges.filter((edge) => !dropped.has(edge))
+    const marked   = (id: string) => (tokens.get(id) ?? 0) > 0
+    const backward = new Set(edges.filter((edge) => marked(edge.target)))
+    const starts   = (node: Node) => marked(node.id)
+        || (!tokens.has(node.id) && !edges.some((edge) => edge.target === node.id))
+    const graph: Graph = { nodes: new Map([ ...Array.from(nodes).filter(([ , node ]) => starts(node)),
+        ...Array.from(nodes).filter(([ , node ]) => !starts(node)) ]), edges }
 
     /*  the sink places: the places with incoming but without outgoing arcs,
         where the tokens come to rest  */
@@ -567,7 +579,7 @@ export const render = async (input: Graph, config: Config, level: LevelContext =
             (ends - 1) * config["size-edge-port-gap"] * 1.5 + PORT_PAD))
         fixedSize.set(id, { w: d, h: d })
     }
-    const layout = await renderGraph(graph, config, { ...level, fixedSize }, undefined, true)
+    const layout = await renderGraph(graph, config, { ...level, fixedSize, backward }, undefined, true)
 
     /*  draw the arc ends attaching to a place up to its circle, along their
         final segments (horizontal at a west or east side port, vertical at

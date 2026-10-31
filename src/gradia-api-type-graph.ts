@@ -1265,7 +1265,8 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
     else {
         /*  determine raw node positions with the AntV Dagre layout, for the
             connected nodes only (Dagre would merely stack the edge-less
-            ones into its first rank)  */
+            ones into its first rank), with the edges to lay out as pointing
+            backwards handed over reversed  */
         const rawX   = new Map<string, number>()
         const rawY   = new Map<string, number>()
         const linked = new Set<string>()
@@ -1284,7 +1285,9 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
             })
             await layout.execute({
                 nodes: connected.map((node) => ({ id: node.id, size: [ boxW.get(node.id)!, boxH.get(node.id)! ] })),
-                edges: realEdges.map((edge, i) => ({ id: `e${i}`, source: edge.source, target: edge.target }))
+                edges: realEdges.map((edge, i) => level.backward?.has(edge) === true ?
+                    { id: `e${i}`, source: edge.target, target: edge.source } :
+                    { id: `e${i}`, source: edge.source, target: edge.target })
             })
             layout.forEachNode((node) => {
                 rawX.set(String(node.id), node.x)

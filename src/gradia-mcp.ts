@@ -160,7 +160,9 @@ component relationships, data flows, dependency graphs, and similar structures.
   8 side-by-side nodes unless "graph-columns-max" is configured, a minimum node
   box width of 120 unless "size-node-width-min" is configured, and a minimum
   channel width of 80 unless "graph-channel-width-min" is configured), with
-  every arc drawn on its own (never bundled). A place is drawn as a circle in
+  every arc drawn on its own (never bundled), and starting at the tokens: the
+  flow reads left-to-right from the initially marked places, while the arcs
+  returning to them point backwards. A place is drawn as a circle in
   the "color-node-place-*" colors around its name (in the smaller
   "size-font-prop" font size), its attributes (in the "size-font-type" font
   size), and its initial tokens ("tokens: <count>", a non-negative integer,
