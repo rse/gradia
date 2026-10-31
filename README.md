@@ -37,8 +37,8 @@ graphs:
   states, and marking its unreachable, dead-end, and incomplete states and
   its conflicting transitions.
 - `petri`: a Petri net of places, holding tokens, and transitions,
-  marking its dead transitions and its unreachable, unbounded, and
-  deadlocked places.
+  marking its dead and non-live transitions and its unreachable,
+  unbounded, and deadlocked places.
 
 Examples
 --------

@@ -20,10 +20,10 @@ const petriKinds = [ "place", "transition" ] as const
 type PetriKind = typeof petriKinds[number]
 
 /*  the budget of the analysis across all parts of the net: the largest
-    number of explored markings and of place comparisons against their
-    predecessor markings, before it gives up determining the dead
-    transitions and the unreachable places (keeping the rendering of an
-    untrusted input fast)  */
+    number of explored markings and of place operations (the places of
+    every fired marking and the place comparisons against predecessor
+    markings), before it gives up determining the dead transitions and the
+    unreachable places (keeping the rendering of an untrusted input fast)  */
 const MARKINGS_MAX = 10000
 const EFFORT_MAX   = 20000000
 
@@ -326,6 +326,15 @@ export const prepare = (input: Graph, _containment: Containment, config: Config)
                 const next = m.slice()
                 for (const [ p, d ] of effects[i])
                     next[p] += d
+
+                /*  count the per-place work of every firing (copying and keying
+                    its marking), too, as a part without acceleration, e.g. with
+                    inhibitor arcs, performs no comparisons at all  */
+                effort += places.length
+                if (effort > EFFORT_MAX) {
+                    complete = false
+                    continue
+                }
                 const pumps = new Map<number, Visit>()
                 for (let up = accelerate ? queue[q] : undefined; up !== undefined && complete; up = up.up) {
                     /*  check whether the marking covers the predecessor marking,
@@ -531,7 +540,7 @@ export const render = async (input: Graph, config: Config, level: LevelContext =
             return
         const twin = input.edges.find((other, j) => j > i && plain(other)
             && !twoway.has(other) && !dropped.has(other) && other.source === edge.target
-            && other.target === edge.source && other.arity === edge.arity)
+            && other.target === edge.source && weightOf(other) === weightOf(edge))
         if (twin === undefined)
             return
         twoway.add(edge)

@@ -985,10 +985,10 @@ export const renderSVG = (layout: Layout, config: Config, explicit: Partial<Conf
 
     /*  derive the collision-free identifiers of this SVG document  */
     const prefix  = idPrefix(seed)
-    const idArrow = `${prefix}-arrow`
-    const idOpen  = `${prefix}-arrow-open`
-    const idAlert = `${prefix}-alert`
-    const idDisc  = `${prefix}-disc`
+    const idArrow     = `${prefix}-arrow`
+    const idOpen      = `${prefix}-arrow-open`
+    const idAlert     = `${prefix}-alert`
+    const idDisc      = `${prefix}-disc`
     const idDiscAlert = `${prefix}-disc-alert`
 
     /*  resolve the configured font into the rendered font family stack  */
@@ -1082,13 +1082,16 @@ export const renderSVG = (layout: Layout, config: Config, explicit: Partial<Conf
     const open      = polys.some((_, i) => hollow(i))
     const classOpen = open ? classOf(`fill: ${color("color-edge-halo")}; stroke: ${color("color-edge-line")}; ` +
         "stroke-width: 1.2; stroke-linejoin: round") : ""
-    const discs     = polys.some((_, i) => disc(i))
-    const classDisc = discs ? classOf(`fill: ${color("color-edge-halo")}; ` +
+    const classDash = polys.some((_, i) => dashed(i)) ?
+        classOf(`fill: none; stroke: ${color("color-edge-line")}; stroke-width: 3; stroke-dasharray: 10 6`) : ""
+
+    /*  the classes of the disc markers of the inhibitor edges (regular
+        and marked as a violation)  */
+    const discs          = polys.some((_, i) => disc(i))
+    const classDisc      = discs ? classOf(`fill: ${color("color-edge-halo")}; ` +
         `stroke: ${color("color-edge-line")}; stroke-width: 1.6`) : ""
     const classDiscAlert = discs && alerted ? classOf(`fill: ${color("color-edge-halo")}; ` +
         `stroke: ${color("color-mark-violation")}; stroke-width: 1.6`) : ""
-    const classDash = polys.some((_, i) => dashed(i)) ?
-        classOf(`fill: none; stroke: ${color("color-edge-line")}; stroke-width: 3; stroke-dasharray: 10 6`) : ""
     const head      = (i: number) => violates(i) ? (disc(i) ? idDiscAlert : idAlert) :
         disc(i) ? idDisc : hollow(i) ? idOpen : idArrow
     const svgEdges = piecesOf(polys, layout.bundled).flatMap((pieces, i) => pieces.map((piece) =>
