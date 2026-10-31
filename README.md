@@ -36,35 +36,51 @@ Examples
 
 Here are examples of the graph diagram renderings:
 
-- [sample-graph-regular](smp/sample-graph-regular.txt):
+- [sample-graph-regular](smp/sample-graph-regular.txt) (layered graph):
 
   ![sample-graph-regular](smp/sample-graph-regular.svg)
 
-- [sample-hub-regular](smp/sample-hub-regular.txt):
+- [sample-graph-crowded](smp/sample-graph-crowded.txt) (crowded channels with bundled edges):
 
-  ![sample-hub-regular](smp/sample-hub-regular.svg)
+  ![sample-graph-crowded](smp/sample-graph-crowded.svg)
 
-- [sample-grid-regular](smp/sample-grid-regular.txt):
+- [sample-graph-simple](smp/sample-graph-simple.txt) (self-loops and edge arities):
 
-  ![sample-grid-regular](smp/sample-grid-regular.svg)
+  ![sample-graph-simple](smp/sample-graph-simple.svg)
 
 - [sample-graph-container](smp/sample-graph-container.txt) (nested containers):
 
   ![sample-graph-container](smp/sample-graph-container.svg)
 
-- [sample-graph-badges](smp/sample-graph-badges.txt) (node badges and multiple nodes):
+- [sample-graph-badges](smp/sample-graph-badges.txt) (node badges, multiple nodes, and word-wrapping):
 
   ![sample-graph-badges](smp/sample-graph-badges.svg)
 
-- [sample-layer-regular](smp/sample-layer-regular.txt) (layered architecture):
+- [sample-hub-regular](smp/sample-hub-regular.txt) (hub graph):
+
+  ![sample-hub-regular](smp/sample-hub-regular.svg)
+
+- [sample-hub-crowded](smp/sample-hub-crowded.txt) (hub graph with wrapped input and output columns):
+
+  ![sample-hub-crowded](smp/sample-hub-crowded.svg)
+
+- [sample-grid-regular](smp/sample-grid-regular.txt) (grid of tiles):
+
+  ![sample-grid-regular](smp/sample-grid-regular.svg)
+
+- [sample-layer-regular](smp/sample-layer-regular.txt) (layered architecture with clusters and violations):
 
   ![sample-layer-regular](smp/sample-layer-regular.svg)
 
-- [sample-slice-regular](smp/sample-slice-regular.txt) (sliced architecture):
+- [sample-slice-regular](smp/sample-slice-regular.txt) (sliced architecture with clusters and violations):
 
   ![sample-slice-regular](smp/sample-slice-regular.svg)
 
-- [sample-matrix-full](smp/sample-matrix-full.txt) (dependency structure matrix):
+- [sample-matrix-regular](smp/sample-matrix-regular.txt) (acyclic dependency structure matrix in explicit order):
+
+  ![sample-matrix-regular](smp/sample-matrix-regular.svg)
+
+- [sample-matrix-full](smp/sample-matrix-full.txt) (dependency structure matrix with clusters, cycles, and badges):
 
   ![sample-matrix-full](smp/sample-matrix-full.svg)
 
