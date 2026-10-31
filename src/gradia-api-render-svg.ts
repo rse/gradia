@@ -13,7 +13,7 @@ import { Config, ConfigEmbedded, resolveFont, cssValueOf, cssSizeOf }
 import { Poly, Layout, Box, Styler, escapeXML }             from "./gradia-api-render-base.js"
 import { defaultStyleOf, markOf, markedStyleOf, isDormant, parentOf }
     from "./gradia-api-render-node.js"
-import { computeHops, piecesOf, pathOf, junctionsOf }       from "./gradia-api-render-edge.js"
+import { computeHops, piecesOf, pathOf, junctionsOf }       from "./gradia-api-render-path.js"
 import { labelPlacer, arityBoxes, renderEdgeArity, stubLabels, arrivalLabels, portLabels, renderEdgeName,
     nameText }
     from "./gradia-api-render-label.js"

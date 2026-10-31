@@ -11,7 +11,7 @@ import { Poly, FS_GROUP, textWidth, Layout, ContainerBox }
     from "./gradia-api-render-base.js"
 import { parentOf, containerTypeOf, containerHead, typeOf, defaultStyleOf, attrsOfNode }
     from "./gradia-api-render-node.js"
-import { simplifyPoly }                            from "./gradia-api-render-edge.js"
+import { simplifyPoly }                            from "./gradia-api-render-path.js"
 
 /*  the side of a container boundary a gate node sits on: an "in" gate
     on the west side carries an edge entering the container, an "out"

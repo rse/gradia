@@ -14,9 +14,10 @@ import { Poly, ARITY_OFF, textWidth, arrowRoom, stubRoom, extentOf, Layout }
     from "./gradia-api-render-base.js"
 import { measureNodes, orderOf }             from "./gradia-api-render-node.js"
 import { LevelContext, GateSide }            from "./gradia-api-render-container.js"
-import { Side, TrackUser, simplifyPoly, assignPorts, assignTracks, computeHops,
-    portGapOf, PORT_PAD }
-    from "./gradia-api-render-edge.js"
+import { Side, assignPorts, portGapOf, PORT_PAD }
+    from "./gradia-api-render-port.js"
+import { TrackUser, assignTracks }           from "./gradia-api-render-track.js"
+import { simplifyPoly, computeHops }         from "./gradia-api-render-path.js"
 
 /*  rendering geometry constants  */
 const CLUSTX   = 26  /*  max X distance within a grid column         */

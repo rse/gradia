@@ -10,7 +10,7 @@ import { Config }                       from "./gradia-api-config.js"
 import { Poly, NodeStyle, Layout }      from "./gradia-api-render-base.js"
 import { defaultStyleOf, markOf, placeLines, placeRadius, PLACE_RING, type NodeMark }
     from "./gradia-api-render-node.js"
-import { PORT_PAD }                     from "./gradia-api-render-edge.js"
+import { PORT_PAD }                     from "./gradia-api-render-port.js"
 import { LevelContext, Containment, rejectContainers }
     from "./gradia-api-render-container.js"
 import { render as renderGraph }        from "./gradia-api-type-graph.js"

@@ -11,7 +11,8 @@ import { Poly, NodeShape, NodeStyle, Layout, REGION_GAP, REGION_HEAD, REGION_PAD
     from "./gradia-api-render-base.js"
 import { defaultStyleOf, markOf, shapeRadius, shapeReach, containerHead, type NodeMark }
     from "./gradia-api-render-node.js"
-import { PORT_PAD, transitionOf }       from "./gradia-api-render-edge.js"
+import { PORT_PAD }                     from "./gradia-api-render-port.js"
+import { transitionOf }                 from "./gradia-api-render-label.js"
 import { LevelContext, Containment }    from "./gradia-api-render-container.js"
 import { render as renderGraph }        from "./gradia-api-type-graph.js"
 

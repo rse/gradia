@@ -11,7 +11,14 @@ import { Poly, Layout, Box, Styler, FS_GROUP, TAG_DX, TAG_DY, ARITY_OFF, ARITY_P
     REGION_HEAD, arityHeight, textWidth, escapeXML }
     from "./gradia-api-render-base.js"
 import { containerHead }                                    from "./gradia-api-render-node.js"
-import { pointAt, segmentsOf, transitionOf }                from "./gradia-api-render-edge.js"
+import { pointAt, segmentsOf }                              from "./gradia-api-render-path.js"
+
+/*  the parts of a transition label of the form "event [guard] / action"
+    (each part being optional, a label not of this form being its event)  */
+export const transitionOf = (name: string): { event: string, guard?: string, action?: string } => {
+    const m = /^([^[/]*)(?:\[([^\]]*)\])?\s*(?:\/(.*))?$/s.exec(name)
+    return m !== null ? { event: m[1].trim(), guard: m[2]?.trim(), action: m[3]?.trim() } : { event: name.trim() }
+}
 
 /*  the half width of the box an edge line segment occupies  */
 const LINE_PAD = 2

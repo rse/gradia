@@ -11,8 +11,9 @@ import { Poly, NodeStyle, Layout, ARITY_OFF, ARROW_AIR, textWidth, arrowRoom, st
     from "./gradia-api-render-base.js"
 import { isPrimary, measureNodes, defaultStyleOf } from "./gradia-api-render-node.js"
 import { LevelContext }                            from "./gradia-api-render-container.js"
-import { Side, TrackUser, simplifyPoly, assignPorts, assignTracks, portGapOf, PORT_PAD }
-    from "./gradia-api-render-edge.js"
+import { Side, assignPorts, portGapOf, PORT_PAD }  from "./gradia-api-render-port.js"
+import { TrackUser, assignTracks }                 from "./gradia-api-render-track.js"
+import { simplifyPoly }                            from "./gradia-api-render-path.js"
 
 /*  the separator between a node id and its placement suffix,
     distinguishing the two clones of a twice-placed node and the

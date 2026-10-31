@@ -12,7 +12,7 @@ import { Shape, pathShape }         from "./gradia-api-render-shape.js"
 import { LevelContext, rejectContainers }
     from "./gradia-api-render-container.js"
 import { measureNodes, orderOf }    from "./gradia-api-render-node.js"
-import { simplifyPoly }             from "./gradia-api-render-edge.js"
+import { simplifyPoly }             from "./gradia-api-render-path.js"
 
 /*  the geometry of the stacked leaves, the cross links, and the self-loops  */
 const BUS_AT     = 0.67 /*  position of a bus in the level gap, from its far end      */
