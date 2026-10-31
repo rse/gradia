@@ -38,7 +38,8 @@ ChangeLog
     every edge pointing upwards against the layering is drawn dashed in the "color-mark-violation"
     color (never bundled with the other edges), the "cluster" attribute (nested through
     "/"-separated cluster paths) groups the layers into columns left of the bands, and the new
-    option "layer-numbered" numbers the layers (by default), plus the new "smp/layer-*" samples.
+    option "layer-numbered" numbers the layers bottom-up (by default), plus the new
+    "smp/layer-*" samples.
 
 -   IMPROVEMENT [code]: bundle the edges of crowded channels and gutters (whose parallel tracks do
     not fit at the full "size-edge-track-gap") instead of squeezing their tracks into one grey bar:

@@ -353,8 +353,8 @@ as columns left of the bands, spanning the bands of their layers, with
 their names running upwards (the layers of a cluster are kept together,
 all nodes of a layer have to name the same path, and the edges may
 freely cross the clusters), and the boolean
-option `layer-numbered` numbers the layers top-down (by default, as the
-layers have a rank). All node boxes take
+option `layer-numbered` numbers the layers bottom-up (by default, as
+every layer builds on the ones below it). All node boxes take
 the width of the widest one and the boxes of a layer the height of the
 highest one, and the boxes of a layer stay aligned in its band. The
 layers determine the order of the rows, so an `order` attribute of a

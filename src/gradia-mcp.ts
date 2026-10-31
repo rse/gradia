@@ -46,9 +46,9 @@ component relationships, data flows, dependency graphs, and similar structures.
   layering is drawn dashed in the "color-mark-violation" color. The attribute
   "cluster: <path>" assigns the layer to nested clusters ("/"-separated,
   outermost first), drawn as columns left of the bands, and the option
-  "layer-numbered" numbers the layers (by default). The layers determine the
-  order of the rows, so an "order" attribute is ignored. It rejects the input
-  with an error if it contains a container.
+  "layer-numbered" numbers the layers bottom-up (by default). The layers
+  determine the order of the rows, so an "order" attribute is ignored. It
+  rejects the input with an error if it contains a container.
 - "matrix": a dependency structure matrix: the nodes are both the rows and the
   columns, a cell counts the edges from its row to its column, and the cycles
   are outlined as blocks on the diagonal, the counts of their edges closing

@@ -146,10 +146,12 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
         shapes.push(rectShape(left, y1, right - left, y2 - y1, "color-container-border", 2,
             undefined, "color-container-box", 12))
         if (numbered) {
+            /*  count the layers bottom-up, as every layer builds on the ones below it  */
             const fs = config["size-font-type"]
+            const nr = String(layers.length - i)
             shapes.push(rectShape(left + pad, mid - NUMBER_R, NUMBER_R * 2, NUMBER_R * 2, "color-container-name", 2,
                 undefined, "color-container-box", NUMBER_R))
-            shapes.push(textShape(left + pad + NUMBER_R, mid, String(i + 1), "middle", textWidth(String(i + 1), fs, true),
+            shapes.push(textShape(left + pad + NUMBER_R, mid, nr, "middle", textWidth(nr, fs, true),
                 "color-container-name", "size-font-type", fs, { bold: true, halo: false }))
         }
         shapes.push(textShape(left + pad + numberW, mid, name, "start", textWidth(name, FS_GROUP, true),
