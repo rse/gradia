@@ -249,6 +249,64 @@ EventStatistic [ url: "#eventstatistic" ]
 ChannelStatistic [ url: "#channelstatistic" ]
 UserStatistic [ url: "#userstatistic" ]
         </script>
+        <script type="text/x-gradia" id="sample-layer-sample">
+#type layer
+
+web:     "Web Client"       [ layer: Presentation ]
+admin:   "Admin Console"    [ layer: Presentation ]
+orders:  "Order Service"    [ layer: Application ]
+billing: "Billing Service"  [ layer: Application ]
+model:   "Domain Model"     [ layer: Domain ]
+store:   "Order Repository" [ layer: Infrastructure ]
+bus:     "Event Bus"        [ layer: Infrastructure ]
+
+web     --> orders
+admin   --> billing
+orders  --> model
+billing --> model
+orders  --> store
+billing --> bus
+store   --(callback)--> orders
+        </script>
+        <script type="text/x-gradia" id="sample-slice-sample">
+#type slice
+
+catalog: "Catalog UI"       [ slice: Catalog ]
+search:  "Search Service"   [ slice: Catalog ]
+items:   "Item Store"       [ slice: Catalog ]
+cart:    "Cart UI"          [ slice: Ordering ]
+orders:  "Order Service"    [ slice: Ordering ]
+ledger:  "Order Store"      [ slice: Ordering ]
+invoice: "Invoice UI"       [ slice: Billing ]
+billing: "Billing Service"  [ slice: Billing ]
+
+catalog --> search
+search  --> items
+cart    --> orders
+orders  --> ledger
+orders  --(price)--> search
+invoice --> billing
+billing --> orders
+        </script>
+        <script type="text/x-gradia" id="sample-matrix-sample">
+#type matrix
+
+web:     "Web Client" [ type: Component ]
+gateway: "API Gateway" [ type: Component ]
+orders:  "Order Service" [ type: Component ]
+billing: "Billing Service" [ type: Component ]
+model:   "Domain Model" [ type: Component ]
+store:   "Order Repository" [ type: Component ]
+
+web     --> gateway
+gateway --> orders
+gateway --> billing
+orders  --> model
+orders  -->[3] store
+billing --> model
+store   --> model
+model   --> orders
+        </script>
         <script type="text/x-gradia" id="sample-sequence-sample">
 #type sequence
 
@@ -291,6 +349,9 @@ gateway --("201 Created")--> client { kind: return }
                 "broadcast-graph.txt": sampleOf("sample-broadcast-graph"),
                 "broadcast-hub.txt":   sampleOf("sample-broadcast-hub"),
                 "broadcast-grid.txt":  sampleOf("sample-broadcast-grid"),
+                "layer-sample.txt":    sampleOf("sample-layer-sample"),
+                "slice-sample.txt":    sampleOf("sample-slice-sample"),
+                "matrix-sample.txt":   sampleOf("sample-matrix-sample"),
                 "sequence-sample.txt": sampleOf("sample-sequence-sample")
             }
 
