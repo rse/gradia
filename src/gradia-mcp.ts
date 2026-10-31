@@ -300,6 +300,11 @@ non-negative numbers, except the booleans "grid-node-width-equal" and
 the width of the widest one and to the height of the tallest one (a nested
 container box taking part in the width unification only).
 
+The boolean "mark-violation" option controls whether the diagram types
+"matrix", "layer", and "slice" mark their violations at all (in the
+"color-mark-violation" color): by default they do, while with "false" they
+render the very same diagram without any marking.
+
 The "size-node-width-max" option additionally enables the word-wrapping of the
 node box texts: given a positive value, the node name, its type, and its
 attribute lines are greedily broken at whitespace, so that the node box stays

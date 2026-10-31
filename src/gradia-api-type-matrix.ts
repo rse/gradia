@@ -263,14 +263,16 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
     /*  the cells: the diagonal shaded, the cells with an entry in the
         node box color, the numbers of the edges closing a cycle (the edges
         within a cycle pointing back to an earlier or the same node, i.e.,
-        on or below the diagonal) in the violation color, a number too
-        wide for its cell in a smaller font  */
+        on or below the diagonal) in the violation color (unless the marking
+        of the violations is disabled), a number too wide for its cell in a
+        smaller font  */
+    const marking = config["mark-violation"]
     for (let r = 0; r < rows.length; r++) {
         for (let c = 0; c < cols.length; c++) {
             const [ x, y ] = [ x0 + c * CELL, y0 + r * CELL ]
             const count    = counts.get(cellOf(r, c))
             const k        = cycles.get(rows[r].id)
-            const feedback = count !== undefined && k !== undefined && k === cycles.get(cols[c].id) && c <= r
+            const feedback = marking && count !== undefined && k !== undefined && k === cycles.get(cols[c].id) && c <= r
             shapes.push(rectShape(x, y, CELL, CELL, "color-container-border", 1, undefined,
                 r === c ? "color-node-self-box" : count !== undefined ? "color-node-regular-box" : "color-container-box"))
             if (count !== undefined) {
@@ -293,12 +295,13 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
         of its consecutive members within a cluster (a cycle spanning several
         clusters is split by them), except a single member split off from
         the rest of its cycle (a run of one is outlined only for a cycle of
-        one, i.e., a self-loop), as only its counts mark it  */
+        one, i.e., a self-loop), as only its counts mark it (and none at all
+        if the marking of the violations is disabled)  */
     const runs: number[][] = []
     nodes.forEach((node, i) => {
         const k    = cycles.get(node.id)
         const last = runs.at(-1)
-        if (k === undefined)
+        if (!marking || k === undefined)
             return
         if (last !== undefined && last.at(-1) === i - 1 && cycles.get(nodes[i - 1].id) === k
             && nameOf(nodes[i - 1]) === nameOf(node))

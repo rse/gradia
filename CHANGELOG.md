@@ -51,6 +51,11 @@ ChangeLog
     rows above the bands, and the new option "slice-numbered" numbers the slices, plus the new
     "smp/slice-*" samples.
 
+-   FEATURE [code]: add the boolean option "mark-violation" (default "true"), which with "false"
+    disables the marking of the violations of the diagram types "matrix" (the counts of the edges
+    closing a cycle and the dashed cycle outlines), "layer", and "slice" (the dashed edges in the
+    "color-mark-violation" color), while keeping their layout unchanged.
+
 -   IMPROVEMENT [code]: bundle the edges of crowded channels and gutters (whose parallel tracks do
     not fit at the full "size-edge-track-gap") instead of squeezing their tracks into one grey bar:
     the edges of the same name leading to the same target node side with the same arity, or else

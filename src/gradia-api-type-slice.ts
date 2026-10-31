@@ -100,7 +100,8 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
 
     /*  an edge pointing from a right slice back to a left one violates the
         slicing if it closes a direct cycle, i.e., if any edge points from
-        that left slice to the right one (no transitive cycles are checked)  */
+        that left slice to the right one (no transitive cycles are checked),
+        unless the marking of the violations is disabled  */
     const forward = new Set<string>()
     for (const edge of graph.edges) {
         const [ s, t ] = [ indexOf(edge.source), indexOf(edge.target) ]
@@ -109,7 +110,7 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
     }
     const violates = (edge: Edge): boolean => {
         const [ s, t ] = [ indexOf(edge.source), indexOf(edge.target) ]
-        return s !== undefined && t !== undefined && s > t && forward.has(`${t}:${s}`)
+        return config["mark-violation"] && s !== undefined && t !== undefined && s > t && forward.has(`${t}:${s}`)
     }
 
     /*  the rows of the nodes within their slices (or within the trailing

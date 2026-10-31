@@ -88,10 +88,11 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
     }
 
     /*  an edge pointing from a lower layer to a higher one violates the
-        layering (an edge within a layer or towards a lower one is fine)  */
+        layering (an edge within a layer or towards a lower one is fine),
+        unless the marking of the violations is disabled  */
     const violates = (edge: Edge): boolean => {
         const [ s, t ] = [ indexOf(edge.source), indexOf(edge.target) ]
-        return s !== undefined && t !== undefined && s > t
+        return config["mark-violation"] && s !== undefined && t !== undefined && s > t
     }
 
     /*  count the self-loops of every node, as their detours rise above

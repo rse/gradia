@@ -72,6 +72,7 @@ export const configDefaults = {
     "grid-gap-vertical":         20,    /*  grid: vertical gap between tiles       */
     "grid-node-width-equal":     true,  /*  grid: force equal width of node boxes  */
     "grid-node-height-equal":    true,  /*  grid: force equal height of node boxes */
+    "mark-violation":            true,  /*  matrix/layer/slice: mark violations    */
     "layer-numbered":            true,  /*  layer: number the layers bottom-up     */
     "slice-numbered":            false  /*  slice: number the slices left-to-right */
 }
