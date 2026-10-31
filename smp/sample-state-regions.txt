@@ -1,0 +1,27 @@
+#type state
+
+#   the top-level states
+Start     [ state: initial ]
+Split     [ state: fork ]
+Merge     [ state: join ]
+End       [ state: final ]
+Ordered
+Closed    [ entry: "archive()" ]
+
+#   the composite state with its two orthogonal regions
+Fulfilling
+Charging  [ parent: Fulfilling, region: Payment, do: "charge()" ]
+Picking   [ parent: Fulfilling, region: Shipping ]
+Packing   [ parent: Fulfilling, region: Shipping, do: "pack()" ]
+
+#   the transitions (the fork enters both regions, and the join leaves
+#   them once both of them are done)
+Start     --> Ordered
+Ordered   --("confirm")--> Split
+Split     --> Charging
+Split     --> Picking
+Picking   --("picked")--> Packing
+Charging  --("paid")--> Merge
+Packing   --("packed / label()")--> Merge
+Merge     --> Closed
+Closed    --("purge")--> End

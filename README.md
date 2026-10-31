@@ -114,6 +114,10 @@ Here are examples of the graph diagram renderings:
 
   ![sample-state-advanced](smp/sample-state-advanced.svg)
 
+- [sample-state-regions](smp/sample-state-regions.txt) (state machine with a composite state of two orthogonal regions):
+
+  ![sample-state-regions](smp/sample-state-regions.svg)
+
 Playground
 ----------
 
@@ -701,14 +705,24 @@ The diagram type `state` draws a state machine.
   drawn as solid grey boxes, bordered in the `color-composite-border`
   color, with their name and their attributes above a dividing line.
 
+- **Regions**: the attribute `region: <name>` splits a composite state
+  into orthogonal regions, active concurrently: its members sharing a
+  name form one region. The regions are stacked top-down as bands (in
+  the order of their first appearance), separated by dashed lines, each
+  with its name in its top-left corner.
+
 - **Semantics**: a transition into a composite state enters its initial
-  state, and one into its history state resumes it. A transition out of
-  a composite state leaves any of its members. An unlabeled transition
-  out of it is a completion transition, firing only once an inner final
-  state is reached. A join fires once all of its sources are reached.
+  state (in each of its regions), and one into its history state resumes
+  it. A transition out of a composite state leaves any of its members.
+  An unlabeled transition out of it is a completion transition, firing
+  only once an inner final state is reached (in each of its regions). A
+  join fires once all of its sources are reached.
 
 - **Validation**: the input is rejected with an error if
 
+    - a node with a `region` is not inside a composite state,
+    - a composite state mixes members with and without a `region`,
+    - a transition crosses between two regions of a composite state,
     - an initial state has an incoming transition,
     - a final or terminate state has an outgoing transition,
     - a choice, junction, fork, join, or entry point has no outgoing
@@ -721,7 +735,8 @@ The diagram type `state` draws a state machine.
       composite state without an initial state,
     - a containment level (or the top level) has more than one initial
       (or history, or deep-history) state,
-    - a transition enters a composite state without an initial state, or
+    - a transition enters a composite state without an initial state
+      (in each of its regions), or
     - a pseudo-state has members.
 
 - **Analysis**: the following violations are marked in the

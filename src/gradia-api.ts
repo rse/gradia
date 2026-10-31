@@ -21,7 +21,7 @@ import { render as renderSlice }                   from "./gradia-api-type-slice
 import { render as renderTree }                    from "./gradia-api-type-tree.js"
 import { render as renderMatrix }                  from "./gradia-api-type-matrix.js"
 import { render as renderSequence }                from "./gradia-api-type-sequence.js"
-import { render as renderState, prepare as prepareState }
+import { render as renderState, prepare as prepareState, frameOf as frameOfState }
     from "./gradia-api-type-state.js"
 
 /*  re-export the graph model and configuration companion types  */
@@ -48,7 +48,7 @@ const renderers = {
     matrix:   { render: renderMatrix,   nestable: false, gated: false, kinds: false },
     sequence: { render: renderSequence, nestable: false, gated: false, kinds: true  },
     state:    { render: renderState,    nestable: true,  gated: true,  kinds: false,
-        prepare: prepareState, boxed: true, defaults: { "graph-columns-max": 8 } }
+        prepare: prepareState, boxed: true, frameOf: frameOfState, defaults: { "graph-columns-max": 8 } }
 } satisfies Record<string, DiagramTypeSpec>
 export type DiagramType = keyof typeof renderers
 export const diagramTypes = Object.keys(renderers) as DiagramType[]

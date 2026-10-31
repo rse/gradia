@@ -778,6 +778,35 @@ Route     --("[else]")--> Review
 Review    --("ok")--> End
 Review    --("ok")--> Editing
         </script>
+        <script type="text/x-gradia" id="sample-state-regions">
+#type state
+
+#   the top-level states
+Start     [ state: initial ]
+Split     [ state: fork ]
+Merge     [ state: join ]
+End       [ state: final ]
+Ordered
+Closed    [ entry: "archive()" ]
+
+#   the composite state with its two orthogonal regions
+Fulfilling
+Charging  [ parent: Fulfilling, region: Payment, do: "charge()" ]
+Picking   [ parent: Fulfilling, region: Shipping ]
+Packing   [ parent: Fulfilling, region: Shipping, do: "pack()" ]
+
+#   the transitions (the fork enters both regions, and the join leaves
+#   them once both of them are done)
+Start     --> Ordered
+Ordered   --("confirm")--> Split
+Split     --> Charging
+Split     --> Picking
+Picking   --("picked")--> Packing
+Charging  --("paid")--> Merge
+Packing   --("packed / label()")--> Merge
+Merge     --> Closed
+Closed    --("purge")--> End
+        </script>
 
         <script>
             /*  access the Gradia API class from the "Gradia" namespace
@@ -811,7 +840,8 @@ Review    --("ok")--> Editing
                 "matrix-full":      sampleOf("sample-matrix-full"),
                 "sequence-regular": sampleOf("sample-sequence-regular"),
                 "state-regular":    sampleOf("sample-state-regular"),
-                "state-advanced":   sampleOf("sample-state-advanced")
+                "state-advanced":   sampleOf("sample-state-advanced"),
+                "state-regions":    sampleOf("sample-state-regions")
             }
 
             const app = Vue.createApp({

@@ -12,12 +12,13 @@ import { Node, Edge }                                       from "./gradia-api-m
 import { Config, ConfigEmbedded, ConfigFontSize, resolveFont, cssValueOf, cssSizeOf }
     from "./gradia-api-config.js"
 import { Poly, NodeStyle, NodeShape, Layout, GroupBox, ContainerBox,
-    FS_GROUP, ARITY_OFF, ARITY_PAD, ARITY_GAP, ARROW_AIR, arityHeight, textWidth, escapeXML }
+    FS_GROUP, ARITY_OFF, ARITY_PAD, ARITY_GAP, ARROW_AIR, REGION_GAP, REGION_HEAD, arityHeight, textWidth,
+    escapeXML }
     from "./gradia-api-render-base.js"
 import { Shape }                                            from "./gradia-api-render-shape.js"
 import { linesOfNode, linesWidth, urlOf, typeOf, defaultStyleOf, containerHead, badgeOf, badgeRoom, isMultiple,
     MULTI_OFF, BADGE_X, PAD_W, badgeRadius, type NodeBadge, MIN_H, NAME_H, ATTR_H, ATTR_P, TYPE_H, TYPE_D, HEAD_H,
-    markOf, markedStyleOf, shapeRadius, attrsOfNode, HEAD_X }
+    markOf, markedStyleOf, shapeRadius, attrsOfNode, parentOf, HEAD_X }
     from "./gradia-api-render-node.js"
 import { computeHops, piecesOf, pathOf, pointAt, segmentsOf, junctionsOf, transitionOf }
     from "./gradia-api-render-edge.js"
@@ -203,7 +204,8 @@ const labelPlacer = (
             group.x + TAG_DX + textWidth(group.name, FS_GROUP), group.y + TAG_DY + FS_GROUP * 1.2 ])
     for (const c of layout.containers ?? [])
         occupied.push([ c.x + TAG_DX, c.y + TAG_DY,
-            c.x + TAG_DX + textWidth(c.node.name, FS_GROUP), c.y + containerHead(c.node, config, c.style !== undefined) ])
+            c.x + TAG_DX + textWidth(c.node.name, FS_GROUP),
+            c.y + (c.style?.band !== undefined ? REGION_HEAD : containerHead(c.node, config, c.style !== undefined)) ])
 
     /*  let the labels also dodge the free-standing texts  */
     for (const shape of layout.shapes ?? [])
@@ -840,8 +842,22 @@ const renderGroup = (group: GroupBox, styler: Styler): string[] => [
     violation color), or, for a container drawn in a node style (e.g. a
     composite state), a solid box in that style with its attribute lines
     below its name and its head divided from its members by a line
-    across the box (as far as not marked)  */
-const renderContainer = (c: ContainerBox, styler: Styler, config: Config): string[] => {
+    across the box (as far as not marked), or, for a region band of a
+    composite state, just its name in its head and, except for the first
+    band, a dashed line across the given outer box, separating it from
+    the band above it  */
+const renderContainer = (c: ContainerBox, styler: Styler, config: Config, outer?: ContainerBox): string[] => {
+    if (c.style?.band !== undefined) {
+        const [ x1, x2 ] = outer !== undefined ? [ outer.x, outer.x + outer.w ] : [ c.x, c.x + c.w ]
+        const parts = [ `<text x="${x1 + TAG_DX}" y="${c.y + REGION_HEAD - 8}" ` +
+            `class="${styler.text(c.style.text, "size-font-type")}">${escapeXML(c.node.name)}</text>` ]
+        if (c.style.band === "next") {
+            const y = c.y - REGION_GAP / 2
+            parts.unshift(`<line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" ` +
+                `class="${styler.line(c.style.stroke, 2)}" stroke-dasharray="10 6"/>`)
+        }
+        return parts
+    }
     const type   = typeOf(c.node)
     const url    = urlOf(c.node)
     const head   = containerHead(c.node, config, c.style !== undefined)
@@ -1116,7 +1132,8 @@ export const renderSVG = (layout: Layout, config: Config, explicit: Partial<Conf
         everything else) and the container boxes (drawn below the edges
         and nodes, an outer box before its nested ones)  */
     const svgGroups     = groups.flatMap((group) => renderGroup(group, styler))
-    const svgContainers = containers.flatMap((c) => renderContainer(c, styler, config))
+    const svgContainers = containers.flatMap((c) => renderContainer(c, styler, config,
+        containers.find((o) => o.node.id === parentOf(c.node))))
 
     /*  generate the SVG fragments for the free-standing shapes (drawn
         above the boxes and below the edges and nodes, in their order,

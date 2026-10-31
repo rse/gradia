@@ -16,6 +16,7 @@ forest with bus connectors, stacked leaves, and dashed cross links),
 structure matrix, outlining its cycles), `sequence` (a sequence
 diagram of participants, their lifelines, and their messages), and
 `state` (a state machine with pseudo-states and composite states,
+optionally split into orthogonal regions,
 marking its unreachable, dead-end, and incomplete states and its
 conflicting transitions).
 
@@ -73,9 +74,11 @@ conflicting transitions).
     -   `src/gradia-api-type-sequence.ts`: the `sequence` diagram type
         (participants, messages, and lifelines)
     -   `src/gradia-api-type-state.ts`: the `state` diagram type (a
-        `graph` with distinct transitions and pseudo-state shapes, plus
-        the validation and the reachability and dead-end analysis of the
-        whole state machine, marking its states via the `mark` attribute)
+        `graph` with distinct transitions and pseudo-state shapes, the
+        orthogonal regions rewritten into synthetic region containers and
+        stacked as bands, plus the validation and the reachability and
+        dead-end analysis of the whole state machine, marking its states
+        via the `mark` attribute)
 -   `etc/`: the tool configurations (`eslint.mjs`, `tsconfig.json`,
     `stx.conf`, `vite.ts`)
 -   `smp/`: the sample graph descriptions (`*.txt`), their rendered

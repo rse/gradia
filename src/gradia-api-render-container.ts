@@ -50,13 +50,16 @@ export type Renderer = (graph: Graph, config: Config, level?: LevelContext) => P
     the general ones, but overridden by the explicit ones), its optional
     preparation of the graph model as a whole, before it is partitioned
     into groups and containment levels (e.g. its validation and analysis,
-    deriving node annotations), and whether it draws its member containers
+    deriving node annotations), whether it draws its member containers
     as solid boxes in its node style, with their attributes in their head
-    (e.g. the composite states of a state machine)  */
+    (e.g. the composite states of a state machine), and its optional head
+    height and padding of a member container (given its own members, e.g.
+    for the compact region bands of a composite state)  */
 export interface DiagramTypeSpec {
     render:    Renderer
     prepare?:  (graph: Graph, containment: Containment, config: Config) => Graph
     boxed?:    boolean
+    frameOf?:  (member: Node, members: Node[], config: Config) => { head: number, pad: number } | undefined
     nestable:  boolean
     gated:     boolean
     kinds:     boolean
@@ -218,18 +221,25 @@ export const renderContained = async (
         if (node.id.includes("\u0000"))
             throw new Error(`node id ${JSON.stringify(node.id)} contains a reserved control character`)
 
+    /*  the head height and the padding of a container placeholder in a
+        level of the given diagram type (unless overridden by that type)  */
+    const frameOf = (member: Node, type: string): { head: number, pad: number } =>
+        types[type].frameOf?.(member, containment.childrenOf.get(member.id) ?? [], config) ??
+            { head: containerHead(member, config, types[type].boxed === true), pad }
+
     /*  the box size of a container placeholder in a level of the given
         diagram type: its content plus the padding and the head, at least
         as wide as its tag (and, for a boxed one, its attribute lines)  */
     const sizeOf = (member: Node, b: Bounds, type: string): { w: number, h: number } => {
         const boxed = types[type].boxed === true
+        const frame = frameOf(member, type)
         const tag   = Math.max(textWidth(member.name, FS_GROUP),
             textWidth(typeOf(member) ?? "", config["size-font-type"]),
             ...(boxed ? attrsOfNode(member).map((attr) =>
                 textWidth(`${attr.key}: ${attr.val}`, config["size-font-prop"])) : []))
         return {
-            w: Math.max(b.maxX - b.minX, tag) + pad * 2,
-            h: b.maxY - b.minY + pad * 2 + containerHead(member, config, boxed)
+            w: Math.max(b.maxX - b.minX, tag) + frame.pad * 2,
+            h: b.maxY - b.minY + frame.pad * 2 + frame.head
         }
     }
 
@@ -262,12 +272,13 @@ export const renderContained = async (
                 throw new Error(`container "${id}" cannot be placed twice by diagram type "${type}"`)
             const { w, h } = sizeOf(member, level.bounds, type)
             const boxed = types[type].boxed === true
+            const frame = frameOf(member, type)
             const cx = layout.cx(id)
             const cy = layout.cy(id)
             const k  = parts.push({
                 layout: level.layout,
-                dx:     cx - w / 2 + pad - level.bounds.minX,
-                dy:     cy - h / 2 + containerHead(member, config, boxed) + pad - level.bounds.minY
+                dx:     cx - w / 2 + frame.pad - level.bounds.minX,
+                dy:     cy - h / 2 + frame.head + frame.pad - level.bounds.minY
             }) - 1
             for (const node of level.layout.nodes)
                 partOf.set(node.id, k)
@@ -380,8 +391,8 @@ export const renderContained = async (
             attaches at: the position of its inner gate  */
         const portOffset = (member: Node, y: number): number => {
             const { bounds } = inner.get(member.id)!
-            return (y - bounds.minY) + containerHead(member, config, types[type].boxed === true) + pad -
-                sizeOf(member, bounds, type).h / 2
+            const frame = frameOf(member, type)
+            return (y - bounds.minY) + frame.head + frame.pad - sizeOf(member, bounds, type).h / 2
         }
 
         /*  derive the edges of this level: the edges lifted to it (both

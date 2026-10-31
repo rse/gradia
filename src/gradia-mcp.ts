@@ -122,19 +122,26 @@ component relationships, data flows, dependency graphs, and similar structures.
   "exit: <action>") are drawn below a line dividing them from its name.
   Containers act as composite states, drawn as solid grey boxes (bordered in
   the "color-composite-border" color) with their name and attributes above a
-  dividing line: a transition into a container enters its initial state, one
-  into its history state resumes it, a transition out of it leaves any of its
-  members, and an unlabeled one out of it is a completion transition, firing
-  once an inner final state is reached. A join fires once all of its sources
-  are reached. It rejects the input with an error if an initial state has an
-  incoming transition, a final or terminate state has an outgoing one, a
-  choice, junction, fork, join, or entry point has none, a history state or
-  join has more than one, a fork has more than one incoming one, a history
-  state, entry point, or exit point is not inside a composite state, a
-  history state without a default transition is inside a composite state
-  without an initial state, a containment level (or the top level) has more
-  than one initial (or history, or deep-history) state, a transition enters a
-  composite state without an initial state, or a pseudo-state has members.
+  dividing line. The attribute "region: <name>" splits a composite state into
+  orthogonal regions (its members sharing a name forming one region, active
+  concurrently), stacked top-down as bands separated by dashed lines, each
+  with its name in its top-left corner. A transition into a container enters
+  its initial state (in each of its regions), one into its history state
+  resumes it, a transition out of it leaves any of its members, and an
+  unlabeled one out of it is a completion transition, firing once an inner
+  final state is reached (in each of its regions). A join fires once all of
+  its sources are reached. It rejects the input with an error if a node with a
+  "region" is not inside a composite state, a composite state mixes members
+  with and without a "region", a transition crosses between two regions of a
+  composite state, an initial state has an incoming transition, a final or
+  terminate state has an outgoing one, a choice, junction, fork, join, or
+  entry point has none, a history state or join has more than one, a fork has
+  more than one incoming one, a history state, entry point, or exit point is
+  not inside a composite state, a history state without a default transition
+  is inside a composite state without an initial state, a containment level
+  (or the top level) has more than one initial (or history, or deep-history)
+  state, a transition enters a composite state without an initial state (in
+  each of its regions), or a pseudo-state has members.
   Once the top level has an initial state, every state not reachable from it
   is marked "unreachable" (its border and outgoing transitions drawn dashed in
   the "color-mark-violation" color), every regular state which is trapped

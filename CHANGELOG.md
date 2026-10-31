@@ -12,13 +12,14 @@ ChangeLog
     join|history|deep-history|entry-point|exit-point" (drawn in the new "color-node-pseudo-*"
     colors), the attributes (e.g. the behaviors "entry", "do", and "exit") below a dividing line,
     and containers as composite states (drawn as solid boxes, bordered in the new
-    "color-composite-border" color, with their attributes in their head, and with completion
-    transitions and history entries), validating the state machine as a whole (through the new
-    "prepare" hook of the diagram type registry) and marking its unreachable, trapped
-    (dead-end), and incomplete states (through the new reserved node attribute
-    "mark: unreachable|dead-end|incomplete") and its conflicting transitions, plus the
-    "smp/sample-state-regular" and "smp/sample-state-advanced" samples and two state machine
-    examples in the playground.
+    "color-composite-border" color, with their attributes in their head, with completion
+    transitions and history entries, and optionally split into orthogonal regions through the new
+    node attribute "region: <name>", stacked as bands separated by dashed lines), validating the
+    state machine as a whole (through the new "prepare" hook of the diagram type registry) and
+    marking its unreachable, trapped (dead-end), and incomplete states (through the new reserved
+    node attribute "mark: unreachable|dead-end|incomplete") and its conflicting transitions, plus
+    the "smp/sample-state-regular", "smp/sample-state-advanced", and "smp/sample-state-regions"
+    samples and three state machine examples in the playground.
 
 -   FEATURE [code, othr]: add the diagram type "sequence" (participants on top of dashed
     lifelines, messages top-down in declaration order, self messages looping on their lifeline),

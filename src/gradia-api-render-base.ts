@@ -94,10 +94,19 @@ export type Poly = [ number, number ][]
 export type NodeShape = "initial" | "final" | "choice" | "history" | "deep-history" |
     "junction" | "fork" | "join" | "entry-point" | "exit-point" | "terminate"
 
+/*  the geometry of the stacked region bands of a composite state: the
+    gap between them (with the dashed line separating them in its
+    middle), the height of the head holding the name of a band, and the
+    padding around the content of a band (and around all of the bands)  */
+export const REGION_GAP  = 24
+export const REGION_HEAD = 28
+export const REGION_PAD  = 16
+
 /*  the node box coloring (given as configuration option keys which
     are resolved into CSS color values at SVG generation time), with
-    the optional shape drawn instead of the box, and whether a line
-    divides the name from the attribute lines  */
+    the optional shape drawn instead of the box, whether a line divides
+    the name from the attribute lines, and, for a container drawn as a
+    region band instead of a box, whether it is the first band  */
 export interface NodeStyle {
     fill:     ConfigEmbedded
     stroke:   ConfigEmbedded
@@ -105,6 +114,7 @@ export interface NodeStyle {
     dash?:    string
     shape?:   NodeShape
     divided?: boolean
+    band?:    "first" | "next"
 }
 
 /*  a decorated group box surrounding the nodes of a named group  */
