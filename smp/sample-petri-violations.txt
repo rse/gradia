@@ -1,0 +1,31 @@
+#type petri
+
+#   two processes, each acquiring both resources, but in opposite
+#   order, which can deadlock with each holding one resource
+Ready1    [ tokens: 1 ]
+Ready2    [ tokens: 1 ]
+Res1      [ tokens: 1 ]
+Res2      [ tokens: 1 ]
+Ready1    --> Take1a [ petri: transition ] --> Hold1 --> Take1b --> Busy1 --> Free1 --> Ready1
+Ready2    --> Take2a [ petri: transition ] --> Hold2 --> Take2b --> Busy2 --> Free2 --> Ready2
+Res1      --> Take1a
+Res2      --> Take1b
+Res2      --> Take2a
+Res1      --> Take2b
+Free1     --> Res1
+Free1     --> Res2
+Free2     --> Res1
+Free2     --> Res2
+
+#   an escalation requiring an approval nothing ever grants
+Busy1     --> Escalate [ petri: transition ]
+Approval  --> Escalate --> Escalated
+
+#   a source of requests served slower than they arrive
+Arrive    [ petri: transition ] --> Pending -->[2] Serve
+
+#   a calibration possible only once, before the service loop (whose
+#   two opposite arcs are drawn as one two-way arc)
+Boot      [ tokens: 1 ]
+Boot      --> Calibrate [ petri: transition ] --> Online
+Online    --> Respond [ petri: transition ] --> Online

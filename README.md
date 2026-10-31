@@ -14,7 +14,7 @@ About
 -----
 
 **Gradia** is a small API and CLI for rendering directed graphs,
-described in a concise textual input language, as SVG diagrams. Nine
+described in a concise textual input language, as SVG diagrams. Ten
 diagram types are supported which fit the scenario of visualizing object
 graphs:
 
@@ -36,6 +36,9 @@ graphs:
   (initial, final, choice, junction, fork/join, and history), composite
   states, and marking its unreachable, dead-end, and incomplete states and
   its conflicting transitions.
+- `petri`: a Petri net of places, holding tokens, and transitions,
+  marking its dead transitions and its unreachable, unbounded, and
+  deadlocked places.
 
 Examples
 --------
@@ -118,6 +121,14 @@ Here are examples of the graph diagram renderings:
 
   ![sample-state-regions](smp/sample-state-regions.svg)
 
+- [sample-petri-regular](smp/sample-petri-regular.txt) (Petri net of a producer, a bounded and inhibiting buffer, and two consumers):
+
+  ![sample-petri-regular](smp/sample-petri-regular.svg)
+
+- [sample-petri-violations](smp/sample-petri-violations.txt) (Petri net with a deadlock, a dead and a non-live transition, an unbounded place, and a two-way arc):
+
+  ![sample-petri-violations](smp/sample-petri-violations.svg)
+
 Playground
 ----------
 
@@ -136,7 +147,7 @@ Usage
 -----
 
 ```sh
-$ gradia [-t graph|hub|grid|layer|slice|tree|matrix|sequence|state] [-f <format>] [-c <name>=<value>] -o <file>.svg <graph>.txt
+$ gradia [-t graph|hub|grid|layer|slice|tree|matrix|sequence|state|petri] [-f <format>] [-c <name>=<value>] -o <file>.svg <graph>.txt
 ```
 
 The diagram type is selected with the `-t` command-line option or, when
@@ -153,7 +164,7 @@ MCP Service
 -----------
 
 ```sh
-$ gradia --mcp [-t graph|hub|grid|layer|slice|tree|matrix|sequence|state] [-f <format>] [-c <name>=<value>]
+$ gradia --mcp [-t graph|hub|grid|layer|slice|tree|matrix|sequence|state|petri] [-f <format>] [-c <name>=<value>]
 ```
 
 With the `-m`/`--mcp` option, **Gradia** instead runs as a [Model Context
@@ -221,7 +232,7 @@ separated by `|`.
 <directive>      ::= "#config" <whitespace> { <whitespace> } <option> <whitespace> { <whitespace> } ( <string> | <word> )
                    | "#type" <whitespace> { <whitespace> } <type>
 <option>         ::= <lowercase-letter> { <lowercase-letter> | <digit> | "-" }
-<type>           ::= "graph" | "hub" | "grid" | "layer" | "slice" | "tree" | "matrix" | "sequence" | "state"
+<type>           ::= "graph" | "hub" | "grid" | "layer" | "slice" | "tree" | "matrix" | "sequence" | "state" | "petri"
 <word>           ::= <char> - <whitespace> { <char> - <whitespace> }
 <newline>        ::= "\n"
 <whitespace>     ::= " " | "\t" | "\r"
@@ -278,11 +289,13 @@ separated by `|`.
 - The `<edge-attrs>` following a node belong to the `<edge>` leading
   into that node, i.e., in `a --> b { kind: async } --> c` they belong
   to the edge `a --> b`. The recognized keys are `kind`, with the values
-  `sync` (the default), `async`, `return`, `create`, and `destroy`, plus
-  `duration` and `time`, with arbitrary texts. Only the diagram type
-  `sequence` renders them (see below), while the other diagram types
-  reject a kind other than `sync`, as well as a `duration` or `time`,
-  with an error. Any other key is rejected with an error, too.
+  `sync` (the default), `async`, `return`, `create`, `destroy`, and
+  `inhibitor`, plus `duration` and `time`, with arbitrary texts. Only
+  the diagram type `sequence` renders the kinds `async`, `return`,
+  `create`, and `destroy` and the `duration` and `time`, and only the
+  diagram type `petri` the kind `inhibitor` (see below), while every
+  diagram type rejects the ones it does not render with an error. Any
+  other key is rejected with an error, too.
 
 - Eleven attribute keys are reserved and consumed by the renderer instead
   of being displayed as a regular `<key>: <val>` line:
@@ -333,16 +346,17 @@ separated by `|`.
       front box with two copies behind it, offset towards the
       bottom-right,
 
-    - `mark: unreachable|dead-end|incomplete` marks the node (or
-      container) as a violation: its border is drawn in the
-      `color-mark-violation` color, for `unreachable` dashed and with its
-      outgoing edges marked, too. It is usually derived by diagram type
-      `state`, but honored by every diagram type drawing node boxes,
-      unless the option `mark-violation` is `false`.
+    - `mark: unreachable|dead-end|incomplete|dead|unbounded|non-live`
+      marks the node (or container) as a violation: its border is drawn
+      in the `color-mark-violation` color, for `unreachable` and `dead`
+      dashed and with its outgoing edges marked, too. It is usually derived by
+      diagram type `state` or `petri`, but honored by every diagram type
+      drawing node boxes, unless the option `mark-violation` is `false`.
 
   Both `badge` and `multiple` are ignored on a container node.
-  Additionally, the diagram types `layer`, `slice`, and `state` consume
-  the attribute `layer: <name>`, `slice: <name>`, and `state: <kind>`,
+  Additionally, the diagram types `layer`, `slice`, `state`, and `petri`
+  consume the attribute `layer: <name>`, `slice: <name>`, `state: <kind>`,
+  and `petri: <kind>` (plus `tokens: <count>` and `capacity: <count>`),
   respectively (see below), while all other diagram types display them
   as regular lines.
 
@@ -403,12 +417,13 @@ separated by `|`.
 
 - **Containers**: only the diagram types `graph`, `hub`, `grid`, and
   `state` lay out the members of a container. The diagram types `layer`,
-  `slice`, `tree`, `matrix`, and `sequence` reject the input with an
-  error as soon as the graph contains a container.
+  `slice`, `tree`, `matrix`, `sequence`, and `petri` reject the input
+  with an error as soon as the graph contains a container.
 
 - **Violations**: the diagram types `layer`, `slice`, `tree`, `matrix`,
-  and `state` mark their violations in the `color-mark-violation` color,
-  unless the option `mark-violation` is `false`.
+  `state`, and `petri` mark their violations in the
+  `color-mark-violation` color, unless the option `mark-violation` is
+  `false`.
 
 #### Diagram Type `graph`
 
@@ -758,10 +773,129 @@ The diagram type `state` draws a state machine.
       state (except a fork) on the same event with the same (or no)
       guard.
 
+#### Diagram Type `petri`
+
+The diagram type `petri` draws a Petri net (a place/transition net).
+
+- **Layout**: the places and transitions (the nodes) and the arcs (the
+  edges) are laid out like a `graph`, but with up to 8 instead of 4
+  side-by-side nodes (unless `graph-columns-max` is configured), a
+  minimum node box width (`size-node-width-min`) of `120` instead of
+  `220` and a minimum channel width (`graph-channel-width-min`) of `80`
+  instead of `24` (unless configured), and every arc drawn on its own
+  (never bundled).
+
+- **Places**: a place is drawn as a circle in the `color-node-place-*`
+  colors around its name (lighter than a node name, in the smaller
+  `size-font-prop` font size), its attributes (in the `size-font-type`
+  font size), and its initial tokens, given as the attribute
+  `tokens: <count>` (a non-negative integer, `0` by default), drawn as
+  dots (arranged like the faces of a die, two tokens side by side) or,
+  beyond 6 tokens, as their count. The optional attribute
+  `capacity: <count>` (a positive integer) limits the tokens the place
+  can hold and is drawn in the usual notation `K = <count>`. A sink
+  place, i.e. a place with incoming but without outgoing arcs, where the
+  tokens come to rest, is drawn as a double circle.
+
+- **Transitions**: a transition is drawn as a regular node box, with its
+  attributes (e.g. a `delay`) as regular attribute lines.
+
+- **Kinds**: the attribute `petri: place` or `petri: transition` sets
+  the kind of a node, and a `tokens` or `capacity` attribute implies a
+  place. As every arc connects a place with a transition, the kinds of
+  all other nodes follow from their arcs, and a connected part of the
+  net without any such node starts with its first declared node as a
+  place. Hence, annotating the transitions, or giving the initial
+  tokens, usually suffices.
+
+- **Arcs**: the arity of an arc, e.g. `-->[2]`, is its weight, i.e., the
+  number of tokens it consumes or produces (`1` by default), while its
+  name is a mere label. Parallel arcs add up their weights. A pair of
+  opposite arcs between a place and a transition, both without a name
+  and of the same weight (e.g. a place merely tested by a transition),
+  is drawn as a single arc with an arrow head at both ends (and its
+  weight drawn once).
+
+- **Inhibitor arcs**: an arc of the kind `inhibitor`, e.g.
+  `p -->[3] t { kind: inhibitor }`, leads from a place to a transition
+  and is drawn ending in a small disc instead of an arrow head. It
+  consumes nothing, but disables its transition as long as its place
+  holds at least as many tokens as its weight (parallel inhibitor arcs
+  taking the lowest weight).
+
+- **Semantics**: a transition is enabled if each of its input places
+  holds at least as many tokens as the weight of its arc, each of its
+  inhibiting places fewer tokens than the weight of its inhibitor arc,
+  and each of its output places stays within its capacity after firing.
+  Firing it consumes the weighted tokens from its input places and
+  produces the weighted tokens into its output places. Hence, a
+  transition without input places is enabled as long as its inhibiting
+  and output places permit it.
+
+- **Validation**: the input is rejected with an error if
+
+    - an arc connects two places or two transitions,
+    - a `petri` attribute is neither `place` nor `transition`,
+    - a transition carries a `tokens` or `capacity` attribute,
+    - an inhibitor arc leads from a transition to a place,
+    - a `tokens`, `capacity`, or arc weight is not an integer in its
+      range, or a place carries more tokens than its capacity, or
+    - the net contains a container.
+
+- **Analysis**: once the net is not inert, i.e., carries an initial
+  token or a transition without input places, every connected part of
+  it is analyzed on its own through its coverability graph (the
+  algorithm of Karp and Miller, which explores the markings reachable
+  from the initial one, and lets the tokens of a place become infinite
+  once a marking covers one of its predecessors with more tokens in that
+  place). A part with inhibitor arcs is explored without this
+  acceleration (as it is not sound for them), so its unbounded places
+  are never proven, but exhaust the budget (see below) instead.
+
+- **Tooltips**: the analysis results of every node are attached to it
+  as its tooltip (shown when hovering over it in a browser): for a
+  place its initial and its most tokens (or that they grow without
+  bound, with the firing sequence to repeat for it and the one leading
+  there), the shortest firing sequence reaching a deadlock it holds a
+  token in, and whether its capacity is never reached, and for a
+  transition whether it never fires, fires, or is live (can always fire
+  again, from every reachable marking).
+
+- **Violations**: the following violations are marked in the
+  `color-mark-violation` color (unless the node carries an explicit
+  `mark` attribute already):
+
+    - `unreachable` (dashed border and outgoing arcs): a place which
+      never holds a token,
+    - `dead` (dashed border and outgoing arcs): a transition which never
+      fires,
+    - `dead-end` (solid border): a place holding a token in a deadlock,
+      i.e., a marking enabling no transition, while feeding a
+      transition (so a token resting in a place without outgoing arcs
+      is a proper termination),
+    - `unbounded` (solid border): a place whose tokens grow without
+      bound,
+    - `non-live` (solid border): a transition which fires, but can get
+      disabled forever, as it fires nowhere within a recurring group of
+      markings the net cannot leave again (a terminal strongly connected
+      component of the reachability graph holding a firing, e.g. a loop
+      entered after an initialization transition), only checked for a
+      completely explored bounded part (a reachable deadlock is marked
+      through its `dead-end` places instead).
+
+  The analysis works within a budget shared by all parts of the net (at
+  most 10000 explored markings and a bounded number of comparisons of
+  markings against their predecessors), so the rendering of a large or
+  hostile input stays fast. A part explored only partially within it
+  keeps its unreachable places and dead and non-live transitions
+  unmarked, while its found unbounded and deadlocked places are still
+  marked. For an unbounded part, the coverability graph exhibits only
+  some of its deadlocks.
+
 ### Directives
 
 A `#type` directive sets the diagram type (`graph`, `hub`, `grid`,
-`layer`, `slice`, `tree`, `matrix`, `sequence`, or `state`), which otherwise is
+`layer`, `slice`, `tree`, `matrix`, `sequence`, `state`, or `petri`), which otherwise is
 settable through the `-t`/`--type` command-line option (which takes
 precedence).
 The last occurrence wins and an invalid type is silently ignored.
@@ -811,6 +945,9 @@ color-composite-border     #c0c0c0
 color-node-pseudo-name     #ffffff
 color-node-pseudo-box      #707070
 color-node-pseudo-border   #444444
+color-node-place-name      #555555
+color-node-place-box       #ececec
+color-node-place-border    #c0c0c0
                                         sequence-message-gap       40
                                         tree-level-gap             60
                                         tree-sibling-gap           20
@@ -833,8 +970,8 @@ non-negative numbers, except the booleans `grid-node-width-equal`,
 and `tree-horizontal`.
 
 The boolean `mark-violation` option controls whether the diagram types
-`matrix`, `layer`, `slice`, `tree`, and `state` mark their violations at
-all (in the `color-mark-violation` color), and whether a `mark`
+`matrix`, `layer`, `slice`, `tree`, `state`, and `petri` mark their
+violations at all (in the `color-mark-violation` color), and whether a `mark`
 attribute is honored: by default they do, while with `false` they render
 the very same diagram without any marking (the cross links of a `tree`
 stay dashed, though).

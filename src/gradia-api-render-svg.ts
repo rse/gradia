@@ -18,7 +18,8 @@ import { Poly, NodeStyle, NodeShape, Layout, GroupBox, ContainerBox,
 import { Shape }                                            from "./gradia-api-render-shape.js"
 import { linesOfNode, linesWidth, urlOf, typeOf, defaultStyleOf, containerHead, badgeOf, badgeRoom, isMultiple,
     MULTI_OFF, BADGE_X, PAD_W, badgeRadius, type NodeBadge, MIN_H, NAME_H, ATTR_H, ATTR_P, TYPE_H, TYPE_D, HEAD_H,
-    markOf, markedStyleOf, shapeRadius, attrsOfNode, parentOf, HEAD_X }
+    markOf, markedStyleOf, isDormant, shapeRadius, attrsOfNode, parentOf, HEAD_X, TOKEN_R, tokenDots, placeLines,
+    PLACE_RING }
     from "./gradia-api-render-node.js"
 import { computeHops, piecesOf, pathOf, pointAt, segmentsOf, junctionsOf, transitionOf }
     from "./gradia-api-render-edge.js"
@@ -481,9 +482,37 @@ const renderPseudo = (shape: NodeShape, x: number, y: number, w: number, h: numb
         return [ `<circle cx="${x}" cy="${y}" r="${r}" class="${cls}"${dash}/>` ]
 }
 
+/*  generate the SVG fragments of a place of a "petri" diagram centered on
+    the given point: a circle filling its box of the given size (doubled
+    for a sink place, i.e. a place where the tokens come to rest), with
+    its text lines and token row stacked and centered in it (see
+    "placeLines")  */
+const renderPlace = (node: Node, x: number, y: number, w: number, h: number, style: NodeStyle,
+    styler: Styler, config: Config): string[] => {
+    const dash  = style.dash !== undefined ? ` stroke-dasharray="${escapeXML(style.dash)}"` : ""
+    const r     = Math.min(w, h) / 2
+    const parts = [ `<circle cx="${x}" cy="${y}" r="${r}" class="${styler.box(style.fill, style.stroke, 4)}"${dash}/>` ]
+    if (style.sink === true)
+        parts.push(`<circle cx="${x}" cy="${y}" r="${r - PLACE_RING}" class="${styler.line(style.stroke, 2)}"${dash}/>`)
+    for (const line of placeLines(node, style.tokens ?? 0, style.capacity, config)) {
+        for (const [ dx, dy ] of tokenDots(line.dots, config))
+            parts.push(`<circle cx="${x + dx}" cy="${y + line.dy + dy}" r="${TOKEN_R(config)}" ` +
+                `class="${styler.box(style.text, style.text, 1)}"/>`)
+        if (line.dots === 0)
+            parts.push(`<text x="${x}" y="${y + line.dy + config[line.size] * 0.36}" ` +
+                `class="${styler.text(style.text, line.size, { bold: line.bold, middle: true })}">` +
+                `${escapeXML(line.text)}</text>`)
+    }
+    const url = urlOf(node)
+    if (url === undefined)
+        return parts
+    return [ `<a href="${escapeXML(url)}" xlink:href="${escapeXML(url)}">`, ...parts, "</a>" ]
+}
+
 /*  generate the SVG fragments for a single node box (a node with a
-    "url" attribute becomes a hyperlink covering the whole box, and a
-    pseudo-state is drawn as its shape, without any texts)  */
+    "url" attribute becomes a hyperlink covering the whole box, a
+    pseudo-state is drawn as its shape, without any texts, and a place
+    as its circle)  */
 const renderNode = (node: Node, layout: Layout, style: NodeStyle, styler: Styler,
     config: Config): string[] => {
     const { cx, cy, boxW, boxH, contentH } = layout
@@ -491,6 +520,8 @@ const renderNode = (node: Node, layout: Layout, style: NodeStyle, styler: Styler
     const h     = boxH.get(node.id)!
     if (style.shape !== undefined)
         return renderPseudo(style.shape, cx(node.id), cy(node.id), w, h, style, styler, config)
+    if (style.tokens !== undefined)
+        return renderPlace(node, cx(node.id), cy(node.id), w, h, style, styler, config)
     const x     = cx(node.id) - w / 2
     const y     = cy(node.id) - h / 2
     const lines = linesOfNode(node, config)
@@ -928,6 +959,15 @@ const marker = (id: string, cls: string): string[] => [
     "</marker>"
 ]
 
+/*  generate the SVG fragments of a disc marker (e.g. of an inhibitor
+    arc), whose far side sits on the end of its edge  */
+const discMarker = (id: string, cls: string): string[] => [
+    `<marker id="${id}" viewBox="0 0 10 10" refX="9.4" refY="5" ` +
+        "markerWidth=\"15\" markerHeight=\"15\" markerUnits=\"userSpaceOnUse\" orient=\"auto\">",
+    `<circle cx="5" cy="5" r="4.2" class="${cls}"/>`,
+    "</marker>"
+]
+
 /*  render a laid out graph into an SVG document (the seed determines the
     identifier prefix of the document, see "idPrefix" above)  */
 export const renderSVG = (layout: Layout, config: Config, explicit: Partial<Config>,
@@ -948,6 +988,8 @@ export const renderSVG = (layout: Layout, config: Config, explicit: Partial<Conf
     const idArrow = `${prefix}-arrow`
     const idOpen  = `${prefix}-arrow-open`
     const idAlert = `${prefix}-alert`
+    const idDisc  = `${prefix}-disc`
+    const idDiscAlert = `${prefix}-disc-alert`
 
     /*  resolve the configured font into the rendered font family stack  */
     const { family, embed, weight } = resolveFont(config)
@@ -986,11 +1028,13 @@ export const renderSVG = (layout: Layout, config: Config, explicit: Partial<Conf
     const classArrow = classOf(`fill: ${color("color-edge-line")}`)
 
     /*  an edge marked as a violation (by its layout, by itself, or as
-        leaving an unreachable node or container) is drawn dashed in the
-        violation color, its arrow head and labels alike  */
+        leaving an unreachable or dead node or container, a two-way edge
+        at either end) is drawn dashed in the violation color, its arrow
+        head and labels alike  */
     const marks      = new Map([ ...nodes, ...containers.map((c) => c.node) ].map((node) => [ node.id, markOf(node) ]))
     const violates   = (i: number): boolean => layout.marked?.[i] === true
-        || (config["mark-violation"] && (edges[i].marked === true || marks.get(edges[i].source) === "unreachable"))
+        || (config["mark-violation"] && (edges[i].marked === true || isDormant(marks.get(edges[i].source))
+            || (layout.twoway?.[i] === true && isDormant(marks.get(edges[i].target)))))
     const alerted    = edges.some((_, i) => violates(i))
     const classAlert = alerted ? classOf(`fill: none; stroke: ${color("color-mark-violation")}; stroke-width: 3; ` +
         "stroke-dasharray: 10 6") : ""
@@ -1024,26 +1068,36 @@ export const renderSVG = (layout: Layout, config: Config, explicit: Partial<Conf
     const repeat  = new Set(Array.from(into.values()).flatMap((l) => l.slice(1)))
 
     /*  a return or create edge, and an edge flagged by its layout, is
-        drawn dashed, and an asynchronous, return, or create edge ends in
-        an open arrow head, an outlined triangle filled with the halo
-        color, so it covers the line ending at its tip (its marker and
-        classes are defined only on demand, so diagrams without such
-        edges stay unchanged)  */
+        drawn dashed, an asynchronous, return, or create edge ends in an
+        open arrow head, an outlined triangle filled with the halo color,
+        so it covers the line ending at its tip, an inhibitor edge ends in
+        an outlined disc instead, and a two-way edge starts with an arrow
+        head, too (its markers and classes are defined only on demand, so
+        diagrams without such edges stay unchanged)  */
     const kindOf    = (i: number) => edges[i].kind ?? "sync"
     const dashKind  = (i: number) => kindOf(i) === "return" || kindOf(i) === "create"
     const dashed    = (i: number) => dashKind(i) || layout.dashed?.[i] === true
     const hollow    = (i: number) => dashKind(i) || kindOf(i) === "async"
+    const disc      = (i: number) => kindOf(i) === "inhibitor"
     const open      = polys.some((_, i) => hollow(i))
     const classOpen = open ? classOf(`fill: ${color("color-edge-halo")}; stroke: ${color("color-edge-line")}; ` +
         "stroke-width: 1.2; stroke-linejoin: round") : ""
+    const discs     = polys.some((_, i) => disc(i))
+    const classDisc = discs ? classOf(`fill: ${color("color-edge-halo")}; ` +
+        `stroke: ${color("color-edge-line")}; stroke-width: 1.6`) : ""
+    const classDiscAlert = discs && alerted ? classOf(`fill: ${color("color-edge-halo")}; ` +
+        `stroke: ${color("color-mark-violation")}; stroke-width: 1.6`) : ""
     const classDash = polys.some((_, i) => dashed(i)) ?
         classOf(`fill: none; stroke: ${color("color-edge-line")}; stroke-width: 3; stroke-dasharray: 10 6`) : ""
+    const head      = (i: number) => violates(i) ? (disc(i) ? idDiscAlert : idAlert) :
+        disc(i) ? idDisc : hollow(i) ? idOpen : idArrow
     const svgEdges = piecesOf(polys, layout.bundled).flatMap((pieces, i) => pieces.map((piece) =>
         `<path d="${pathOf(polys[i], hops[i], config["size-edge-corner-radius"], config["size-edge-hop-radius"],
             junction, layout.crowded === true, piece)}" ` +
         `class="${violates(i) ? classAlert : dashed(i) ? classDash : classEdge}"` +
-        (repeat.has(i) || !piece.end ? "/>" :
-            ` marker-end="url(#${violates(i) ? idAlert : hollow(i) ? idOpen : idArrow})"/>`)))
+        (layout.twoway?.[i] === true && piece.from === 0 ?
+            ` marker-start="url(#${violates(i) ? idAlert : idArrow})"` : "") +
+        (repeat.has(i) || !piece.end ? "/>" : ` marker-end="url(#${head(i)})"/>`)))
     const passes = (poly: Poly, x: number, y: number): boolean =>
         poly.some((p, m) => m > 0
             && Math.min(p[0], poly[m - 1][0]) <= x && x <= Math.max(p[0], poly[m - 1][0])
@@ -1124,9 +1178,14 @@ export const renderSVG = (layout: Layout, config: Config, explicit: Partial<Conf
                 (c, dodge, own) => claim(c, i, dodge, own), styler, violates(i)))
     })
 
-    /*  generate the SVG fragments for the node boxes (with their marking)  */
-    const svgNodes = nodes.flatMap((node) =>
-        renderNode(node, layout, markedStyleOf(node, styleOf(node), config), styler, config))
+    /*  generate the SVG fragments for the node boxes (with their marking,
+        and grouped with their optional tooltip)  */
+    const svgNodes = nodes.flatMap((node) => {
+        const style = markedStyleOf(node, styleOf(node), config)
+        const parts = renderNode(node, layout, style, styler, config)
+        return style.title === undefined ? parts :
+            [ "<g>", `<title>${escapeXML(style.title)}</title>`, ...parts, "</g>" ]
+    })
 
     /*  generate the SVG fragments for the group boxes (drawn below
         everything else) and the container boxes (drawn below the edges
@@ -1173,6 +1232,8 @@ export const renderSVG = (layout: Layout, config: Config, explicit: Partial<Conf
             `<path d="M 0.6 1 L 9 5 L 0.6 9 z" class="${classOpen}"/>`,
             "</marker>"
         ] : []),
+        ...(discs ? discMarker(idDisc, classDisc) : []),
+        ...(discs && alerted ? discMarker(idDiscAlert, classDiscAlert) : []),
         "</defs>",
         ...svgGroups,
         ...svgContainers,

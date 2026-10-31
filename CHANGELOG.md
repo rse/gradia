@@ -5,6 +5,12 @@ ChangeLog
 1.5.0 (2026-10-31)
 ------------------
 
+-   FEATURE [code, othr]: add the diagram type "petri", a Petri net of places (circles with tokens,
+    "tokens"/"capacity" attributes, "color-node-place-*" colors) and transitions, with inferred node
+    kinds ("petri" attribute), arc weights, inhibitor arcs (new edge kind "inhibitor"), and merged
+    two-way arcs, analyzed through its coverability graph (marking dead, non-live, unreachable,
+    unbounded, and dead-end nodes, with the results as tooltips), plus samples and examples.
+
 -   FEATURE [code, othr]: add the diagram type "state", a state machine laid out like a "graph"
     (folding its columns only beyond 8 by default) with never bundled transitions (the guards of a
     choice or junction placed at their start, their guards in italics and actions dimmed), the

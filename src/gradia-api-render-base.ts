@@ -105,16 +105,24 @@ export const REGION_PAD  = 16
 /*  the node box coloring (given as configuration option keys which
     are resolved into CSS color values at SVG generation time), with
     the optional shape drawn instead of the box, whether a line divides
-    the name from the attribute lines, and, for a container drawn as a
-    region band instead of a box, whether it is the first band  */
+    the name from the attribute lines, for a container drawn as a
+    region band instead of a box, whether it is the first band, for a
+    place of a "petri" diagram, drawn as a circle instead of a box, its
+    tokens and capacity drawn below its name and whether it is a sink
+    (drawn as a double circle), and the optional tooltip of the node
+    (e.g. the analysis results of a "petri" diagram)  */
 export interface NodeStyle {
-    fill:     ConfigEmbedded
-    stroke:   ConfigEmbedded
-    text:     ConfigEmbedded
-    dash?:    string
-    shape?:   NodeShape
-    divided?: boolean
-    band?:    "first" | "next"
+    fill:      ConfigEmbedded
+    stroke:    ConfigEmbedded
+    text:      ConfigEmbedded
+    dash?:     string
+    shape?:    NodeShape
+    divided?:  boolean
+    band?:     "first" | "next"
+    tokens?:   number
+    capacity?: number
+    sink?:     boolean
+    title?:    string
 }
 
 /*  a decorated group box surrounding the nodes of a named group  */
@@ -143,7 +151,9 @@ export interface ContainerBox {
     a track, composing by concatenation exactly like the edges, the
     optional "marked" flags likewise mark the edges violating their
     diagram type (e.g. its layering), the optional "dashed" flags the
-    edges drawn dashed (e.g. the cross links of a tree), the optional "crowded" flag marks a
+    edges drawn dashed (e.g. the cross links of a tree), the optional
+    "twoway" flags the edges drawn with an arrow head at both ends (e.g.
+    the merged opposite arcs of a Petri net), the optional "crowded" flag marks a
     layout with crowded channels/gutters, the optional "centered" flag
     one keeping its edge names centered on their routes instead of in
     front of their arrow heads, and the optional "transitions" flag one
@@ -163,6 +173,7 @@ export interface Layout {
     shapes?:      Shape[]
     marked?:      boolean[]
     dashed?:      boolean[]
+    twoway?:      boolean[]
     bundled?:     boolean[]
     crowded?:     boolean
     centered?:    boolean

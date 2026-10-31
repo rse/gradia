@@ -5,7 +5,7 @@
 */
 
 /*  internal dependencies  */
-import { Node, Edge, Graph }                       from "./gradia-api-model.js"
+import { Node, Edge, EdgeKind, Graph }             from "./gradia-api-model.js"
 import { Config }                                  from "./gradia-api-config.js"
 import { Poly, FS_GROUP, textWidth, Layout, ContainerBox }
     from "./gradia-api-render-base.js"
@@ -45,8 +45,9 @@ export type Renderer = (graph: Graph, config: Config, level?: LevelContext) => P
     container (and hence is valid as a "container" annotation), whether
     it supports gate nodes (and hence lets the edges crossing a
     container boundary continue to the inner nodes, instead of ending at
-    the container border), whether it renders the edge kinds and
-    timings, its own defaults of the rendering options (overriding
+    the container border), the edge kinds it renders besides the
+    synchronous default, whether it renders the edge timings, its own
+    defaults of the rendering options (overriding
     the general ones, but overridden by the explicit ones), its optional
     preparation of the graph model as a whole, before it is partitioned
     into groups and containment levels (e.g. its validation and analysis,
@@ -62,7 +63,8 @@ export interface DiagramTypeSpec {
     frameOf?:  (member: Node, members: Node[], config: Config) => { head: number, pad: number } | undefined
     nestable:  boolean
     gated:     boolean
-    kinds:     boolean
+    kinds?:    readonly EdgeKind[]
+    timed?:    boolean
     defaults?: Partial<Config>
 }
 
@@ -306,6 +308,7 @@ export const renderContained = async (
         const bundled: boolean[] = []
         const marked:  boolean[] = []
         const dashed:  boolean[] = []
+        const twoway:  boolean[] = []
         const partial            = new Map<number, Poly>()
         parts.forEach((part, k) => {
             if (k === 0)
@@ -316,6 +319,7 @@ export const renderContained = async (
                 bundled.push(part.layout.bundled?.[ei] ?? false)
                 marked.push(part.layout.marked?.[ei] ?? false)
                 dashed.push(part.layout.dashed?.[ei] ?? false)
+                twoway.push(part.layout.twoway?.[ei] ?? false)
             })
         })
         levelEdges.forEach((edge, li) => {
@@ -335,6 +339,7 @@ export const renderContained = async (
                 bundled.push(layout.bundled?.[li] ?? false)
                 marked.push(layout.marked?.[li] ?? false)
                 dashed.push(layout.dashed?.[li] ?? false)
+                twoway.push(layout.twoway?.[li] ?? false)
             }
         })
 
@@ -359,6 +364,7 @@ export const renderContained = async (
             bundled,
             marked,
             dashed,
+            twoway,
             crowded:     parts.some((part) => part.layout.crowded === true),
             transitions: parts.some((part) => part.layout.transitions === true)
         }

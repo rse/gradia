@@ -19,9 +19,10 @@ export interface Node {
 
 /*  the kinds of an edge, i.e., of a message in a "sequence" diagram
     (a synchronous call, an asynchronous message, a return, or the
-    creation or destruction of its receiver)  */
-export type EdgeKind = "sync" | "async" | "return" | "create" | "destroy"
-export const edgeKinds: EdgeKind[] = [ "sync", "async", "return", "create", "destroy" ]
+    creation or destruction of its receiver), or of an arc in a "petri"
+    diagram (an inhibitor arc)  */
+export type EdgeKind = "sync" | "async" | "return" | "create" | "destroy" | "inhibitor"
+export const edgeKinds: EdgeKind[] = [ "sync", "async", "return", "create", "destroy", "inhibitor" ]
 
 /*  a directed graph edge with optional name, arity, kind, and timing
     (a duration constraint up to its return and a time constraint or

@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="20 20 1772 938" width="1772" height="938">
+<defs>
+<style>
+.gradia-3167da4d { fill: none; stroke: var(--gradia-color-edge-line, #999999); stroke-width: 3 }
+.gradia-6c7500cd { fill: var(--gradia-color-edge-line, #999999) }
+.gradia-8f3e8366 { fill: none; stroke: var(--gradia-color-mark-violation, #b06820); stroke-width: 3; stroke-dasharray: 10 6 }
+.gradia-72d5e907 { fill: var(--gradia-color-mark-violation, #b06820) }
+.gradia-a09eb644 { font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; font-size: var(--gradia-size-font-arity, 16px); text-anchor: middle; fill: var(--gradia-color-edge-arity, #333333); stroke: var(--gradia-color-edge-halo, #ffffff); stroke-width: 4.5; paint-order: stroke; stroke-linejoin: round }
+.gradia-0fe5af00 { fill: var(--gradia-color-node-place-box, #ececec); stroke: var(--gradia-color-node-place-border, #c0c0c0); stroke-width: 4 }
+.gradia-ae50cbbc { font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; font-size: var(--gradia-size-font-prop, 22px); font-weight: 600; text-anchor: middle; fill: var(--gradia-color-node-place-name, #555555) }
+.gradia-257c0f21 { fill: var(--gradia-color-node-place-name, #555555); stroke: var(--gradia-color-node-place-name, #555555); stroke-width: 1 }
+.gradia-c318c042 { fill: var(--gradia-color-node-regular-box, #e0f0ff); stroke: var(--gradia-color-node-regular-border, #c0d0e0); stroke-width: 4 }
+.gradia-f36ab1ca { font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; font-size: var(--gradia-size-font-node, 30px); font-weight: 600; text-anchor: middle; fill: var(--gradia-color-node-regular-name, #336699) }
+.gradia-58719d15 { fill: var(--gradia-color-node-place-box, #ececec); stroke: var(--gradia-color-mark-violation, #b06820); stroke-width: 4 }
+.gradia-45b06a2b { fill: var(--gradia-color-node-regular-box, #e0f0ff); stroke: var(--gradia-color-mark-violation, #b06820); stroke-width: 4 }
+.gradia-5d65de7b { fill: none; stroke: var(--gradia-color-mark-violation, #b06820); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round }
+</style>
+<marker id="gradia-1957bb6dc4e1-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="21" markerHeight="21" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+<path d="M 0 1 L 9 5 L 0 9 z" class="gradia-6c7500cd"/>
+</marker>
+<marker id="gradia-1957bb6dc4e1-alert" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="21" markerHeight="21" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+<path d="M 0 1 L 9 5 L 0 9 z" class="gradia-72d5e907"/>
+</marker>
+</defs>
+<path d="M 156.78078794301996 492 L 199.5 492 Q 208 492 208 483.5 L 208 483.5 Q 208 475 216.5 475 L 281.5 475" class="gradia-3167da4d" marker-end="url(#gradia-1957bb6dc4e1-arrow)"/>
+<path d="M 411.5 458 L 464.5 458 Q 473 458 473 466.5 L 473 466.5 Q 473 475 481.5 475 L 553 475" class="gradia-3167da4d" marker-end="url(#gradia-1957bb6dc4e1-arrow)"/>
+<path d="M 637 475 L 672.5 475 Q 681 475 681 466.5 L 681 466.5 Q 681 458 689.5 458 L 751 458" class="gradia-3167da4d" marker-end="url(#gradia-1957bb6dc4e1-arrow)"/>
+<path d="M 881 475 L 909 475 Q 929 475 929 455 L 929 196 Q 929 176 949 176 L 987 176" class="gradia-3167da4d" marker-end="url(#gradia-1957bb6dc4e1-arrow)"/>
+<path d="M 1067.405728739343 193 L 1113 193 A 8 8 0 0 1 1129 193 L 1197.5 193" class="gradia-3167da4d" marker-end="url(#gradia-1957bb6dc4e1-arrow)"/>
+<path d="M 1197.5 227 L 1153 227 Q 1133 227 1133 247 L 1133 401 Q 1133 421 1113 421 L 937 421 A 8 8 0 0 0 921 421 L 238.5 421 Q 220 421 220 439.5 L 220 439.5 Q 220 458 201.5 458 L 156.78078794301996 458" class="gradia-3167da4d" marker-end="url(#gradia-1957bb6dc4e1-arrow)"/>
+<path d="M 649.5 735.5 L 685 735.5 A 8 8 0 0 1 701 735.5 L 701 735.5 Q 705 735.5 705 739.5 L 705 861 Q 705 865 709 865 L 709 865 A 8 8 0 0 1 725 865 L 751 865" class="gradia-3167da4d" marker-end="url(#gradia-1957bb6dc4e1-arrow)"/>
+<path d="M 881 882 L 987 882" class="gradia-3167da4d" marker-end="url(#gradia-1957bb6dc4e1-arrow)"/>
+<path d="M 1071 882 L 1137 882 Q 1157 882 1157 862 L 1157 573 Q 1157 553 1177 553 L 1576 553 Q 1596 553 1596 533 L 1596 302.5 Q 1596 282.5 1616 282.5 L 1642 282.5" class="gradia-3167da4d" marker-end="url(#gradia-1957bb6dc4e1-arrow)"/>
+<path d="M 1642 316.5 L 1625 316.5 Q 1608 316.5 1608 333.5 L 1608 794 Q 1608 814 1588 814 L 1165 814 A 8 8 0 0 0 1149 814 L 725 814 A 20 8 0 0 0 685 814 L 493 814 A 14 8 0 0 0 465 814 L 225 814 Q 208 814 208 831 L 208 831 Q 208 848 191 848 L 143.40572873934303 848" class="gradia-3167da4d" marker-end="url(#gradia-1957bb6dc4e1-arrow)"/>
+<path d="M 143.40572873934303 882 L 286.5 882" class="gradia-3167da4d" marker-end="url(#gradia-1957bb6dc4e1-arrow)"/>
+<path d="M 406.5 882 L 465 882 Q 485 882 485 862 L 485 755.5 Q 485 735.5 505 735.5 L 540.5 735.5" class="gradia-3167da4d" marker-end="url(#gradia-1957bb6dc4e1-arrow)"/>
+<path d="M 1445.5 248.5 L 1398 248.5 Q 1378 248.5 1378 268.5 L 1378 509 Q 1378 529 1358 529 L 1153 529 A 8 8 0 0 0 1137 529 L 701 529 A 8 8 0 0 0 685 529 L 503.5 529 Q 485 529 485 510.5 L 485 510.5 Q 485 492 466.5 492 L 411.5 492" class="gradia-3167da4d" marker-end="url(#gradia-1957bb6dc4e1-arrow)"/>
+<path d="M 630.8720720833848 846.3333333333333 L 673 846.3333333333333 Q 693 846.3333333333333 693 826.3333333333333 L 693 512 Q 693 492 713 492 L 751 492" class="gradia-3167da4d" marker-end="url(#gradia-1957bb6dc4e1-arrow)"/>
+<path d="M 630.8720720833848 899 L 751 899" class="gradia-3167da4d" marker-end="url(#gradia-1957bb6dc4e1-arrow)"/>
+<path d="M 1534.5 248.5 L 1642 248.5" class="gradia-3167da4d" marker-end="url(#gradia-1957bb6dc4e1-arrow)"/>
+<path d="M 1317.5 227 L 1363.5833333333333 227 Q 1366 227 1366 224.58333333333331 L 1366 224.58333333333331 Q 1366 222.16666666666666 1368.4166666666667 222.16666666666666 L 1454.1279279166151 222.16666666666666" class="gradia-3167da4d" marker-end="url(#gradia-1957bb6dc4e1-arrow)"/>
+<path d="M 1197.5 261 L 1165 261 Q 1145 261 1145 281 L 1145 782 Q 1145 802 1125 802 L 737 802 Q 717 802 717 822 L 717 852.6666666666666 Q 717 872.6666666666666 697 872.6666666666666 L 639.5 872.6666666666666" class="gradia-3167da4d" marker-end="url(#gradia-1957bb6dc4e1-arrow)"/>
+<path d="M 406.5 848 L 453 848 Q 473 848 473 828 L 473 561 Q 473 541 493 541 L 685 541 A 8 8 0 0 1 701 541 L 1137 541 A 8 8 0 0 1 1153 541 L 1370 541 Q 1390 541 1390 521 L 1390 294.8333333333333 Q 1390 274.8333333333333 1410 274.8333333333333 L 1454.1279279166151 274.8333333333333" class="gradia-3167da4d" marker-end="url(#gradia-1957bb6dc4e1-arrow)"/>
+<path d="M 406.5 916 L 477 916 Q 497 916 497 896 L 497 892.6666666666666 Q 497 872.6666666666666 517 872.6666666666666 L 550.5 872.6666666666666" class="gradia-3167da4d" marker-end="url(#gradia-1957bb6dc4e1-arrow)"/>
+<path d="M 1067.405728739343 159 L 1089 159 Q 1109 159 1109 139 L 1109 115 Q 1109 95 1129 95 L 1177 95" class="gradia-3167da4d" marker-end="url(#gradia-1957bb6dc4e1-arrow)"/>
+<path d="M 1089 349 L 1105 349 Q 1121 349 1121 333 L 1121 149 Q 1121 129 1141 129 L 1177 129" class="gradia-8f3e8366" marker-end="url(#gradia-1957bb6dc4e1-alert)"/>
+<path d="M 1338 112 L 1418 112" class="gradia-8f3e8366" marker-end="url(#gradia-1957bb6dc4e1-alert)"/>
+<path d="M 170 94 L 292.5 94" class="gradia-3167da4d" marker-end="url(#gradia-1957bb6dc4e1-arrow)"/>
+<path d="M 400.5 94 L 535 94" class="gradia-3167da4d" marker-end="url(#gradia-1957bb6dc4e1-arrow)"/>
+<path d="M 149.5 613 L 258 613" class="gradia-3167da4d" marker-end="url(#gradia-1957bb6dc4e1-arrow)"/>
+<path d="M 435 613 L 465 613 A 8 8 0 0 1 481 613 L 547 613" class="gradia-3167da4d" marker-end="url(#gradia-1957bb6dc4e1-arrow)"/>
+<path d="M 643 613 L 685 613 A 8 8 0 0 1 701 613 L 743 613" class="gradia-3167da4d" marker-start="url(#gradia-1957bb6dc4e1-arrow)" marker-end="url(#gradia-1957bb6dc4e1-arrow)"/>
+<g>
+<title>tokens: 1 initially, at most 1</title>
+<circle cx="105" cy="475" r="54.5" class="gradia-0fe5af00"/>
+<text x="105" y="466.92" class="gradia-ae50cbbc">Ready1</text>
+<circle cx="105" cy="488" r="5.5" class="gradia-257c0f21"/>
+</g>
+<g>
+<title>tokens: 1 initially, at most 1</title>
+<circle cx="595" cy="735.5" r="54.5" class="gradia-0fe5af00"/>
+<text x="595" y="727.42" class="gradia-ae50cbbc">Ready2</text>
+<circle cx="595" cy="748.5" r="5.5" class="gradia-257c0f21"/>
+</g>
+<g>
+<title>tokens: 1 initially, at most 1</title>
+<circle cx="1490" cy="248.5" r="44.5" class="gradia-0fe5af00"/>
+<text x="1490" y="240.42" class="gradia-ae50cbbc">Res1</text>
+<circle cx="1490" cy="261.5" r="5.5" class="gradia-257c0f21"/>
+</g>
+<g>
+<title>tokens: 1 initially, at most 1</title>
+<circle cx="595" cy="872.6666666666666" r="44.5" class="gradia-0fe5af00"/>
+<text x="595" y="864.5866666666666" class="gradia-ae50cbbc">Res2</text>
+<circle cx="595" cy="885.6666666666666" r="5.5" class="gradia-257c0f21"/>
+</g>
+<g>
+<title>fires, but not live (a deadlock is reachable)</title>
+<rect x="281.5" y="436" width="130" height="78" rx="6" class="gradia-c318c042"/>
+<text x="346.5" y="485.8" class="gradia-f36ab1ca">Take1a</text>
+</g>
+<g>
+<title>tokens: 0 initially, at most 1
+holds a token in a deadlock, reached by firing: Take1a, Take2a</title>
+<circle cx="595" cy="475" r="42" class="gradia-58719d15"/>
+<text x="595" y="482.92" class="gradia-ae50cbbc">Hold1</text>
+</g>
+<g>
+<title>fires, but not live (a deadlock is reachable)</title>
+<rect x="751" y="436" width="130" height="78" rx="6" class="gradia-c318c042"/>
+<text x="816" y="485.8" class="gradia-f36ab1ca">Take1b</text>
+</g>
+<g>
+<title>tokens: 0 initially, at most 1</title>
+<circle cx="1029" cy="176" r="42" class="gradia-0fe5af00"/>
+<text x="1029" y="183.92" class="gradia-ae50cbbc">Busy1</text>
+</g>
+<g>
+<title>fires, but not live (a deadlock is reachable)</title>
+<rect x="1197.5" y="171" width="120" height="112" rx="6" class="gradia-c318c042"/>
+<text x="1257.5" y="237.8" class="gradia-f36ab1ca">Free1</text>
+</g>
+<g>
+<title>fires, but not live (a deadlock is reachable)</title>
+<rect x="751" y="843" width="130" height="78" rx="6" class="gradia-c318c042"/>
+<text x="816" y="892.8" class="gradia-f36ab1ca">Take2a</text>
+</g>
+<g>
+<title>tokens: 0 initially, at most 1
+holds a token in a deadlock, reached by firing: Take1a, Take2a</title>
+<circle cx="1029" cy="882" r="42" class="gradia-58719d15"/>
+<text x="1029" y="889.92" class="gradia-ae50cbbc">Hold2</text>
+</g>
+<g>
+<title>fires, but not live (a deadlock is reachable)</title>
+<rect x="1642" y="226.5" width="130" height="112" rx="6" class="gradia-c318c042"/>
+<text x="1707" y="293.3" class="gradia-f36ab1ca">Take2b</text>
+</g>
+<g>
+<title>tokens: 0 initially, at most 1</title>
+<circle cx="105" cy="865" r="42" class="gradia-0fe5af00"/>
+<text x="105" y="872.92" class="gradia-ae50cbbc">Busy2</text>
+</g>
+<g>
+<title>fires, but not live (a deadlock is reachable)</title>
+<rect x="286.5" y="826" width="120" height="112" rx="6" class="gradia-c318c042"/>
+<text x="346.5" y="892.8" class="gradia-f36ab1ca">Free2</text>
+</g>
+<g>
+<title>never fires</title>
+<rect x="1177" y="73" width="161" height="78" rx="6" class="gradia-45b06a2b" stroke-dasharray="10 6"/>
+<text x="1257.5" y="122.8" class="gradia-f36ab1ca">Escalate</text>
+</g>
+<g>
+<title>tokens: 0 initially, at most 0
+never holds a token</title>
+<circle cx="1029" cy="349" r="60" class="gradia-58719d15" stroke-dasharray="10 6"/>
+<text x="1029" y="356.92" class="gradia-ae50cbbc">Approval</text>
+</g>
+<g>
+<title>tokens: 0 initially, at most 0
+never holds a token</title>
+<circle cx="1490" cy="112" r="72" class="gradia-58719d15" stroke-dasharray="10 6"/>
+<circle cx="1490" cy="112" r="66" class="gradia-5d65de7b" stroke-dasharray="10 6"/>
+<text x="1490" y="119.92" class="gradia-ae50cbbc">Escalated</text>
+</g>
+<g>
+<title>fires</title>
+<rect x="40" y="62.5" width="130" height="63" rx="6" class="gradia-c318c042"/>
+<text x="105" y="104.8" class="gradia-f36ab1ca">Arrive</text>
+</g>
+<g>
+<title>tokens: 0 initially, unbounded
+grows without bound by repeating: Arrive</title>
+<circle cx="346.5" cy="94" r="54" class="gradia-58719d15"/>
+<text x="346.5" y="101.92" class="gradia-ae50cbbc">Pending</text>
+</g>
+<g>
+<title>fires</title>
+<rect x="535" y="62.5" width="120" height="63" rx="6" class="gradia-c318c042"/>
+<text x="595" y="104.8" class="gradia-f36ab1ca">Serve</text>
+</g>
+<g>
+<title>tokens: 1 initially, at most 1</title>
+<circle cx="105" cy="613" r="44.5" class="gradia-0fe5af00"/>
+<text x="105" y="604.92" class="gradia-ae50cbbc">Boot</text>
+<circle cx="105" cy="626" r="5.5" class="gradia-257c0f21"/>
+</g>
+<g>
+<title>fires, but can get disabled forever (not live)</title>
+<rect x="258" y="581.5" width="177" height="63" rx="6" class="gradia-45b06a2b"/>
+<text x="346.5" y="623.8" class="gradia-f36ab1ca">Calibrate</text>
+</g>
+<g>
+<title>tokens: 0 initially, at most 1</title>
+<circle cx="595" cy="613" r="48" class="gradia-0fe5af00"/>
+<text x="595" y="620.92" class="gradia-ae50cbbc">Online</text>
+</g>
+<g>
+<title>live (can always fire again)</title>
+<rect x="743" y="581.5" width="146" height="63" rx="6" class="gradia-c318c042"/>
+<text x="816" y="623.8" class="gradia-f36ab1ca">Respond</text>
+</g>
+<text x="506.84" y="87" class="gradia-a09eb644">2</text>
+</svg>

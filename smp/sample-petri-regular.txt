@@ -1,0 +1,24 @@
+#type petri
+
+#   the producer cycle (its places and transitions)
+Idle      [ tokens: 1 ]
+Produce   [ petri: transition ]
+Produced
+Deliver   [ petri: transition ]
+
+#   the buffer between the producer and the consumers
+Buffer    [ capacity: 4 ]
+
+#   the consumer cycle (two consumers, as two tokens)
+Waiting   [ tokens: 2 ]
+Fetch     [ petri: transition ]
+Fetched
+Process   [ petri: transition, delay: "5ms" ]
+
+#   the arcs (the producer delivering two items at once, but only
+#   while the buffer holds fewer than three items, as inhibited)
+Idle      --> Produce --> Produced --> Deliver --> Idle
+Deliver   -->[2] Buffer
+Buffer    -->[3] Deliver { kind: inhibitor }
+Buffer    --> Fetch
+Waiting   --> Fetch --> Fetched --> Process --> Waiting

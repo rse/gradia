@@ -3,7 +3,7 @@
 **gradia** is the opinionated tooling of *Dr. Ralf S. Engelschall*
 for *Object Graph Diagram Rendering*: a small CLI for rendering
 directed graphs, described in a concise textual input language, as SVG
-diagrams. Nine diagram types are supported: `graph` (a grid-snapped
+diagrams. Ten diagram types are supported: `graph` (a grid-snapped
 layered layout of the whole graph, based on the Dagre algorithm of
 `@antv/layout`), `hub` (a hub graph, placing one primary hub node
 between its input and output nodes), `grid` (a compact grid of
@@ -14,11 +14,15 @@ closing a direct cycle between two slices), `tree` (a tidy tree or
 forest with bus connectors, stacked leaves, and dashed cross links),
 `matrix` (a dependency
 structure matrix, outlining its cycles), `sequence` (a sequence
-diagram of participants, their lifelines, and their messages), and
+diagram of participants, their lifelines, and their messages),
 `state` (a state machine with pseudo-states and composite states,
 optionally split into orthogonal regions,
 marking its unreachable, dead-end, and incomplete states and its
-conflicting transitions).
+conflicting transitions), and `petri` (a Petri net of places with
+tokens and transitions, optionally with inhibitor arcs, marking its
+dead and non-live transitions and its unreachable, unbounded, and
+deadlocked places, as determined by its coverability graph, and
+attaching the analysis results to its nodes as tooltips).
 
 ## Repository Layout
 
@@ -79,6 +83,13 @@ conflicting transitions).
         stacked as bands, plus the validation and the reachability and
         dead-end analysis of the whole state machine, marking its states
         via the `mark` attribute)
+    -   `src/gradia-api-type-petri.ts`: the `petri` diagram type (a
+        `graph` with distinct arcs, opposite arcs merged into two-way
+        ones, its places drawn as circles with their tokens, plus the
+        inference of the node kinds, the validation, and the
+        coverability graph and liveness analysis of every connected
+        part of the net, marking its places and transitions via the
+        `mark` attribute and attaching the results as tooltips)
 -   `etc/`: the tool configurations (`eslint.mjs`, `tsconfig.json`,
     `stx.conf`, `vite.ts`)
 -   `smp/`: the sample graph descriptions (`*.txt`), their rendered
@@ -117,7 +128,7 @@ No test target is defined.
 ## CLI Command
 
 ```
-gradia [-t graph|hub|grid|layer|slice|tree|matrix|sequence|state] [-f <format>] [-c <name>=<value>] -o <file>.svg <graph>.txt
+gradia [-t graph|hub|grid|layer|slice|tree|matrix|sequence|state|petri] [-f <format>] [-c <name>=<value>] -o <file>.svg <graph>.txt
 ```
 
 Both the `-o`/`--output` option and the input file argument are

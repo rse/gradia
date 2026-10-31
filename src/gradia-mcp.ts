@@ -155,6 +155,57 @@ component relationships, data flows, dependency graphs, and similar structures.
   explicit "mark" attribute already. The transitions leaving the same state
   (except a fork) on the same event with the same (or no) guard conflict and
   are drawn dashed in that color, too.
+- "petri": a Petri net (place/transition net): the nodes are the places and
+  transitions and the edges the arcs, laid out like a "graph" (but with up to
+  8 side-by-side nodes unless "graph-columns-max" is configured, a minimum node
+  box width of 120 unless "size-node-width-min" is configured, and a minimum
+  channel width of 80 unless "graph-channel-width-min" is configured), with
+  every arc drawn on its own (never bundled). A place is drawn as a circle in
+  the "color-node-place-*" colors around its name (in the smaller
+  "size-font-prop" font size), its attributes (in the "size-font-type" font
+  size), and its initial tokens ("tokens: <count>", a non-negative integer,
+  default 0, drawn as dots arranged like the faces of a die or, beyond 6, as
+  their count), and an optional "capacity: <count>" (a positive integer, drawn
+  as "K = <count>") limits its tokens. A sink place (incoming, but no
+  outgoing arcs) is drawn as a double circle. A transition is drawn as a
+  regular node box, with its attributes as regular attribute lines. The attribute
+  "petri: place" or "petri: transition" sets the kind of a node, and "tokens"
+  or "capacity" implies a place. As every arc connects a place with a
+  transition, the kinds of all other nodes follow from their arcs (a connected
+  part of the net without any such node starting with its first declared node
+  as a place), so annotating the transitions or giving the initial tokens
+  usually suffices. The arity of an arc (e.g. "-->[2]") is its weight (default
+  1), its name a mere label, and parallel arcs add up. A pair of opposite
+  unnamed arcs of the same weight is drawn as one arc with an arrow head at
+  both ends. An arc of the edge kind "inhibitor" (e.g.
+  "p -->[3] t { kind: inhibitor }", from a place to a transition only, drawn
+  ending in a small disc) consumes nothing, but disables its transition while
+  its place holds at least its weight of tokens. A transition is enabled if
+  its input places hold at least the weights of their arcs, its inhibiting
+  places fewer, and its output places stay within their capacities, and firing
+  it moves the weighted tokens. It rejects the input with an error if an arc
+  connects two places or two transitions, an inhibitor arc leads from a
+  transition to a place, a "petri" value is neither "place" nor "transition",
+  a transition carries "tokens" or "capacity", a "tokens", "capacity", or arc
+  weight is not an integer in its range, a place carries more tokens than its
+  capacity, or the net contains a container. Once the net carries an initial
+  token or a transition without input places, every connected part of it is
+  analyzed through its coverability graph (Karp-Miller, without acceleration
+  for a part with inhibitor arcs, within a budget of 10000 markings and bounded
+  comparison work shared by all parts), with the results attached to every
+  node as its tooltip (the initial and most tokens of a place, the firing
+  sequences reaching its deadlock or pumping it without bound, a capacity never
+  reached, and whether a transition never fires, fires, or is live): every
+  place which never holds a token is marked "unreachable" and every
+  transition which never fires "dead"
+  (both with their border and outgoing arcs drawn dashed in the
+  "color-mark-violation" color, and only if all markings were explored), every
+  place holding a token in a deadlock (a marking enabling no transition) while
+  feeding a transition is marked "dead-end", every place whose tokens grow
+  without bound "unbounded", and, for a completely explored bounded part, every
+  transition which fires, but nowhere within a recurring group of markings the
+  net cannot leave again, "non-live" (all three with their border drawn solid
+  in that color), unless the node carries an explicit "mark" attribute.
 
 ### Diagram Type Constraints
 
@@ -216,7 +267,7 @@ as <name>, terminals as "...", optional parts as [ ... ], repeatable parts as
     <directive>      ::= "#config" <whitespace> { <whitespace> } <option> <whitespace> { <whitespace> } ( <string> | <word> )
                        | "#type" <whitespace> { <whitespace> } <type>
     <option>         ::= <letter> { <letter> | <digit> | "-" }
-    <type>           ::= "graph" | "hub" | "grid" | "layer" | "slice" | "tree" | "matrix" | "sequence" | "state"
+    <type>           ::= "graph" | "hub" | "grid" | "layer" | "slice" | "tree" | "matrix" | "sequence" | "state" | "petri"
     <word>           ::= <char> - <whitespace> { <char> - <whitespace> }
     <newline>        ::= "\\n"
     <whitespace>     ::= " " | "\\t" | "\\r"
@@ -255,10 +306,12 @@ as <name>, terminals as "...", optional parts as [ ... ], repeatable parts as
 - The <edge-attrs> following a node belong to the <edge> leading into that node,
   i.e., in "a --> b { kind: async } --> c" they belong to the edge "a --> b".
   The recognized keys are "kind", with the values "sync" (the default),
-  "async", "return", "create", and "destroy", plus "duration" and "time",
-  with arbitrary texts. Only the "sequence" type renders them, while the other
-  types reject a kind other than "sync", as well as a "duration" or "time",
-  with an error. Any other key is rejected with an error, too.
+  "async", "return", "create", "destroy", and "inhibitor", plus "duration" and
+  "time", with arbitrary texts. Only the "sequence" type renders the kinds
+  "async", "return", "create", and "destroy" and the "duration" and "time",
+  and only the "petri" type the kind "inhibitor", while every type rejects the
+  ones it does not render with an error. Any other key is rejected with an
+  error, too.
 - Eleven attribute keys are reserved and consumed by the renderer instead of
   being displayed as a regular "<key>: <val>" line:
   - "url: <url>" renders the node box as a hyperlink. Only relative URLs and
@@ -295,11 +348,12 @@ as <name>, terminals as "...", optional parts as [ ... ], repeatable parts as
   - "multiple: true" draws the node box as several instances: the front box
     with two copies behind it, offset towards the bottom-right. The value has
     to be the literal string "true",
-  - "mark: unreachable|dead-end|incomplete" marks the node (or container) as
-    a violation: its border is drawn in the "color-mark-violation" color, for
-    "unreachable" dashed and with its outgoing edges marked, too. It is
-    usually derived by the diagram type "state", but honored by every diagram
-    type drawing node boxes, unless the option "mark-violation" is "false".
+  - "mark: unreachable|dead-end|incomplete|dead|unbounded|non-live" marks the
+    node (or container) as a violation: its border is drawn in the
+    "color-mark-violation" color, for "unreachable" and "dead" dashed and with
+    its outgoing edges marked, too. It is usually derived by the diagram type
+    "state" or "petri", but honored by every diagram type drawing node boxes,
+    unless the option "mark-violation" is "false".
   Both "badge" and "multiple" are ignored on a container node.
 - A "graph" (a "graph" container level, too) with at least one node carrying an
   "order" attribute is laid out in that explicit order instead of by the layered
@@ -381,8 +435,8 @@ between the subtrees of a "tree" diagram, and a positive "tree-stack-min" or
 the parent has that many of them or their level holds more nodes.
 
 The boolean "mark-violation" option controls whether the diagram types
-"matrix", "layer", "slice", "tree", and "state" mark their violations at all
-(in the "color-mark-violation" color), and whether a "mark" attribute is
+"matrix", "layer", "slice", "tree", "state", and "petri" mark their violations
+at all (in the "color-mark-violation" color), and whether a "mark" attribute is
 honored: by default they do, while with "false" they render the very same
 diagram without any marking (the cross links of a "tree" stay dashed, though).
 

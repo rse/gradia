@@ -23,6 +23,8 @@ import { render as renderMatrix }                  from "./gradia-api-type-matri
 import { render as renderSequence }                from "./gradia-api-type-sequence.js"
 import { render as renderState, prepare as prepareState, frameOf as frameOfState }
     from "./gradia-api-type-state.js"
+import { render as renderPetri, prepare as preparePetri }
+    from "./gradia-api-type-petri.js"
 
 /*  re-export the graph model and configuration companion types  */
 export type { Attr, Node, Edge, EdgeKind, Graph }  from "./gradia-api-model.js"
@@ -30,25 +32,29 @@ export type { Config }                             from "./gradia-api-config.js"
 
 /*  the supported diagram types, their renderers, whether they lay out
     the members of a container, whether they let the edges crossing a
-    container boundary continue to the inner nodes, and whether they
-    render the edge kinds other than the synchronous default and the
+    container boundary continue to the inner nodes, the edge kinds they
+    render besides the synchronous default, and whether they render the
     edge timings, plus their own defaults of the rendering options (a
     tree, e.g., wraps its node texts by default to stay narrow, and a
-    state machine folds its columns later, as it reads as a flow) and
-    their own preparation of the whole graph model (a state machine,
-    e.g., is validated and analyzed as a whole)  */
+    state machine or Petri net folds its columns later, as it reads as a
+    flow) and their own preparation of the whole graph model (a state
+    machine or Petri net, e.g., is validated and analyzed as a whole)  */
 const renderers = {
-    graph:    { render: renderGraph,    nestable: true,  gated: true,  kinds: false },
-    hub:      { render: renderHub,      nestable: true,  gated: false, kinds: false },
-    grid:     { render: renderGrid,     nestable: true,  gated: false, kinds: false },
-    layer:    { render: renderLayer,    nestable: false, gated: false, kinds: false },
-    slice:    { render: renderSlice,    nestable: false, gated: false, kinds: false },
-    tree:     { render: renderTree,     nestable: false, gated: false, kinds: false,
+    graph:    { render: renderGraph,    nestable: true,  gated: true  },
+    hub:      { render: renderHub,      nestable: true,  gated: false },
+    grid:     { render: renderGrid,     nestable: true,  gated: false },
+    layer:    { render: renderLayer,    nestable: false, gated: false },
+    slice:    { render: renderSlice,    nestable: false, gated: false },
+    tree:     { render: renderTree,     nestable: false, gated: false,
         defaults: { "size-node-width-min": 160, "size-node-width-max": 240 } },
-    matrix:   { render: renderMatrix,   nestable: false, gated: false, kinds: false },
-    sequence: { render: renderSequence, nestable: false, gated: false, kinds: true  },
-    state:    { render: renderState,    nestable: true,  gated: true,  kinds: false,
-        prepare: prepareState, boxed: true, frameOf: frameOfState, defaults: { "graph-columns-max": 8 } }
+    matrix:   { render: renderMatrix,   nestable: false, gated: false },
+    sequence: { render: renderSequence, nestable: false, gated: false,
+        kinds: [ "async", "return", "create", "destroy" ], timed: true },
+    state:    { render: renderState,    nestable: true,  gated: true,
+        prepare: prepareState, boxed: true, frameOf: frameOfState, defaults: { "graph-columns-max": 8 } },
+    petri:    { render: renderPetri,    nestable: false, gated: false, kinds: [ "inhibitor" ],
+        prepare: preparePetri, defaults: { "graph-columns-max": 8, "graph-channel-width-min": 80,
+            "size-node-width-min": 120 } }
 } satisfies Record<string, DiagramTypeSpec>
 export type DiagramType = keyof typeof renderers
 export const diagramTypes = Object.keys(renderers) as DiagramType[]
@@ -72,7 +78,8 @@ const parseTypeDirective = (input: string): DiagramType | undefined => {
 /*  the options entering the identifier seed only once deviating from
     their default, keeping the identifiers of all older diagrams stable  */
 const seedLate = new Set<string>([ "color-mark-violation", "color-composite-border",
-    "color-node-pseudo-name", "color-node-pseudo-box", "color-node-pseudo-border", "mark-violation", "layer-numbered", "slice-numbered",
+    "color-node-pseudo-name", "color-node-pseudo-box", "color-node-pseudo-border",
+    "color-node-place-name", "color-node-place-box", "color-node-place-border", "mark-violation", "layer-numbered", "slice-numbered",
     "sequence-column-gap", "sequence-message-gap", "tree-level-gap", "tree-sibling-gap", "tree-row-max",
     "tree-stack-min", "tree-stack-double", "tree-node-width-equal", "tree-horizontal" ])
 
@@ -137,14 +144,15 @@ export class Gradia {
         /*  validate the edge kinds and timings: a known kind, and other
             than the synchronous default, as well as any timing, only for
             a diagram type rendering them  */
+        const spec = renderers[type] as DiagramTypeSpec
         for (const edge of graph.edges) {
             const what = `edge "${edge.source}" --> "${edge.target}"`
             if (edge.kind !== undefined && !edgeKinds.includes(edge.kind))
                 throw new Error(`invalid kind "${edge.kind}" of ${what}`)
-            if (edge.kind !== undefined && edge.kind !== "sync" && !renderers[type].kinds)
+            if (edge.kind !== undefined && edge.kind !== "sync" && !(spec.kinds ?? []).includes(edge.kind))
                 throw new Error(`diagram type "${type}" does not support the kind "${edge.kind}" of ${what}`)
             for (const key of [ "duration", "time" ] as const)
-                if (edge[key] !== undefined && !renderers[type].kinds)
+                if (edge[key] !== undefined && spec.timed !== true)
                     throw new Error(`diagram type "${type}" does not support the ${key} of ${what}`)
         }
 

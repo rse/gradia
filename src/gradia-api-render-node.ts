@@ -6,7 +6,7 @@
 
 /*  internal dependencies  */
 import { Attr, Node }                              from "./gradia-api-model.js"
-import { Config }                                  from "./gradia-api-config.js"
+import { Config, ConfigFontSize }                  from "./gradia-api-config.js"
 import { NodeStyle, NodeShape, textWidth, textWrap }
     from "./gradia-api-render-base.js"
 
@@ -76,16 +76,21 @@ const ATTRS_SPECIAL = new Set([ "url", "type", "primary", "group", "parent", "co
     "badge", "multiple", "cluster", "mark" ])
 
 /*  the special "mark" annotation (the violation marking of a node, as
-    set by the analysis of a "state" diagram, an unknown value being
-    ignored), drawn with a dashed border for an "unreachable" node, whose
-    outgoing edges are marked, too, and a solid one for a "dead-end" or
-    an "incomplete" node  */
-const nodeMarks = [ "unreachable", "dead-end", "incomplete" ] as const
+    set by the analysis of a "state" or "petri" diagram, an unknown value
+    being ignored), drawn with a dashed border for an "unreachable" or a
+    "dead" node, whose outgoing edges are marked, too, and a solid one for
+    a "dead-end", an "incomplete", an "unbounded", or a "non-live" node  */
+const nodeMarks = [ "unreachable", "dead-end", "incomplete", "dead", "unbounded", "non-live" ] as const
 export type NodeMark = typeof nodeMarks[number]
 export const markOf = (node: Node): NodeMark | undefined => {
     const val = node.attrs.findLast((attr) => attr.key === "mark")?.val
     return nodeMarks.find((mark) => mark === val)
 }
+
+/*  whether a node mark lets the node never be entered, i.e., marks its
+    outgoing edges, too  */
+export const isDormant = (mark: NodeMark | undefined): boolean =>
+    mark === "unreachable" || mark === "dead"
 
 /*  the node coloring of a marked node: the border in the violation color
     (unless the marking of the violations is disabled)  */
@@ -93,8 +98,41 @@ export const markedStyleOf = (node: Node, style: NodeStyle, config: Config): Nod
     const mark = config["mark-violation"] ? markOf(node) : undefined
     if (mark === undefined)
         return style
-    return { ...style, stroke: "color-mark-violation", ...(mark === "unreachable" ? { dash: "10 6" } : {}) }
+    return { ...style, stroke: "color-mark-violation", ...(isDormant(mark) ? { dash: "10 6" } : {}) }
 }
+
+/*  the token row of a place of a "petri" diagram below its name: its
+    minimum height, the radius of a token dot, the largest number of
+    tokens drawn as dots (more being drawn as their count), and the dot
+    offsets (in units of the distance of neighboring dots) of every
+    drawn number of tokens, arranged like the faces of a die (except two
+    tokens, side by side)  */
+export const TOKEN_H = (config: Config): number =>
+    config["size-font-prop"] + 10
+export const TOKEN_R = (config: Config): number =>
+    config["size-font-prop"] * 0.25
+export const TOKEN_DOTS = 6
+const tokenFaces: [ number, number ][][] = [
+    [],
+    [ [ 0, 0 ] ],
+    [ [ -0.5, 0 ], [ 0.5, 0 ] ],
+    [ [ -1, -1 ], [ 0, 0 ], [ 1, 1 ] ],
+    [ [ -1, -1 ], [ 1, -1 ], [ -1, 1 ], [ 1, 1 ] ],
+    [ [ -1, -1 ], [ 1, -1 ], [ 0, 0 ], [ -1, 1 ], [ 1, 1 ] ],
+    [ [ -0.6, -1 ], [ 0.6, -1 ], [ -0.6, 0 ], [ 0.6, 0 ], [ -0.6, 1 ], [ 0.6, 1 ] ]
+]
+
+/*  the offsets of the token dots of a place from the middle of its token
+    row (none beyond the number of tokens drawn as dots)  */
+export const tokenDots = (tokens: number, config: Config): [ number, number ][] => {
+    const step = TOKEN_R(config) * 3
+    return (tokenFaces[tokens] ?? []).map(([ x, y ]) => [ x * step, y * step ])
+}
+
+/*  the side padding of the text lines of a place within its circle, and
+    the gap of the inner circle of a sink place to its outer circle  */
+export const PLACE_PAD  = 8
+export const PLACE_RING = 6
 
 /*  the geometry of a pseudo-state shape centered in its box of the half
     size "a" (the smaller half extent of the box): the radius of the dot of
@@ -264,4 +302,56 @@ export const measureNodes = (
     }
     return { boxW, boxH, contentH }
 }
+
+/*  a text line (or the row of token dots) of a place of a "petri"
+    diagram: its text and font (or its number of dots), its estimated
+    width and height, and the offset of its middle from the circle center  */
+export interface PlaceLine {
+    text: string
+    size: ConfigFontSize
+    bold: boolean
+    dots: number
+    w:    number
+    h:    number
+    dy:   number
+}
+
+/*  the lines of a place, stacked and centered on its circle: its type
+    lines, its bold name lines in the attribute font size, its token row,
+    its capacity (in the usual notation "K = <count>"), and its attribute
+    lines, the latter two in the type font size, so a place stays
+    optically lighter than the boxes of the transitions  */
+export const placeLines = (node: Node, tokens: number, capacity: number | undefined,
+    config: Config): PlaceLine[] => {
+    const fsT   = config["size-font-type"]
+    const fsP   = config["size-font-prop"]
+    const lines = linesOfNode(node, { ...config, "size-font-node": fsP, "size-font-prop": fsT })
+    const text  = (text: string, size: ConfigFontSize, bold: boolean, h: number): PlaceLine =>
+        ({ text, size, bold, dots: 0, w: textWidth(text, config[size], bold), h, dy: 0 })
+    const dots  = (): PlaceLine => {
+        const extent = (k: number) =>
+            Math.max(...tokenDots(tokens, config).map((dot) => Math.abs(dot[k]))) * 2 + TOKEN_R(config) * 2
+        return { text: "", size: "size-font-prop", bold: false, dots: tokens,
+            w: extent(0), h: Math.max(TOKEN_H(config), extent(1) + 10), dy: 0 }
+    }
+    const stack: PlaceLine[] = [
+        ...lines.type.map((line) => text(line, "size-font-type", false, fsT + 4)),
+        ...lines.name.map((line) => text(line, "size-font-prop", true, fsP + 4)),
+        ...(tokens > TOKEN_DOTS ? [ text(String(tokens), "size-font-prop", true, TOKEN_H(config)) ] :
+            tokens > 0 ? [ dots() ] : []),
+        ...(capacity !== undefined ? [ text(`K = ${capacity}`, "size-font-type", false, fsT + 6) ] : []),
+        ...lines.attrs.map((line) => text(line, "size-font-type", false, fsT + 6))
+    ]
+    let y = -stack.reduce((sum, line) => sum + line.h, 0) / 2
+    for (const line of stack) {
+        line.dy = y + line.h / 2
+        y += line.h
+    }
+    return stack
+}
+
+/*  the radius of the circle of a place enclosing all of its lines, each
+    with the side padding  */
+export const placeRadius = (lines: PlaceLine[]): number =>
+    Math.max(0, ...lines.map((line) => Math.hypot(line.w / 2 + PLACE_PAD, Math.abs(line.dy) + line.h / 2)))
 
