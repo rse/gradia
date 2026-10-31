@@ -604,7 +604,6 @@ admin   --(uses)--> orders
 eng:      "Engineering"        [ badge: team, primary: true ]
 platform: "Platform"           [ badge: cloud ]
 product:  "Product"            [ badge: package ]
-infra:    "Infrastructure"     [ badge: network ]
 kai:      "Kai"                [ badge: person ]
 lena:     "Lena"               [ badge: person ]
 max:      "Max"                [ badge: person ]
@@ -617,12 +616,9 @@ dan:      "Dan"                [ badge: person ]
 eva:      "Eva"                [ badge: person ]
 ios:      "iOS"                [ badge: device ]
 android:  "Android"            [ badge: device ]
-db:       "Databases"          [ badge: database ]
-net:      "Networks"           [ badge: network ]
 
 eng      --> platform
 eng      --> product
-eng      --> infra
 platform --> kai
 platform --> lena
 platform --> max
@@ -635,8 +631,6 @@ product  --> dan
 product  --> eva
 mobile   --> ios
 mobile   --> android
-infra    --> db
-infra    --> net
 eva      --("pairs with")--> lena
 android  --("reports to")--> kai
         </script>

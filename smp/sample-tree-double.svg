@@ -4,10 +4,10 @@
 <style>
 .gradia-3167da4d { fill: none; stroke: var(--gradia-color-edge-line, #999999); stroke-width: 3 }
 .gradia-6c7500cd { fill: var(--gradia-color-edge-line, #999999) }
-.gradia-d9926a5f { fill: none; stroke: var(--gradia-color-mark-violation, #cc3333); stroke-width: 3; stroke-dasharray: 10 6 }
-.gradia-fea79086 { fill: var(--gradia-color-mark-violation, #cc3333) }
+.gradia-8f3e8366 { fill: none; stroke: var(--gradia-color-mark-violation, #b06820); stroke-width: 3; stroke-dasharray: 10 6 }
+.gradia-72d5e907 { fill: var(--gradia-color-mark-violation, #b06820) }
 .gradia-8e1fb7ed { fill: none; stroke: var(--gradia-color-edge-line, #999999); stroke-width: 3; stroke-dasharray: 10 6 }
-.gradia-f8346d44 { font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; font-size: var(--gradia-size-font-edge, 16px); fill: var(--gradia-color-mark-violation, #cc3333); stroke: var(--gradia-color-edge-halo, #ffffff); stroke-width: 4.5; paint-order: stroke; stroke-linejoin: round }
+.gradia-b476456b { font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; font-size: var(--gradia-size-font-edge, 16px); fill: var(--gradia-color-mark-violation, #b06820); stroke: var(--gradia-color-edge-halo, #ffffff); stroke-width: 4.5; paint-order: stroke; stroke-linejoin: round }
 .gradia-92e1c07c { fill: var(--gradia-color-node-primary-box, #336699); stroke: var(--gradia-color-node-primary-border, #003366); stroke-width: 4 }
 .gradia-e8199b28 { fill: var(--gradia-color-node-primary-box, #336699); stroke: var(--gradia-color-node-primary-border, #003366); stroke-width: 2 }
 .gradia-47a707d0 { fill: var(--gradia-color-node-primary-name, #ffffff); stroke: var(--gradia-color-node-primary-name, #ffffff); stroke-width: 1 }
@@ -24,7 +24,7 @@
 <path d="M 0 1 L 9 5 L 0 9 z" class="gradia-6c7500cd"/>
 </marker>
 <marker id="gradia-aa85bcf57d50-alert" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="21" markerHeight="21" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
-<path d="M 0 1 L 9 5 L 0 9 z" class="gradia-fea79086"/>
+<path d="M 0 1 L 9 5 L 0 9 z" class="gradia-72d5e907"/>
 </marker>
 </defs>
 <path d="M 528.4375 103 l 0 19.799999999999997" class="gradia-cb45cba8"/>
@@ -49,8 +49,8 @@
 <path d="M 962.5 519.5 L 922.5 519.5" class="gradia-3167da4d" marker-end="url(#gradia-aa85bcf57d50-arrow)"/>
 <path d="M 516 570.8 L 516 639" class="gradia-3167da4d" marker-end="url(#gradia-aa85bcf57d50-arrow)"/>
 <path d="M 714.5 570.8 L 714.5 639" class="gradia-3167da4d" marker-end="url(#gradia-aa85bcf57d50-arrow)"/>
-<path d="M 762.5 519.5 L 748.5 519.5 Q 734.5 519.5 734.5 505.5 L 734.5 314 Q 734.5 294 714.5 294 L 623.25 294 A 8 8 0 0 0 607.25 294 L 516 294 Q 496 294 496 314 L 496 339.5 Q 496 353.5 482 353.5 L 468 353.5" class="gradia-d9926a5f" marker-end="url(#gradia-aa85bcf57d50-alert)"/>
-<path d="M 665.25 639 L 665.25 625 Q 665.25 611 651.25 611 L 524 611 A 8 8 0 0 0 508 611 L 60 611 Q 40 611 40 591 L 40 367.5 Q 40 353.5 54 353.5 L 68 353.5" class="gradia-d9926a5f" marker-end="url(#gradia-aa85bcf57d50-alert)"/>
+<path d="M 762.5 519.5 L 748.5 519.5 Q 734.5 519.5 734.5 505.5 L 734.5 314 Q 734.5 294 714.5 294 L 623.25 294 A 8 8 0 0 0 607.25 294 L 516 294 Q 496 294 496 314 L 496 339.5 Q 496 353.5 482 353.5 L 468 353.5" class="gradia-8f3e8366" marker-end="url(#gradia-aa85bcf57d50-alert)"/>
+<path d="M 665.25 639 L 665.25 625 Q 665.25 611 651.25 611 L 524 611 A 8 8 0 0 0 508 611 L 60 611 Q 40 611 40 591 L 40 367.5 Q 40 353.5 54 353.5 L 68 353.5" class="gradia-8f3e8366" marker-end="url(#gradia-aa85bcf57d50-alert)"/>
 <rect x="398.9375" y="40" width="259" height="63" rx="6" class="gradia-92e1c07c"/>
 <circle cx="431.9375" cy="71.5" r="18" class="gradia-e8199b28"/>
 <g transform="translate(431.9375 71.5) scale(1.059)">
@@ -141,6 +141,6 @@
 <path d="M -7 -7 h 14 v 10 h -14 z M -4 7 h 8 M 0 3 v 4" class="gradia-d356e2cb"/>
 </g>
 <text x="739.6" y="681.3" class="gradia-f36ab1ca">Android</text>
-<text x="524" y="287" class="gradia-f8346d44">pairs with</text>
-<text x="68" y="604" class="gradia-f8346d44">reports to</text>
+<text x="524" y="287" class="gradia-b476456b">pairs with</text>
+<text x="68" y="604" class="gradia-b476456b">reports to</text>
 </svg>

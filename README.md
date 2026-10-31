@@ -692,7 +692,7 @@ size-font-type             16           grid-gap-horizontal        40
 size-font-prop             22           grid-gap-vertical          20
 size-font-edge             16           grid-node-width-equal      true
 size-font-arity            16           grid-node-height-equal     true
-color-mark-violation       #cc3333      sequence-column-gap        20
+color-mark-violation       #b06820      sequence-column-gap        20
                                         sequence-message-gap       40
                                         tree-level-gap             60
                                         tree-sibling-gap           20

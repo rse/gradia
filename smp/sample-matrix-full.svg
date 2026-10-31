@@ -15,13 +15,13 @@
 .gradia-063da071 { fill: var(--gradia-color-node-regular-box, #e0f0ff); stroke: var(--gradia-color-container-border, #a0a0a0); stroke-width: 1 }
 .gradia-de61de06 { fill: var(--gradia-color-container-box, #f6f6f6); stroke: var(--gradia-color-container-border, #a0a0a0); stroke-width: 1 }
 .gradia-ddfbdb7f { fill: none; stroke: var(--gradia-color-group-name, #6699cc); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round }
-.gradia-8f5f281a { fill: none; stroke: var(--gradia-color-mark-violation, #cc3333); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round }
+.gradia-4ab9d272 { fill: none; stroke: var(--gradia-color-mark-violation, #b06820); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round }
 .gradia-8f91fa3b { font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; font-size: var(--gradia-size-font-prop, 22px); font-weight: 600; fill: var(--gradia-color-node-regular-name, #336699) }
 .gradia-cf359be4 { font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; font-size: var(--gradia-size-font-prop, 22px); font-weight: 600; fill: var(--gradia-color-node-primary-name, #ffffff) }
 .gradia-a43f48bd { font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; font-size: 16px; fill: var(--gradia-color-group-name, #6699cc) }
 .gradia-5f52a16d { font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; font-size: var(--gradia-size-font-type, 16px); font-weight: 600; fill: var(--gradia-color-container-name, #666666) }
 .gradia-c8482516 { font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; font-size: var(--gradia-size-font-type, 16px); font-weight: 600; fill: var(--gradia-color-node-regular-name, #336699) }
-.gradia-f7e4690f { font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; font-size: var(--gradia-size-font-type, 16px); font-weight: 600; fill: var(--gradia-color-mark-violation, #cc3333) }
+.gradia-08d3f396 { font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; font-size: var(--gradia-size-font-type, 16px); font-weight: 600; fill: var(--gradia-color-mark-violation, #b06820) }
 </style>
 <marker id="gradia-21d54f5196d5-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="21" markerHeight="21" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
 <path d="M 0 1 L 9 5 L 0 9 z" class="gradia-6c7500cd"/>
@@ -132,7 +132,7 @@
 <path d="M 356 356 h 88 v 88 h -88 z" class="gradia-ddfbdb7f"/>
 <path d="M 444 444 h 176 v 176 h -176 z" class="gradia-ddfbdb7f"/>
 <path d="M 620 620 h 88 v 88 h -88 z" class="gradia-ddfbdb7f"/>
-<path d="M 488 488 h 132 v 132 h -132 z" class="gradia-8f5f281a" stroke-dasharray="10 6"/>
+<path d="M 488 488 h 132 v 132 h -132 z" class="gradia-4ab9d272" stroke-dasharray="10 6"/>
 <text x="385.7" y="297.6" transform="rotate(-90 385.7 297.6)" class="gradia-8f91fa3b">Mobile App</text>
 <text x="429.7" y="297.6" transform="rotate(-90 429.7 297.6)" class="gradia-8f91fa3b">Web Client</text>
 <text x="473.7" y="297.6" transform="rotate(-90 473.7 297.6)" class="gradia-cf359be4">API Gateway</text>
@@ -166,7 +166,7 @@
 <text x="686" y="515.6" text-anchor="middle" class="gradia-c8482516">3</text>
 <text x="598" y="559.6" text-anchor="middle" class="gradia-c8482516">1</text>
 <text x="642" y="559.6" text-anchor="middle" class="gradia-c8482516">1</text>
-<text x="510" y="603.6" text-anchor="middle" class="gradia-f7e4690f">1</text>
-<text x="554" y="603.6" text-anchor="middle" class="gradia-f7e4690f">1</text>
-<text x="598" y="647.6" text-anchor="middle" class="gradia-f7e4690f">1</text>
+<text x="510" y="603.6" text-anchor="middle" class="gradia-08d3f396">1</text>
+<text x="554" y="603.6" text-anchor="middle" class="gradia-08d3f396">1</text>
+<text x="598" y="647.6" text-anchor="middle" class="gradia-08d3f396">1</text>
 </svg>

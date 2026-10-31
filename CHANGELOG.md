@@ -51,6 +51,9 @@ ChangeLog
     rows above the bands, and the new option "slice-numbered" numbers the slices, plus the new
     "smp/slice-*" samples.
 
+-   IMPROVEMENT [code]: change the default of the option "color-mark-violation" from a red
+    ("#cc3333") to a brown ("#b06820").
+
 -   FEATURE [code]: add the boolean option "mark-violation" (default "true"), which with "false"
     disables the marking of the violations of the diagram types "matrix" (the counts of the edges
     closing a cycle and the dashed cycle outlines), "layer", and "slice" (the dashed edges in the
