@@ -49,6 +49,16 @@ component relationships, data flows, dependency graphs, and similar structures.
   "layer-numbered" numbers the layers bottom-up (by default). The layers
   determine the order of the rows, so an "order" attribute is ignored. It
   rejects the input with an error if it contains a container.
+- "slice": a sliced architecture: the slices (the "slice: <name>" attribute of
+  the nodes) line up left-to-right as bands, the nodes of a slice stacked
+  top-down, and an edge pointing from a right slice back to a left one is
+  drawn dashed in the "color-mark-violation" color if it closes a direct cycle,
+  i.e., if any edge points from that left slice to the right one. The
+  attribute "cluster: <path>" assigns the slice to nested clusters
+  ("/"-separated, outermost first), drawn as rows above the bands, and the
+  option "slice-numbered" numbers the slices. The slices determine the order
+  of the columns, so an "order" attribute is ignored. It rejects the input
+  with an error if it contains a container.
 - "matrix": a dependency structure matrix: the nodes are both the rows and the
   columns, a cell counts the edges from its row to its column, and the cycles
   are outlined as blocks on the diagonal, the counts of their edges closing
@@ -142,7 +152,7 @@ as <name>, terminals as "...", optional parts as [ ... ], repeatable parts as
     <directive>      ::= "#config" <whitespace> { <whitespace> } <option> <whitespace> { <whitespace> } ( <string> | <word> )
                        | "#type" <whitespace> { <whitespace> } <type>
     <option>         ::= <letter> { <letter> | <digit> | "-" }
-    <type>           ::= "graph" | "hub" | "grid" | "layer" | "matrix" | "sequence"
+    <type>           ::= "graph" | "hub" | "grid" | "layer" | "slice" | "matrix" | "sequence"
     <word>           ::= <char> - <whitespace> { <char> - <whitespace> }
     <newline>        ::= "\\n"
     <whitespace>     ::= " " | "\\t" | "\\r"
@@ -200,8 +210,8 @@ as <name>, terminals as "...", optional parts as [ ... ], repeatable parts as
   - "cluster: <path>" places the node into the nested clusters of the
     "/"-separated path <path> within the one diagram, crossed freely by the
     edges (for the diagram type "matrix": partitions of its rows and columns,
-    for the diagram type "layer": groups of its layers), while the other
-    diagram types ignore it,
+    for the diagram type "layer": groups of its layers, for the diagram type
+    "slice": groups of its slices), while the other diagram types ignore it,
   - "parent: <id>" nests the node into the container node <id> (a node which
     is implicitly declared if never referenced otherwise),
   - "container: <type>" marks the node as a container whose members are laid

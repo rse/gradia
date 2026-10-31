@@ -453,10 +453,13 @@ interface Need {
 /*  the uniform layout of an explicitly ordered graph in lanes (e.g. the
     layers of a "layer" diagram): all boxes take one width, the boxes of a
     lane one height, and all gutters one height, while the marked edges
-    never share a bundle with unmarked ones  */
+    never share a bundle with unmarked ones (a transposed one turns the
+    order values into columns instead of rows, e.g. for the slices of a
+    "slice" diagram)  */
 export interface Uniform {
-    laneOf:  (id: string) => number
-    markOf?: (edge: Edge) => boolean
+    laneOf:      (id: string) => number
+    markOf?:     (edge: Edge) => boolean
+    transposed?: boolean
 }
 
 /*  the height the detours of the given number of self-loops of a node
@@ -1227,14 +1230,31 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
         const values      = Array.from(new Set(real.map(orderOrLast))).sort((a, b) => a - b)
         ncols = 1
         nrows = 0
-        for (const value of values) {
-            const members = real.filter((node) => orderOrLast(node) === value)
-            members.forEach((node, i) => {
-                col.set(node.id, i % maxCols)
-                row.set(node.id, nrows + Math.floor(i / maxCols))
+        if (uniform?.transposed === true) {
+            /*  a transposed uniform layout instead turns the order values
+                into the columns, left-to-right, the nodes of one value
+                filling their column top-down in declaration order (never
+                wrapped), and the nodes without an order the trailing column  */
+            ncols = values.length
+            nrows = 1
+            values.forEach((value, c) => {
+                real.filter((node) => orderOrLast(node) === value).forEach((node, i) => {
+                    col.set(node.id, c)
+                    row.set(node.id, i)
+                    nrows = Math.max(nrows, i + 1)
+                })
             })
-            ncols  = Math.max(ncols, Math.min(members.length, maxCols))
-            nrows += Math.ceil(members.length / maxCols)
+        }
+        else {
+            for (const value of values) {
+                const members = real.filter((node) => orderOrLast(node) === value)
+                members.forEach((node, i) => {
+                    col.set(node.id, i % maxCols)
+                    row.set(node.id, nrows + Math.floor(i / maxCols))
+                })
+                ncols  = Math.max(ncols, Math.min(members.length, maxCols))
+                nrows += Math.ceil(members.length / maxCols)
+            }
         }
     }
     else {

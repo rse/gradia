@@ -3,12 +3,16 @@
 **gradia** is the opinionated tooling of *Dr. Ralf S. Engelschall*
 for *Object Graph Diagram Rendering*: a small CLI for rendering
 directed graphs, described in a concise textual input language, as SVG
-diagrams. Four diagram types are supported: `graph` (a grid-snapped
+diagrams. Seven diagram types are supported: `graph` (a grid-snapped
 layered layout of the whole graph, based on the Dagre algorithm of
 `@antv/layout`), `hub` (a hub graph, placing one primary hub node
 between its input and output nodes), `grid` (a compact grid of
-tiles for an edge-less graph), and `sequence` (a sequence diagram of
-participants, their lifelines, and their messages).
+tiles for an edge-less graph), `layer` (a layered architecture of
+stacked layer bands, marking the edges against the layering), `slice`
+(a sliced architecture of side-by-side slice bands, marking the edges
+closing a direct cycle between two slices), `matrix` (a dependency
+structure matrix, outlining its cycles), and `sequence` (a sequence
+diagram of participants, their lifelines, and their messages).
 
 ## Repository Layout
 
@@ -48,6 +52,8 @@ participants, their lifelines, and their messages).
     -   `src/gradia-api-type-grid.ts`: the `grid` diagram type (compact grid layout)
     -   `src/gradia-api-type-layer.ts`: the `layer` diagram type (a uniform
         `graph`, its layers drawn as bands and its violations marked)
+    -   `src/gradia-api-type-slice.ts`: the `slice` diagram type (a uniform
+        and transposed `graph`, its slices drawn as bands and its cycles marked)
     -   `src/gradia-api-type-matrix.ts`: the `matrix` diagram type (the
         headers and cells of a dependency structure matrix, as shapes)
     -   `src/gradia-api-type-sequence.ts`: the `sequence` diagram type
@@ -87,7 +93,7 @@ No test target is defined.
 ## CLI Command
 
 ```
-gradia [-t graph|hub|grid|sequence] [-f <format>] [-c <name>=<value>] [-o <file>.svg] <graph>.txt
+gradia [-t graph|hub|grid|layer|slice|matrix|sequence] [-f <format>] [-c <name>=<value>] [-o <file>.svg] <graph>.txt
 ```
 
 The output format is `svg:standalone` (a standalone SVG/XML document,

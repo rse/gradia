@@ -1,0 +1,18 @@
+#type slice
+
+catalog: "Catalog UI"       [ slice: Catalog ]
+search:  "Search Service"   [ slice: Catalog ]
+items:   "Item Store"       [ slice: Catalog ]
+cart:    "Cart UI"          [ slice: Ordering ]
+orders:  "Order Service"    [ slice: Ordering ]
+ledger:  "Order Store"      [ slice: Ordering ]
+invoice: "Invoice UI"       [ slice: Billing ]
+billing: "Billing Service"  [ slice: Billing ]
+
+catalog --> search
+search  --> items
+cart    --> orders
+orders  --> ledger
+orders  --(price)--> search
+invoice --> billing
+billing --> orders

@@ -14,7 +14,7 @@ About
 -----
 
 **Gradia** is a small API and CLI for rendering directed graphs,
-described in a concise textual input language, as SVG diagrams. Six
+described in a concise textual input language, as SVG diagrams. Seven
 diagram types are supported which fit the scenario of visualizing object
 graphs:
 
@@ -25,6 +25,8 @@ graphs:
 - `grid`: a compact grid of tiles for an edge-less graph.
 - `layer`: a layered architecture, stacking its layers as bands and
   marking the edges pointing upwards against the layering.
+- `slice`: a sliced architecture, lining up its slices as bands and
+  marking the edges pointing backwards to close a cycle between slices.
 - `matrix`: a dependency structure matrix, counting the edges between
   its rows and columns and outlining its cycles.
 - `sequence`: a sequence diagram of participants and their messages.
@@ -58,6 +60,10 @@ Here are examples of the graph diagram renderings:
 
   ![layer-sample](smp/layer-sample.svg)
 
+- [slice-sample](smp/slice-sample.txt) (sliced architecture):
+
+  ![slice-sample](smp/slice-sample.svg)
+
 - [matrix-sample](smp/matrix-sample.txt) (dependency structure matrix):
 
   ![matrix-sample](smp/matrix-sample.svg)
@@ -84,7 +90,7 @@ Usage
 -----
 
 ```sh
-$ gradia [-t graph|hub|grid|layer|matrix|sequence] [-f <format>] [-c <name>=<value>] -o <file>.svg <graph>.txt
+$ gradia [-t graph|hub|grid|layer|slice|matrix|sequence] [-f <format>] [-c <name>=<value>] -o <file>.svg <graph>.txt
 ```
 
 The diagram type is selected with the `-t` command-line option or, when
@@ -101,7 +107,7 @@ MCP Service
 -----------
 
 ```sh
-$ gradia --mcp [-t graph|hub|grid|layer|matrix|sequence] [-f <format>] [-c <name>=<value>]
+$ gradia --mcp [-t graph|hub|grid|layer|slice|matrix|sequence] [-f <format>] [-c <name>=<value>]
 ```
 
 With the `-m`/`--mcp` option, **Gradia** instead runs as a [Model Context
@@ -169,7 +175,7 @@ separated by `|`.
 <directive>      ::= "#config" <whitespace> { <whitespace> } <option> <whitespace> { <whitespace> } ( <string> | <word> )
                    | "#type" <whitespace> { <whitespace> } <type>
 <option>         ::= <letter> { <letter> | <digit> | "-" }
-<type>           ::= "graph" | "hub" | "grid" | "layer" | "matrix" | "sequence"
+<type>           ::= "graph" | "hub" | "grid" | "layer" | "slice" | "matrix" | "sequence"
 <word>           ::= <char> - <whitespace> { <char> - <whitespace> }
 <newline>        ::= "\n"
 <whitespace>     ::= " " | "\t" | "\r"
@@ -244,8 +250,9 @@ separated by `|`.
     - `cluster: <path>` places the node into the nested clusters of the
       `/`-separated path `<path>` within the one diagram, crossed freely
       by the edges (for diagram type `matrix`: partitions of its rows and
-      columns, for diagram type `layer`: groups of its layers), while the
-      other diagram types ignore it,
+      columns, for diagram type `layer`: groups of its layers, for
+      diagram type `slice`: groups of its slices), while the other diagram
+      types ignore it,
     - `parent: <id>` nests the node into the container node `<id>` (a
       node which is implicitly declared if never referenced otherwise),
     - `container: <type>` marks the node as a container whose members
@@ -360,6 +367,29 @@ highest one, and the boxes of a layer stay aligned in its band. The
 layers determine the order of the rows, so an `order` attribute of a
 node is ignored.
 
+The diagram type `slice` is the companion of the diagram type `layer`:
+it lays out a sliced architecture and rejects the input with an error
+as soon as the graph contains a container. The attribute
+`slice: <name>` assigns a node to a slice, the slices line up
+left-to-right in the order of their first appearance as bands spanning
+the whole diagram (colored by the `color-container-*` options, the slice
+name above its nodes, and never wrapped, regardless of
+`graph-columns-max`), and the nodes of a slice stack top-down in its
+band in declaration order (never wrapped), while the nodes without a
+slice trail outside of any band. An edge pointing from a right slice
+back to a left one is drawn dashed in the `color-mark-violation` color
+if it closes a direct cycle, i.e., if any edge points from that left
+slice to the right one (transitive cycles are not checked). The
+attribute `cluster: <path>` assigns the slice of a node to nested
+clusters, which are drawn as rows above the bands, spanning the bands
+of their slices (with the same rules as for the diagram type `layer`),
+and the boolean option `slice-numbered` numbers the slices
+left-to-right. All node boxes take the width of the widest one and the
+boxes of a row the height of the highest one, and the channels between
+the bands widen until the edges within a slice stay inside its band.
+The slices determine the order of the columns, so an `order` attribute
+of a node is ignored.
+
 The diagram type `matrix` draws a dependency structure matrix (DSM) and
 rejects the input with an error as soon as the graph contains a
 container. The nodes are both its rows and its columns, their headers
@@ -448,8 +478,8 @@ group and every `hub` container needs its own primary node.
 ### Directives
 
 A `#type` directive sets the diagram type (`graph`, `hub`, `grid`,
-`layer`, `matrix`, or `sequence`), which otherwise is settable through
-the `-t`/`--type` command-line option (which takes precedence). The last
+`layer`, `slice`, `matrix`, or `sequence`), which otherwise is settable
+through the `-t`/`--type` command-line option (which takes precedence). The last
 occurrence wins and an invalid type is silently ignored. Without both,
 the type defaults to `graph`.
 
@@ -490,6 +520,7 @@ size-font-prop             22           grid-gap-vertical          20
 size-font-edge             16           grid-node-width-equal      true
 size-font-arity            16           grid-node-height-equal     true
 color-mark-violation       #cc3333      layer-numbered             true
+                                        slice-numbered             false
 ```
 
 The `size-*`, `group-*`, `container-*`, `graph-*`, `hub-*`, and

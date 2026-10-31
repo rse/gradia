@@ -41,6 +41,16 @@ ChangeLog
     option "layer-numbered" numbers the layers bottom-up (by default), plus the new
     "smp/layer-*" samples.
 
+-   FEATURE [code, othr]: add the diagram type "slice", the companion of the diagram type "layer":
+    a sliced architecture whose slices (the node attribute "slice") line up left-to-right as bands,
+    laid out as a uniform and transposed "graph" (the order values as columns, the nodes of a slice
+    stacked top-down, the boxes of a row of one height and aligned), with the channels widened until
+    the intra-slice edges stay within their bands, where every edge pointing from a right slice back
+    to a left one is drawn dashed in the "color-mark-violation" color if it closes a direct cycle
+    between the two slices (no transitive cycles), the "cluster" attribute groups the slices into
+    rows above the bands, and the new option "slice-numbered" numbers the slices, plus the new
+    "smp/slice-*" samples.
+
 -   IMPROVEMENT [code]: bundle the edges of crowded channels and gutters (whose parallel tracks do
     not fit at the full "size-edge-track-gap") instead of squeezing their tracks into one grey bar:
     the edges of the same name leading to the same target node side with the same arity, or else

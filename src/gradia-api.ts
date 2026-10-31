@@ -17,6 +17,7 @@ import { render as renderGraph }                   from "./gradia-api-type-graph
 import { render as renderHub }                     from "./gradia-api-type-hub.js"
 import { render as renderGrid }                    from "./gradia-api-type-grid.js"
 import { render as renderLayer }                   from "./gradia-api-type-layer.js"
+import { render as renderSlice }                   from "./gradia-api-type-slice.js"
 import { render as renderMatrix }                  from "./gradia-api-type-matrix.js"
 import { render as renderSequence }                from "./gradia-api-type-sequence.js"
 
@@ -34,6 +35,7 @@ const renderers = {
     hub:      { render: renderHub,      nestable: true,  gated: false, kinds: false },
     grid:     { render: renderGrid,     nestable: true,  gated: false, kinds: false },
     layer:    { render: renderLayer,    nestable: false, gated: false, kinds: false },
+    slice:    { render: renderSlice,    nestable: false, gated: false, kinds: false },
     matrix:   { render: renderMatrix,   nestable: false, gated: false, kinds: false },
     sequence: { render: renderSequence, nestable: false, gated: false, kinds: true  }
 } satisfies Record<string, DiagramTypeSpec>
@@ -58,7 +60,7 @@ const parseTypeDirective = (input: string): DiagramType | undefined => {
 
 /*  the options entering the identifier seed only once deviating from
     their default, keeping the identifiers of all older diagrams stable  */
-const seedLate = new Set<string>([ "color-mark-violation", "layer-numbered" ])
+const seedLate = new Set<string>([ "color-mark-violation", "layer-numbered", "slice-numbered" ])
 
 /*  the supported output formats  */
 export const diagramFormats = [ "svg:standalone", "svg:embedded", "url:xml", "url:base64" ] as const
