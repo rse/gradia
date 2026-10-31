@@ -42,6 +42,13 @@ ChangeLog
 -   IMPROVEMENT [code, othr]: draw the segments shared by bundled edges only once, instead of
     overpainting them once per edge.
 
+-   IMPROVEMENT [code, othr]: place the edge names right in front of their arrow heads, beside
+    their arities, instead of searching a position along their routes, so every name is clearly
+    attributable to its edge: the "graph" and "hub" channels reserve the room of these arrival
+    stubs and shift their tracks accordingly, a name whose spot is taken steps back along its
+    stub, falls back below the line or onto the segment before the last corner, and only then
+    searches along its route, while the "sequence" diagram keeps its names centered on the messages.
+
 1.4.4 (2026-10-27)
 ------------------
 
