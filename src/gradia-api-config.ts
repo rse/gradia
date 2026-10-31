@@ -44,6 +44,7 @@ export const configDefaults = {
     "color-edge-arity":          "#333333",
     "color-edge-halo":           "#ffffff",
     "color-mark-violation":      "#b06820",
+    "color-mark-critical":       "#4a88c7",
     "size-font-node":            30,    /*  font size of node names                */
     "size-font-type":            16,    /*  font size of node types                */
     "size-font-prop":            22,    /*  font size of node properties           */
@@ -88,6 +89,9 @@ export const configDefaults = {
     "tree-stack-double":         false, /*  tree: stack on both sides of the trunk */
     "tree-node-width-equal":     false, /*  tree: equal node box width per level   */
     "tree-horizontal":           false, /*  tree: grow left-to-right, not top-down */
+    "gantt-unit-width":          40,    /*  gantt: width of one time unit          */
+    "gantt-unit-name":           "",    /*  gantt: name of the time unit (if any)  */
+    "gantt-critical":            true,  /*  gantt: mark the critical path          */
     "mark-violation":            true,  /*  matrix/layer/slice/state: violations   */
     "layer-numbered":            true,  /*  layer: number the layers bottom-up     */
     "slice-numbered":            false  /*  slice: number the slices left-to-right */

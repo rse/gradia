@@ -1,0 +1,34 @@
+#type   gantt
+#config gantt-unit-width  6
+#config gantt-unit-name   hours
+
+#   the backend sub-project (rows in explicit order, nested clusters,
+#   badges and links, and an extract job with an earliest start)
+db:      "Schema Design"     [ group: Backend, cluster: Data/Model,    order: 1, duration: 16, badge: database ]
+mig:     "Migrations"        [ group: Backend, cluster: Data/Model,    order: 2, duration: 8 ]
+etl:     "ETL Jobs"          [ group: Backend, cluster: Data/Pipeline, order: 3, duration: 24, start: 30 ]
+api:     "REST API"          [ group: Backend, cluster: Service,       order: 4, duration: 60, badge: api ]
+api                          [ url: "https://example.com/api" ]
+auth:    "Authentication"    [ group: Backend, cluster: Service,       order: 5, duration: 20, badge: security ]
+ready:   "Backend Ready"     [ group: Backend, order: 6, primary: true ]
+db       --> mig
+db       --> etl   { type: ss, duration: 4 }
+mig      --> api
+mig      --> auth  { duration: 6 }
+api      --> ready
+auth     --> ready
+etl      --> ready { type: ff }
+
+#   the frontend sub-project (rows by earliest start)
+ux:      "UX Research"       [ group: Frontend, duration: 24, badge: person ]
+ui:      "UI Design"         [ group: Frontend, duration: 32 ]
+web:     "Web Client"        [ group: Frontend, duration: 50, badge: browser ]
+app:     "Mobile App"        [ group: Frontend, duration: 64, badge: mobile ]
+e2e:     "End-to-End Tests"  [ group: Frontend, duration: 16 ]
+launch:  "Launch"            [ group: Frontend, primary: true ]
+ux       --> ui    { duration: -8 }
+ui       --> web
+ui       --> app   { type: ss, duration: 12 }
+web      --> e2e
+app      --> e2e   { type: ff, duration: 4 }
+e2e      --> launch

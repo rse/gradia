@@ -14,7 +14,7 @@ About
 -----
 
 **Gradia** is a small API and CLI for rendering directed graphs,
-described in a concise textual input language, as SVG diagrams. Ten
+described in a concise textual input language, as SVG diagrams. Eleven
 diagram types are supported which fit the scenario of visualizing object
 graphs:
 
@@ -39,6 +39,8 @@ graphs:
 - `petri`: a Petri net of places, holding tokens, and transitions,
   marking its dead and non-live transitions and its unreachable,
   unbounded, and deadlocked places.
+- `gantt`: a Gantt chart of tasks and their dependencies, scheduling the
+  tasks and marking its critical path.
 
 Examples
 --------
@@ -129,6 +131,14 @@ Here are examples of the graph diagram renderings:
 
   ![sample-petri-violations](smp/sample-petri-violations.svg)
 
+- [sample-gantt-regular](smp/sample-gantt-regular.txt) (Gantt chart with clusters, milestones, all dependency types, a lag, a lead, and the critical path):
+
+  ![sample-gantt-regular](smp/sample-gantt-regular.svg)
+
+- [sample-gantt-full](smp/sample-gantt-full.txt) (Gantt charts of two groups with nested clusters, explicit order, an earliest start, badges, and a named time unit):
+
+  ![sample-gantt-full](smp/sample-gantt-full.svg)
+
 Playground
 ----------
 
@@ -147,7 +157,7 @@ Usage
 -----
 
 ```sh
-$ gradia [-t graph|hub|grid|layer|slice|tree|matrix|sequence|state|petri] [-f <format>] [-c <name>=<value>] -o <file>.svg <graph>.txt
+$ gradia [-t graph|hub|grid|layer|slice|tree|matrix|sequence|state|petri|gantt] [-f <format>] [-c <name>=<value>] -o <file>.svg <graph>.txt
 ```
 
 The diagram type is selected with the `-t` command-line option or, when
@@ -164,7 +174,7 @@ MCP Service
 -----------
 
 ```sh
-$ gradia --mcp [-t graph|hub|grid|layer|slice|tree|matrix|sequence|state|petri] [-f <format>] [-c <name>=<value>]
+$ gradia --mcp [-t graph|hub|grid|layer|slice|tree|matrix|sequence|state|petri|gantt] [-f <format>] [-c <name>=<value>]
 ```
 
 With the `-m`/`--mcp` option, **Gradia** instead runs as a [Model Context
@@ -232,7 +242,7 @@ separated by `|`.
 <directive>      ::= "#config" <whitespace> { <whitespace> } <option> <whitespace> { <whitespace> } ( <string> | <word> )
                    | "#type" <whitespace> { <whitespace> } <type>
 <option>         ::= <lowercase-letter> { <lowercase-letter> | <digit> | "-" }
-<type>           ::= "graph" | "hub" | "grid" | "layer" | "slice" | "tree" | "matrix" | "sequence" | "state" | "petri"
+<type>           ::= "graph" | "hub" | "grid" | "layer" | "slice" | "tree" | "matrix" | "sequence" | "state" | "petri" | "gantt"
 <word>           ::= <char> - <whitespace> { <char> - <whitespace> }
 <newline>        ::= "\n"
 <whitespace>     ::= " " | "\t" | "\r"
@@ -290,12 +300,14 @@ separated by `|`.
   into that node, i.e., in `a --> b { kind: async } --> c` they belong
   to the edge `a --> b`. The recognized keys are `kind`, with the values
   `sync` (the default), `async`, `return`, `create`, `destroy`, and
-  `inhibitor`, plus `duration` and `time`, with arbitrary texts. Only
-  the diagram type `sequence` renders the kinds `async`, `return`,
-  `create`, and `destroy` and the `duration` and `time`, and only the
-  diagram type `petri` the kind `inhibitor` (see below), while every
-  diagram type rejects the ones it does not render with an error. Any
-  other key is rejected with an error, too.
+  `inhibitor`, `type`, with the values `fs`, `ss`, `ff`, and `sf`, plus
+  `duration` and `time`, with arbitrary texts. Only the diagram type
+  `sequence` renders the kinds `async`, `return`, `create`, and
+  `destroy` and the `duration` and `time`, only the diagram type `petri`
+  the kind `inhibitor`, and only the diagram type `gantt` the `type` and
+  the `duration` (as a numeric lag, see below), while every diagram type
+  rejects the ones it does not render with an error. Any other key is
+  rejected with an error, too.
 
 - Eleven attribute keys are reserved and consumed by the renderer instead
   of being displayed as a regular `<key>: <val>` line:
@@ -317,9 +329,10 @@ separated by `|`.
     - `cluster: <path>` places the node into the nested clusters of the
       `/`-separated path `<path>` within the one diagram, crossed freely
       by the edges (for diagram type `matrix`: partitions of its rows and
-      columns, for diagram type `layer`: groups of its layers, for
-      diagram type `slice`: groups of its slices), while the other diagram
-      types ignore it,
+      columns, for diagram type `gantt`: partitions of its rows, for
+      diagram type `layer`: groups of its layers, for diagram type
+      `slice`: groups of its slices), while the other diagram types
+      ignore it,
 
     - `parent: <id>` nests the node into the container node `<id>` (a
       node which is implicitly declared if never referenced otherwise),
@@ -357,8 +370,9 @@ separated by `|`.
   Additionally, the diagram types `layer`, `slice`, `state`, and `petri`
   consume the attribute `layer: <name>`, `slice: <name>`, `state: <kind>`,
   and `petri: <kind>` (plus `tokens: <count>` and `capacity: <count>`),
-  respectively (see below), while all other diagram types display them
-  as regular lines.
+  respectively, and the diagram type `gantt` the attributes
+  `duration: <number>` and `start: <number>` (see below), while all
+  other diagram types display them as regular lines.
 
 - A `graph` (a `graph` container level, too) with at least one node
   carrying an `order` attribute is laid out in that explicit order
@@ -417,12 +431,14 @@ separated by `|`.
 
 - **Containers**: only the diagram types `graph`, `hub`, `grid`, and
   `state` lay out the members of a container. The diagram types `layer`,
-  `slice`, `tree`, `matrix`, `sequence`, and `petri` reject the input
-  with an error as soon as the graph contains a container.
+  `slice`, `tree`, `matrix`, `sequence`, `petri`, and `gantt` reject the
+  input with an error as soon as the graph contains a container.
 
 - **Violations**: the diagram types `layer`, `slice`, `tree`, `matrix`,
   `state`, and `petri` mark their violations in the
   `color-mark-violation` color, unless the option `mark-violation` is
+  `false`, and the diagram type `gantt` its critical path in the
+  `color-mark-critical` color, unless the option `gantt-critical` is
   `false`.
 
 #### Diagram Type `graph`
@@ -895,10 +911,71 @@ The diagram type `petri` draws a Petri net (a place/transition net).
   marked. For an unbounded part, the coverability graph exhibits only
   some of its deadlocks.
 
+#### Diagram Type `gantt`
+
+The diagram type `gantt` draws a Gantt chart of a project plan.
+
+- **Tasks**: the tasks (the nodes) are drawn as one row each, with a row
+  header like the ones of a `matrix` (the label, linked through `url`,
+  a `badge` in front of it, the primary colors, and the type shared by
+  all tasks as the title in the corner) and a bar over a time axis of
+  abstract numeric units (with its ticks and their faint grid lines).
+  The attribute `duration: <number>` is the length of a task and
+  `start: <number>` its earliest start (both non-negative numbers, `0`
+  by default). A task without a duration is a milestone, drawn as a dark
+  grey diamond (in the `color-node-pseudo-*` colors). The option
+  `gantt-unit-width` (`40` by default) sets the width of one time unit,
+  and the option `gantt-unit-name` (e.g. `days`) its name, shown above
+  the row headers. The schedule of every task (its earliest and latest
+  start and finish, and its slack) is attached to its bar as its
+  tooltip.
+
+- **Dependencies**: the dependencies (the edges) are drawn as orthogonal
+  arrows between the bars. The edge attribute `type` is the type of a
+  dependency: `fs` (finish-to-start, the default), `ss`
+  (start-to-start), `ff` (finish-to-finish), or `sf` (start-to-finish),
+  and the edge attribute `duration: <number>` its lag (a negative one
+  being a lead), e.g. `a --> b { type: ss, duration: 2 }` starts `b` at
+  least 2 units after the start of `a`. A lag or lead is labeled at the
+  start of its arrow (e.g. `+2` or `−2`). Arrows sharing the start or
+  end of a bar run on tracks of their own, and every arrow runs its
+  vertical segment where it crosses the fewest bars. The edge names and
+  arities are ignored.
+
+- **Scheduling**: the tasks are scheduled as early as possible by the
+  critical path method: a forward pass determines the earliest start of
+  every task (the latest of its `start` and of what its dependencies
+  imply), and a backward pass from the project end (the latest earliest
+  finish) its latest finish. The slack of a task, i.e. how far it can
+  slip without delaying the project, is drawn as a dashed whisker after
+  its bar, up to its latest finish.
+
+- **Critical path**: every task without slack, and every dependency
+  among them determining the earliest start of its target, form the
+  critical path, drawn in the `color-mark-critical` color (a critical
+  milestone ringed in it), unless the option `gantt-critical` is `false`.
+
+- **Order**: the rows follow the earliest start of their tasks (ties in
+  declaration order). As soon as one task carries an `order` attribute,
+  the rows instead follow these attributes (the tasks without one
+  trailing).
+
+- **Clusters**: the clusters (see the `cluster` attribute) become
+  partitions of the rows, exactly like for a `matrix`: consecutive rows,
+  each partition ordered on its own, labeled by bands left of the row
+  headers, and outlined across the chart.
+
+- **Validation**: the input is rejected with an error if
+
+    - a `duration` or `start` is not a non-negative number,
+    - a lag is not a number,
+    - the dependencies form a cycle (naming the tasks on it), or
+    - the chart contains a container.
+
 ### Directives
 
 A `#type` directive sets the diagram type (`graph`, `hub`, `grid`,
-`layer`, `slice`, `tree`, `matrix`, `sequence`, `state`, or `petri`), which otherwise is
+`layer`, `slice`, `tree`, `matrix`, `sequence`, `state`, `petri`, or `gantt`), which otherwise is
 settable through the `-t`/`--type` command-line option (which takes
 precedence).
 The last occurrence wins and an invalid type is silently ignored.
@@ -944,6 +1021,7 @@ size-font-prop             22           grid-gap-vertical          20
 size-font-edge             16           grid-node-width-equal      true
 size-font-arity            16           grid-node-height-equal     true
 color-mark-violation       #b06820      sequence-column-gap        20
+color-mark-critical        #4a88c7
 color-composite-border     #c0c0c0
 color-node-pseudo-name     #ffffff
 color-node-pseudo-box      #707070
@@ -959,25 +1037,30 @@ color-node-place-border    #c0c0c0
                                         tree-stack-double          false
                                         tree-node-width-equal      false
                                         tree-horizontal            false
+                                        gantt-unit-width           40
+                                        gantt-unit-name            ""
+                                        gantt-critical             true
                                         mark-violation             true
                                         layer-numbered             true
                                         slice-numbered             false
 ```
 
 The `size-*`, `group-*`, `container-*`, `graph-*`, `hub-*`, `grid-*`,
-`sequence-*`, and `tree-*` options control the rendering geometry (text
+`sequence-*`, `tree-*`, and `gantt-*` options control the rendering geometry (text
 font sizes, canvas margin, node box sizing, edge routing, group and
 container box spacing, and the per-diagram-type layout) and take
 non-negative numbers, except the booleans `grid-node-width-equal`,
 `grid-node-height-equal`, `tree-stack-double`, `tree-node-width-equal`,
-and `tree-horizontal`.
+`tree-horizontal`, and `gantt-critical`, and the string `gantt-unit-name`.
 
 The boolean `mark-violation` option controls whether the diagram types
 `matrix`, `layer`, `slice`, `tree`, `state`, and `petri` mark their
 violations at all (in the `color-mark-violation` color), and whether a `mark`
 attribute is honored: by default they do, while with `false` they render
 the very same diagram without any marking (the cross links of a `tree`
-stay dashed, though).
+stay dashed, though). Likewise, the boolean `gantt-critical` option
+controls whether the diagram type `gantt` marks its critical path (in the
+`color-mark-critical` color).
 
 The `size-font-*` options control the font sizes of the node names
 (`size-font-node`), the node types (`size-font-type`), the node

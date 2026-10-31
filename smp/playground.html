@@ -866,6 +866,73 @@ Boot      [ tokens: 1 ]
 Boot      --> Calibrate [ petri: transition ] --> Online
 Online    --> Respond [ petri: transition ] --> Online
         </script>
+        <script type="text/x-gradia" id="sample-gantt-regular">
+#type gantt
+
+#   the tasks of a small release project (durations in days, a task
+#   without a duration being a milestone), grouped into clusters
+spec:    "Specification"     [ type: Task, duration: 3, cluster: Design ]
+arch:    "Architecture"      [ type: Task, duration: 2, cluster: Design ]
+ui:      "UI Mockups"        [ type: Task, duration: 3, cluster: Design ]
+review:  "Design Review"     [ type: Task, cluster: Design ]
+core:    "Core Engine"       [ type: Task, duration: 6, cluster: Build ]
+front:   "Frontend"          [ type: Task, duration: 2, cluster: Build ]
+docs:    "Documentation"     [ type: Task, duration: 3, cluster: Build ]
+test:    "Integration Test"  [ type: Task, duration: 4, cluster: Release ]
+ship:    "Release"           [ type: Task, cluster: Release, primary: true ]
+legacy:  "Legacy Support"    [ type: Task, duration: 4, cluster: Release ]
+
+#   the dependencies (finish-to-start by default, or of the given type),
+#   optionally with a lag (or, if negative, a lead) as their duration
+spec     --> arch
+spec     --> ui     { type: ss, duration: 1 }
+arch     --> review
+ui       --> review
+review   --> core
+review   --> front  { duration: 1 }
+core     --> docs   { type: ff, duration: 1 }
+core     --> test   { duration: -2 }
+front    --> test
+test     --> ship
+docs     --> ship
+ship     --> legacy { type: sf, duration: 2 }
+        </script>
+        <script type="text/x-gradia" id="sample-gantt-full">
+#type   gantt
+#config gantt-unit-width  6
+#config gantt-unit-name   hours
+
+#   the backend sub-project (rows in explicit order, nested clusters,
+#   badges and links, and an extract job with an earliest start)
+db:      "Schema Design"     [ group: Backend, cluster: Data/Model,    order: 1, duration: 16, badge: database ]
+mig:     "Migrations"        [ group: Backend, cluster: Data/Model,    order: 2, duration: 8 ]
+etl:     "ETL Jobs"          [ group: Backend, cluster: Data/Pipeline, order: 3, duration: 24, start: 30 ]
+api:     "REST API"          [ group: Backend, cluster: Service,       order: 4, duration: 60, badge: api ]
+api                          [ url: "https://example.com/api" ]
+auth:    "Authentication"    [ group: Backend, cluster: Service,       order: 5, duration: 20, badge: security ]
+ready:   "Backend Ready"     [ group: Backend, order: 6, primary: true ]
+db       --> mig
+db       --> etl   { type: ss, duration: 4 }
+mig      --> api
+mig      --> auth  { duration: 6 }
+api      --> ready
+auth     --> ready
+etl      --> ready { type: ff }
+
+#   the frontend sub-project (rows by earliest start)
+ux:      "UX Research"       [ group: Frontend, duration: 24, badge: person ]
+ui:      "UI Design"         [ group: Frontend, duration: 32 ]
+web:     "Web Client"        [ group: Frontend, duration: 50, badge: browser ]
+app:     "Mobile App"        [ group: Frontend, duration: 64, badge: mobile ]
+e2e:     "End-to-End Tests"  [ group: Frontend, duration: 16 ]
+launch:  "Launch"            [ group: Frontend, primary: true ]
+ux       --> ui    { duration: -8 }
+ui       --> web
+ui       --> app   { type: ss, duration: 12 }
+web      --> e2e
+app      --> e2e   { type: ff, duration: 4 }
+e2e      --> launch
+        </script>
 
         <script>
             /*  access the Gradia API class from the "Gradia" namespace
@@ -902,7 +969,9 @@ Online    --> Respond [ petri: transition ] --> Online
                 "state-advanced":   sampleOf("sample-state-advanced"),
                 "state-regions":    sampleOf("sample-state-regions"),
                 "petri-regular":    sampleOf("sample-petri-regular"),
-                "petri-violations": sampleOf("sample-petri-violations")
+                "petri-violations": sampleOf("sample-petri-violations"),
+                "gantt-regular":    sampleOf("sample-gantt-regular"),
+                "gantt-full":       sampleOf("sample-gantt-full")
             }
 
             const app = Vue.createApp({

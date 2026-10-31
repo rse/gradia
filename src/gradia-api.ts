@@ -5,7 +5,7 @@
 */
 
 /*  internal dependencies  */
-import { Graph, edgeKinds }                        from "./gradia-api-model.js"
+import { Graph, edgeKinds, edgeTypes }             from "./gradia-api-model.js"
 import { parse }                                   from "./gradia-api-parser.js"
 import { Config, configDefaults, parseDirectives, validateConfig }
     from "./gradia-api-config.js"
@@ -25,16 +25,18 @@ import { render as renderState, prepare as prepareState, frameOf as frameOfState
     from "./gradia-api-type-state.js"
 import { render as renderPetri, prepare as preparePetri }
     from "./gradia-api-type-petri.js"
+import { render as renderGantt }                   from "./gradia-api-type-gantt.js"
 
 /*  re-export the graph model and configuration companion types  */
-export type { Attr, Node, Edge, EdgeKind, Graph }  from "./gradia-api-model.js"
-export type { Config }                             from "./gradia-api-config.js"
+export type { Attr, Node, Edge, EdgeKind, EdgeType, Graph } from "./gradia-api-model.js"
+export type { Config }                                      from "./gradia-api-config.js"
 
 /*  the supported diagram types, their renderers, whether they lay out
     the members of a container, whether they let the edges crossing a
     container boundary continue to the inner nodes, the edge kinds they
-    render besides the synchronous default, and whether they render the
-    edge timings, plus their own defaults of the rendering options (a
+    render besides the synchronous default, whether they render the edge
+    timings (or the edge durations only), and whether they render the edge
+    types, plus their own defaults of the rendering options (a
     tree, e.g., wraps its node texts by default to stay narrow, and a
     state machine or Petri net folds its columns later, as it reads as a
     flow) and their own preparation of the whole graph model (a state
@@ -54,7 +56,8 @@ const renderers = {
         prepare: prepareState, boxed: true, frameOf: frameOfState, defaults: { "graph-columns-max": 8 } },
     petri:    { render: renderPetri,    nestable: false, gated: false, kinds: [ "inhibitor" ],
         prepare: preparePetri, defaults: { "graph-columns-max": 8, "graph-channel-width-min": 80,
-            "size-node-width-min": 120 } }
+            "size-node-width-min": 120 } },
+    gantt:    { render: renderGantt,    nestable: false, gated: false, durations: true, types: true }
 } satisfies Record<string, DiagramTypeSpec>
 export type DiagramType = keyof typeof renderers
 export const diagramTypes = Object.keys(renderers) as DiagramType[]
@@ -77,11 +80,12 @@ const parseTypeDirective = (input: string): DiagramType | undefined => {
 
 /*  the options entering the identifier seed only once deviating from
     their default, keeping the identifiers of all older diagrams stable  */
-const seedLate = new Set<string>([ "color-mark-violation", "color-composite-border",
+const seedLate = new Set<string>([ "color-mark-violation", "color-mark-critical", "color-composite-border",
     "color-node-pseudo-name", "color-node-pseudo-box", "color-node-pseudo-border",
     "color-node-place-name", "color-node-place-box", "color-node-place-border", "mark-violation", "layer-numbered", "slice-numbered",
     "sequence-column-gap", "sequence-message-gap", "tree-level-gap", "tree-sibling-gap", "tree-row-max",
-    "tree-stack-min", "tree-stack-double", "tree-node-width-equal", "tree-horizontal" ])
+    "tree-stack-min", "tree-stack-double", "tree-node-width-equal", "tree-horizontal", "gantt-unit-width",
+    "gantt-unit-name", "gantt-critical" ])
 
 /*  the supported output formats  */
 export const diagramFormats = [ "svg:standalone", "svg:embedded", "url:xml", "url:base64" ] as const
@@ -141,9 +145,9 @@ export class Gradia {
                     throw new Error(`endpoint "${id}" of edge ` +
                         `"${edge.source}" --> "${edge.target}" is not a declared node`)
 
-        /*  validate the edge kinds and timings: a known kind, and other
-            than the synchronous default, as well as any timing, only for
-            a diagram type rendering them  */
+        /*  validate the edge kinds, types, and timings: a known kind, and
+            other than the synchronous default, a known type, as well as any
+            timing, only for a diagram type rendering them  */
         const spec = renderers[type] as DiagramTypeSpec
         for (const edge of graph.edges) {
             const what = `edge "${edge.source}" --> "${edge.target}"`
@@ -151,8 +155,12 @@ export class Gradia {
                 throw new Error(`invalid kind "${edge.kind}" of ${what}`)
             if (edge.kind !== undefined && edge.kind !== "sync" && !(spec.kinds ?? []).includes(edge.kind))
                 throw new Error(`diagram type "${type}" does not support the kind "${edge.kind}" of ${what}`)
+            if (edge.type !== undefined && !edgeTypes.includes(edge.type))
+                throw new Error(`invalid type "${edge.type}" of ${what}`)
+            if (edge.type !== undefined && spec.types !== true)
+                throw new Error(`diagram type "${type}" does not support the type "${edge.type}" of ${what}`)
             for (const key of [ "duration", "time" ] as const)
-                if (edge[key] !== undefined && spec.timed !== true)
+                if (edge[key] !== undefined && spec.timed !== true && !(key === "duration" && spec.durations === true))
                     throw new Error(`diagram type "${type}" does not support the ${key} of ${what}`)
         }
 

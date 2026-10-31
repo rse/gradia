@@ -5,6 +5,16 @@ ChangeLog
 1.5.0 (2026-10-31)
 ------------------
 
+-   FEATURE [code, othr]: add the diagram type "gantt", a Gantt chart of tasks (node attributes
+    "duration", with milestones as diamonds, and "start") over a time axis of abstract units (new
+    "gantt-unit-width" and "gantt-unit-name" options), with their dependencies as arrows on their
+    own tracks (new edge attribute "{ type: fs|ss|ff|sf }", and the edge attribute "duration" as a
+    labeled lag or lead), scheduled by the critical path method (rejecting cyclic dependencies,
+    attaching the schedule of every task as its tooltip), drawing the slack as whiskers and marking
+    the critical path (new "color-mark-critical" color and "gantt-critical" option), with the
+    "cluster" attribute partitioning its rows like for "matrix", plus the "smp/sample-gantt-regular"
+    and "smp/sample-gantt-full" samples and two playground examples.
+
 -   FEATURE [code, othr]: add the diagram type "petri", a Petri net of places (circles with tokens,
     "tokens"/"capacity" attributes, "color-node-place-*" colors) and transitions, with inferred node
     kinds ("petri" attribute), arc weights, inhibitor arcs (new edge kind "inhibitor"), and merged

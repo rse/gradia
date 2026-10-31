@@ -16,7 +16,8 @@ type Area = [ number, number, number, number ]
     boxes and edges (e.g. the lifelines of a "sequence" diagram), styled
     through the regular configuration options (a "path" starts at its
     origin with relative commands only, so it can be shifted, carries
-    the area it covers, and is filled only if a fill is given)  */
+    the area it covers, is filled only if a fill is given, and carries
+    an optional tooltip)  */
 export interface ShapePath {
     kind:     "path"
     x:        number
@@ -27,6 +28,7 @@ export interface ShapePath {
     width:    number
     dash?:    string
     fill?:    ConfigEmbedded
+    title?:   string
 }
 
 /*  a free-standing single-line text, anchored at its origin on its

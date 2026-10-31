@@ -5,7 +5,7 @@
 */
 
 /*  internal dependencies  */
-import { Attr, Edge, EdgeKind, Graph, edgeKinds } from "./gradia-api-model.js"
+import { Attr, Edge, EdgeKind, EdgeType, Graph, edgeKinds, edgeTypes } from "./gradia-api-model.js"
 
 /*  the token stream elements  */
 interface Token {
@@ -179,8 +179,8 @@ export const parse = (input: string): Graph => {
     }
 
     /*  parse the optional attributes of an edge, following its target
-        node, of which only its "kind", "duration", and "time" are
-        recognized  */
+        node, of which only its "kind", "type", "duration", and "time"
+        are recognized  */
     const parseEdgeAttrs = (edge: Edge): void => {
         if (!accept("{"))
             return
@@ -195,6 +195,12 @@ export const parse = (input: string): Graph => {
                     throw new Error(`invalid edge kind "${val}" (expected ${edgeKinds.map((k) => `"${k}"`).join(", ")}) ` +
                         `at line ${start.line}, column ${start.col}`)
                 edge.kind = val as EdgeKind
+            }
+            else if (key === "type") {
+                if (!edgeTypes.includes(val as EdgeType))
+                    throw new Error(`invalid edge type "${val}" (expected ${edgeTypes.map((t) => `"${t}"`).join(", ")}) ` +
+                        `at line ${start.line}, column ${start.col}`)
+                edge.type = val as EdgeType
             }
             else if (key === "duration" || key === "time")
                 edge[key] = val

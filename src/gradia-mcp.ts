@@ -208,6 +208,34 @@ component relationships, data flows, dependency graphs, and similar structures.
   transition which fires, but nowhere within a recurring group of markings the
   net cannot leave again, "non-live" (all three with their border drawn solid
   in that color), unless the node carries an explicit "mark" attribute.
+- "gantt": a Gantt chart of a project plan: the nodes are the tasks, one row
+  each, with a bar over a time axis of abstract numeric units, and the edges
+  are the dependencies, drawn as arrows between the bars. The attribute
+  "duration: <number>" is the length of a task (non-negative, default 0, a
+  task without a duration being a milestone, drawn as a dark grey diamond in
+  the "color-node-pseudo-*" colors) and
+  "start: <number>" its earliest start (non-negative, default 0). The edge
+  attribute "type" is the type of a dependency: "fs" (finish-to-start, the
+  default), "ss" (start-to-start), "ff" (finish-to-finish), or "sf"
+  (start-to-finish), and the edge attribute "duration: <number>" its lag (a
+  negative one being a lead), e.g. "a --> b { type: ss, duration: 2 }" starts
+  "b" at least 2 units after the start of "a". The tasks are scheduled as
+  early as possible (critical path method): every task without slack and every
+  dependency among them determining the start of its target form the critical
+  path, drawn in the "color-mark-critical" color (a critical milestone ringed
+  in it) unless the option "gantt-critical" is "false", while the slack of
+  every other task is drawn as a dashed whisker after its bar, up to its
+  latest finish. The schedule of every task (earliest and latest start and
+  finish, and slack) is its tooltip, and a lag or lead is labeled at the start
+  of its arrow. The "cluster" attribute partitions the rows (exactly like for
+  "matrix"), and within a cluster the rows follow their "order" attributes, if
+  one task carries one, or else their earliest start. A node "badge" is drawn
+  inside its row header, in front of its label, and the edge names and arities
+  are ignored. The option "gantt-unit-width" (default 40) sets the width of one
+  time unit and "gantt-unit-name" (e.g. "days") its name, shown above the row
+  headers. It rejects the input with an error if it contains a container or a
+  cyclic dependency, a "duration" or "start" is not a non-negative number, or
+  a lag is not a number.
 
 ### Diagram Type Constraints
 
@@ -269,7 +297,7 @@ as <name>, terminals as "...", optional parts as [ ... ], repeatable parts as
     <directive>      ::= "#config" <whitespace> { <whitespace> } <option> <whitespace> { <whitespace> } ( <string> | <word> )
                        | "#type" <whitespace> { <whitespace> } <type>
     <option>         ::= <letter> { <letter> | <digit> | "-" }
-    <type>           ::= "graph" | "hub" | "grid" | "layer" | "slice" | "tree" | "matrix" | "sequence" | "state" | "petri"
+    <type>           ::= "graph" | "hub" | "grid" | "layer" | "slice" | "tree" | "matrix" | "sequence" | "state" | "petri" | "gantt"
     <word>           ::= <char> - <whitespace> { <char> - <whitespace> }
     <newline>        ::= "\\n"
     <whitespace>     ::= " " | "\\t" | "\\r"
@@ -308,12 +336,13 @@ as <name>, terminals as "...", optional parts as [ ... ], repeatable parts as
 - The <edge-attrs> following a node belong to the <edge> leading into that node,
   i.e., in "a --> b { kind: async } --> c" they belong to the edge "a --> b".
   The recognized keys are "kind", with the values "sync" (the default),
-  "async", "return", "create", "destroy", and "inhibitor", plus "duration" and
-  "time", with arbitrary texts. Only the "sequence" type renders the kinds
-  "async", "return", "create", and "destroy" and the "duration" and "time",
-  and only the "petri" type the kind "inhibitor", while every type rejects the
-  ones it does not render with an error. Any other key is rejected with an
-  error, too.
+  "async", "return", "create", "destroy", and "inhibitor", "type", with the
+  values "fs", "ss", "ff", and "sf", plus "duration" and "time", with arbitrary
+  texts. Only the "sequence" type renders the kinds "async", "return",
+  "create", and "destroy" and the "duration" and "time", only the "petri" type
+  the kind "inhibitor", and only the "gantt" type the "type" and the "duration"
+  (as a numeric lag), while every type rejects the ones it does not render
+  with an error. Any other key is rejected with an error, too.
 - Eleven attribute keys are reserved and consumed by the renderer instead of
   being displayed as a regular "<key>: <val>" line:
   - "url: <url>" renders the node box as a hyperlink. Only relative URLs and
@@ -329,8 +358,9 @@ as <name>, terminals as "...", optional parts as [ ... ], repeatable parts as
   - "cluster: <path>" places the node into the nested clusters of the
     "/"-separated path <path> within the one diagram, crossed freely by the
     edges (for the diagram type "matrix": partitions of its rows and columns,
-    for the diagram type "layer": groups of its layers, for the diagram type
-    "slice": groups of its slices), while the other diagram types ignore it,
+    for the diagram type "gantt": partitions of its rows, for the diagram type
+    "layer": groups of its layers, for the diagram type "slice": groups of its
+    slices), while the other diagram types ignore it,
   - "parent: <id>" nests the node into the container node <id> (a node which
     is implicitly declared if never referenced otherwise),
   - "container: <type>" marks the node as a container whose members are laid
@@ -420,13 +450,14 @@ over them. The recognized options, with their types and built-in defaults, are:
 ${configOptions}
 
 The "size-*", "group-*", "container-*", "graph-*", "hub-*", "grid-*",
-"sequence-*", and "tree-*" options control the rendering geometry (canvas
+"sequence-*", "tree-*", and "gantt-*" options control the rendering geometry (canvas
 margin, node box sizing, edge routing, group and container box spacing, and
 the per-diagram-type layout) and take non-negative numbers, except the booleans
 "grid-node-width-equal" and "grid-node-height-equal", which force all node
 boxes of a "grid" diagram to the width of the widest one and to the height of
 the tallest one (a nested container box taking part in the width unification
-only), "tree-stack-double", "tree-node-width-equal", and "tree-horizontal".
+only), "tree-stack-double", "tree-node-width-equal", "tree-horizontal", and
+"gantt-critical", and the string "gantt-unit-name".
 The "sequence-column-gap" and
 "sequence-message-gap" options set the minimum gap between neighboring
 participants and the vertical gap between messages of a "sequence" diagram, so
@@ -441,6 +472,8 @@ The boolean "mark-violation" option controls whether the diagram types
 at all (in the "color-mark-violation" color), and whether a "mark" attribute is
 honored: by default they do, while with "false" they render the very same
 diagram without any marking (the cross links of a "tree" stay dashed, though).
+Likewise, the boolean "gantt-critical" option controls whether the diagram type
+"gantt" marks its critical path (in the "color-mark-critical" color).
 
 The "size-node-width-max" option additionally enables the word-wrapping of the
 node box texts: given a positive value, the node name, its type, and its

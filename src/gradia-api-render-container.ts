@@ -49,7 +49,8 @@ export type Renderer = (graph: Graph, config: Config, level?: LevelContext) => P
     it supports gate nodes (and hence lets the edges crossing a
     container boundary continue to the inner nodes, instead of ending at
     the container border), the edge kinds it renders besides the
-    synchronous default, whether it renders the edge timings, its own
+    synchronous default, whether it renders the edge timings (or the edge
+    durations only, e.g. as lags), whether it renders the edge types, its own
     defaults of the rendering options (overriding
     the general ones, but overridden by the explicit ones), its optional
     preparation of the graph model as a whole, before it is partitioned
@@ -60,15 +61,17 @@ export type Renderer = (graph: Graph, config: Config, level?: LevelContext) => P
     height and padding of a member container (given its own members, e.g.
     for the compact region bands of a composite state)  */
 export interface DiagramTypeSpec {
-    render:    Renderer
-    prepare?:  (graph: Graph, containment: Containment, config: Config) => Graph
-    boxed?:    boolean
-    frameOf?:  (member: Node, members: Node[], config: Config) => { head: number, pad: number } | undefined
-    nestable:  boolean
-    gated:     boolean
-    kinds?:    readonly EdgeKind[]
-    timed?:    boolean
-    defaults?: Partial<Config>
+    render:     Renderer
+    prepare?:   (graph: Graph, containment: Containment, config: Config) => Graph
+    boxed?:     boolean
+    frameOf?:   (member: Node, members: Node[], config: Config) => { head: number, pad: number } | undefined
+    nestable:   boolean
+    gated:      boolean
+    kinds?:     readonly EdgeKind[]
+    timed?:     boolean
+    durations?: boolean
+    types?:     boolean
+    defaults?:  Partial<Config>
 }
 
 /*  the containment tree of a graph  */

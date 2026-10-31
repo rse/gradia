@@ -24,16 +24,23 @@ export interface Node {
 export type EdgeKind = "sync" | "async" | "return" | "create" | "destroy" | "inhibitor"
 export const edgeKinds: EdgeKind[] = [ "sync", "async", "return", "create", "destroy", "inhibitor" ]
 
-/*  a directed graph edge with optional name, arity, kind, and timing
-    (a duration constraint up to its return and a time constraint or
-    observation at its start, in a "sequence" diagram), and its optional
-    marking as a violation (e.g. by the analysis of a "state" diagram)  */
+/*  the types of an edge, i.e., of a dependency in a "gantt" diagram
+    (finish-to-start, start-to-start, finish-to-finish, or start-to-finish)  */
+export type EdgeType = "fs" | "ss" | "ff" | "sf"
+export const edgeTypes: EdgeType[] = [ "fs", "ss", "ff", "sf" ]
+
+/*  a directed graph edge with optional name, arity, kind, type, and
+    timing (a duration constraint up to its return and a time constraint
+    or observation at its start, in a "sequence" diagram, or the lag of a
+    dependency, in a "gantt" diagram), and its optional marking as a
+    violation (e.g. by the analysis of a "state" diagram)  */
 export interface Edge {
     source:    string
     target:    string
     name?:     string
     arity?:    string
     kind?:     EdgeKind
+    type?:     EdgeType
     duration?: string
     time?:     string
     marked?:   boolean

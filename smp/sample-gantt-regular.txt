@@ -1,0 +1,29 @@
+#type gantt
+
+#   the tasks of a small release project (durations in days, a task
+#   without a duration being a milestone), grouped into clusters
+spec:    "Specification"     [ type: Task, duration: 3, cluster: Design ]
+arch:    "Architecture"      [ type: Task, duration: 2, cluster: Design ]
+ui:      "UI Mockups"        [ type: Task, duration: 3, cluster: Design ]
+review:  "Design Review"     [ type: Task, cluster: Design ]
+core:    "Core Engine"       [ type: Task, duration: 6, cluster: Build ]
+front:   "Frontend"          [ type: Task, duration: 2, cluster: Build ]
+docs:    "Documentation"     [ type: Task, duration: 3, cluster: Build ]
+test:    "Integration Test"  [ type: Task, duration: 4, cluster: Release ]
+ship:    "Release"           [ type: Task, cluster: Release, primary: true ]
+legacy:  "Legacy Support"    [ type: Task, duration: 4, cluster: Release ]
+
+#   the dependencies (finish-to-start by default, or of the given type),
+#   optionally with a lag (or, if negative, a lead) as their duration
+spec     --> arch
+spec     --> ui     { type: ss, duration: 1 }
+arch     --> review
+ui       --> review
+review   --> core
+review   --> front  { duration: 1 }
+core     --> docs   { type: ff, duration: 1 }
+core     --> test   { duration: -2 }
+front    --> test
+test     --> ship
+docs     --> ship
+ship     --> legacy { type: sf, duration: 2 }

@@ -3,7 +3,7 @@
 **gradia** is the opinionated tooling of *Dr. Ralf S. Engelschall*
 for *Object Graph Diagram Rendering*: a small CLI for rendering
 directed graphs, described in a concise textual input language, as SVG
-diagrams. Ten diagram types are supported: `graph` (a grid-snapped
+diagrams. Eleven diagram types are supported: `graph` (a grid-snapped
 layered layout of the whole graph, based on the Dagre algorithm of
 `@antv/layout`), `hub` (a hub graph, placing one primary hub node
 between its input and output nodes), `grid` (a compact grid of
@@ -18,11 +18,13 @@ diagram of participants, their lifelines, and their messages),
 `state` (a state machine with pseudo-states and composite states,
 optionally split into orthogonal regions,
 marking its unreachable, dead-end, and incomplete states and its
-conflicting transitions), and `petri` (a Petri net of places with
+conflicting transitions), `petri` (a Petri net of places with
 tokens and transitions, optionally with inhibitor arcs, marking its
 dead and non-live transitions and its unreachable, unbounded, and
 deadlocked places, as determined by its coverability graph, and
-attaching the analysis results to its nodes as tooltips).
+attaching the analysis results to its nodes as tooltips), and `gantt`
+(a Gantt chart of tasks and their typed dependencies with lags,
+scheduled by the critical path method, marking its critical path).
 
 ## Repository Layout
 
@@ -35,10 +37,11 @@ attaching the analysis results to its nodes as tooltips).
         static `config` of the option defaults), wiring parser,
         configuration, group partitioning, container nesting, the
         per-type renderers, and the SVG output, plus the re-exported
-        companion types (`Graph`, `Node`, `Edge`, `EdgeKind`, `Attr`,
-        `Config`)
+        companion types (`Graph`, `Node`, `Edge`, `EdgeKind`, `EdgeType`,
+        `Attr`, `Config`)
     -   `src/gradia-api-model.ts`: the graph model types (`Attr`, `Node`,
-        `Edge`, `EdgeKind`, `Graph`) and the list `edgeKinds`
+        `Edge`, `EdgeKind`, `EdgeType`, `Graph`) and the lists `edgeKinds`
+        and `edgeTypes`
     -   `src/gradia-api-parser.ts`: the input language parser, producing the graph model
     -   `src/gradia-api-config.ts`: the rendering options (defaults,
         validation, in-input directive parsing, CSS value resolution,
@@ -90,6 +93,9 @@ attaching the analysis results to its nodes as tooltips).
         coverability graph and liveness analysis of every connected
         part of the net, marking its places and transitions via the
         `mark` attribute and attaching the results as tooltips)
+    -   `src/gradia-api-type-gantt.ts`: the `gantt` diagram type (the
+        critical path scheduling of the tasks, and their row headers,
+        bars, and dependency arrows over a time axis, as shapes)
 -   `etc/`: the tool configurations (`eslint.mjs`, `tsconfig.json`,
     `stx.conf`, `vite.ts`)
 -   `smp/`: the sample graph descriptions (`*.txt`), their rendered
@@ -128,7 +134,7 @@ No test target is defined.
 ## CLI Command
 
 ```
-gradia [-t graph|hub|grid|layer|slice|tree|matrix|sequence|state|petri] [-f <format>] [-c <name>=<value>] -o <file>.svg <graph>.txt
+gradia [-t graph|hub|grid|layer|slice|tree|matrix|sequence|state|petri|gantt] [-f <format>] [-c <name>=<value>] -o <file>.svg <graph>.txt
 ```
 
 Both the `-o`/`--output` option and the input file argument are
@@ -170,11 +176,12 @@ their own declarations.
 
 The rendering options (`font-family`, `font-embed`, the `color-*`
 family, the numeric geometry families `size-*`, `group-*`,
-`container-*`, `graph-*`, `hub-*`, `grid-*`, `sequence-*`, and
-`tree-*`, and the booleans `grid-node-width-equal`,
+`container-*`, `graph-*`, `hub-*`, `grid-*`, `sequence-*`, `tree-*`,
+and `gantt-*`, and the booleans `grid-node-width-equal`,
 `grid-node-height-equal`, `mark-violation`, `layer-numbered`,
-`slice-numbered`, `tree-stack-double`, `tree-node-width-equal`, and
-`tree-horizontal`) are set through the repeatable
+`slice-numbered`, `tree-stack-double`, `tree-node-width-equal`,
+`tree-horizontal`, and `gantt-critical`, and the string `gantt-unit-name`)
+are set through the repeatable
 `--config <name>=<value>` command-line option, or through `#config
 <option> <value>` directives inside the input, except `font-embed` and
 WOFF2 file paths, which are command-line-only, as the input is treated
