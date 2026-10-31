@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="20 20 1611 1229" width="1611" height="1229">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="20 20 1611 921" width="1611" height="921">
 <defs>
 <style>
 .gradia-1b78e744 { fill: none; stroke: #999999; stroke-width: 3 }
@@ -18,143 +18,143 @@
 <path d="M 0 1 L 9 5 L 0 9 z" class="gradia-72a34555"/>
 </marker>
 </defs>
-<path d="M 764 515 L 790 515 Q 810 515 810 535 L 810 979 Q 810 999 830 999 L 921.5 999" class="gradia-1b78e744" marker-end="url(#gradia-87a087f53d14-arrow)"/>
-<path d="M 764 345 L 802 345 Q 822 345 822 325 L 822 223.5 Q 822 203.5 842 203.5 L 850 203.5 A 8 8 0 0 1 866 203.5 L 921.5 203.5" class="gradia-1b78e744" marker-end="url(#gradia-87a087f53d14-arrow)"/>
-<path d="M 764 481 L 802 481 Q 822 481 822 501 L 822 683 Q 822 703 842 703 L 850 703 A 8 8 0 0 1 866 703 L 921.5 703" class="gradia-1b78e744" marker-end="url(#gradia-87a087f53d14-arrow)"/>
-<path d="M 764 413 L 826 413 Q 846 413 846 433 L 846 565 Q 846 569 850 569 L 850 569 A 8 8 0 0 1 866 569 L 1196 569 A 14 8 0 0 1 1224 569 L 1226 569 Q 1240 569 1240 583 L 1240 615 Q 1240 635 1260 635 L 1332 635" class="gradia-1b78e744" marker-end="url(#gradia-87a087f53d14-arrow)"/>
-<path d="M 764 379 L 850 379 A 8 8 0 0 1 866 379 L 904 379" class="gradia-1b78e744" marker-end="url(#gradia-87a087f53d14-arrow)"/>
-<path d="M 544 430 L 495 430 Q 475 430 475 450 L 475 945 Q 475 965 455 965 L 332 965" class="gradia-1b78e744" marker-end="url(#gradia-87a087f53d14-arrow)"/>
-<path d="M 764 277 L 781 277 Q 798 277 798 260 L 798 82 Q 798 62 818 62 L 921.5 62" class="gradia-1b78e744" marker-end="url(#gradia-87a087f53d14-arrow)"/>
-<path d="M 764 311 L 790 311 Q 810 311 810 291 L 810 116 Q 810 96 830 96 L 921.5 96" class="gradia-1b78e744" marker-end="url(#gradia-87a087f53d14-arrow)"/>
-<path d="M 921.5 130 L 878 130 Q 858 130 858 150 L 858 887 Q 858 907 838 907 L 818 907 A 8 8 0 0 0 802 907 L 507 907 Q 487 907 487 927 L 487 979 Q 487 999 467 999 L 332 999" class="gradia-1b78e744" marker-end="url(#gradia-87a087f53d14-arrow)"/>
-<path d="M 1141.5 1016 L 1211 1016 Q 1228 1016 1228 999 L 1228 986 Q 1228 982 1232 982 L 1232 982 A 8 8 0 0 1 1248 982 L 1332 982" class="gradia-1b78e744" marker-end="url(#gradia-87a087f53d14-arrow)"/>
-<path d="M 1141.5 982 L 1196 982 Q 1216 982 1216 962 L 1216 416 Q 1216 396 1236 396 L 1299 396" class="gradia-1b78e744" marker-end="url(#gradia-87a087f53d14-arrow)"/>
-<path d="M 1332 1016 L 1272 1016 Q 1252 1016 1252 1036 L 1252 1134 Q 1252 1154 1232 1154 L 471 1154 Q 451 1154 451 1174 L 451 1177.5 Q 451 1197.5 431 1197.5 L 404 1197.5" class="gradia-1b78e744" marker-end="url(#gradia-87a087f53d14-arrow)"/>
-<path d="M 1141.5 703 L 1208 703 A 8 8 0 0 1 1224 703 L 1332 703" class="gradia-1b78e744" marker-end="url(#gradia-87a087f53d14-arrow)"/>
-<path d="M 1141.5 737 L 1208 737 A 8 8 0 0 1 1224 737 L 1332 737" class="gradia-1b78e744" marker-end="url(#gradia-87a087f53d14-arrow)"/>
-<path d="M 1141.5 669 L 1184 669 Q 1204 669 1204 649 L 1204 223.5 Q 1204 203.5 1224 203.5 L 1322.5 203.5" class="gradia-1b78e744" marker-end="url(#gradia-87a087f53d14-arrow)"/>
-<path d="M 1332 771 L 1224 771 A 8 8 0 0 0 1208 771 L 1141.5 771" class="gradia-1b78e744" marker-end="url(#gradia-87a087f53d14-arrow)"/>
-<path d="M 1332 805 L 1224 805 A 8 8 0 0 0 1208 805 L 1141.5 805" class="gradia-1b78e744" marker-end="url(#gradia-87a087f53d14-arrow)"/>
-<path d="M 1332 669 L 1248 669 Q 1228 669 1228 649 L 1228 585 Q 1228 581 1224 581 L 1224 581 A 14 8 0 0 0 1196 581 L 866 581 A 8 8 0 0 0 850 581 L 848 581 Q 834 581 834 567 L 834 467 Q 834 447 814 447 L 764 447" class="gradia-1b78e744" marker-end="url(#gradia-87a087f53d14-arrow)"/>
-<path d="M 1552 737 L 1579 737 Q 1599 737 1599 717 L 1599 581 Q 1599 561 1579 561 L 1479 561 Q 1459 561 1459 581 L 1459 613" class="gradia-1b78e744" marker-end="url(#gradia-87a087f53d14-arrow)"/>
-<path d="M 1552 771 L 1591 771 Q 1611 771 1611 751 L 1611 569 Q 1611 549 1591 549 L 1445 549 Q 1425 549 1425 569 L 1425 613" class="gradia-1b78e744" marker-end="url(#gradia-87a087f53d14-arrow)"/>
-<path d="M 1332 839 L 1248 839 Q 1228 839 1228 859 L 1228 915 Q 1228 919 1224 919 L 1224 919 A 8 8 0 0 0 1208 919 L 878 919 A 8 8 0 0 0 862 919 L 818 919 A 8 8 0 0 0 802 919 L 519 919 Q 499 919 499 939 L 499 1013 Q 499 1033 479 1033 L 332 1033" class="gradia-1b78e744" marker-end="url(#gradia-87a087f53d14-arrow)"/>
-<path d="M 1332 873 L 1260 873 Q 1240 873 1240 893 L 1240 1047 Q 1240 1067 1220 1067 L 471 1067 Q 451 1067 451 1087 L 451 1090.5 Q 451 1110.5 431 1110.5 L 332 1110.5" class="gradia-1b78e744" marker-end="url(#gradia-87a087f53d14-arrow)"/>
-<path d="M 380.5 396 L 431 396 Q 451 396 451 416 L 451 565 Q 451 569 455 569 L 455 569 A 14 8 0 0 1 483 569 L 778 569 Q 798 569 798 589 L 798 733 Q 798 737 802 737 L 802 737 A 8 8 0 0 1 818 737 L 850 737 A 8 8 0 0 1 866 737 L 921.5 737" class="gradia-1b78e744" marker-end="url(#gradia-87a087f53d14-arrow)"/>
-<path d="M 380.5 362 L 544 362" class="gradia-1b78e744" marker-end="url(#gradia-87a087f53d14-arrow)"/>
-<path d="M 334 771 L 431 771 Q 451 771 451 791 L 451 917 Q 451 931 465 931 L 467 931 A 20 8 0 0 1 507 931 L 802 931 A 8 8 0 0 1 818 931 L 850 931 Q 870 931 870 911 L 870 791 Q 870 771 890 771 L 921.5 771" class="gradia-1b78e744" marker-end="url(#gradia-87a087f53d14-arrow)"/>
-<path d="M 334 737 L 443 737 Q 463 737 463 717 L 463 416 Q 463 396 483 396 L 544 396" class="gradia-1b78e744" marker-end="url(#gradia-87a087f53d14-arrow)"/>
+<path d="M 764 405.5 L 790 405.5 Q 810 405.5 810 425.5 L 810 801.5 Q 810 821.5 830 821.5 L 921.5 821.5" class="gradia-1b78e744" marker-end="url(#gradia-87a087f53d14-arrow)"/>
+<path d="M 764 235.5 L 806 235.5 Q 822 235.5 822 219.5 L 822 219.5 Q 822 203.5 838 203.5 L 850 203.5 A 8 8 0 0 1 866 203.5 L 921.5 203.5" class="gradia-1b78e744" marker-end="url(#gradia-87a087f53d14-arrow)"/>
+<path d="M 764 371.5 L 802 371.5 Q 822 371.5 822 391.5 L 822 539.5 Q 822 559.5 842 559.5 L 850 559.5 A 8 8 0 0 1 866 559.5 L 921.5 559.5" class="gradia-1b78e744" marker-end="url(#gradia-87a087f53d14-arrow)"/>
+<path d="M 764 303.5 L 826 303.5 Q 846 303.5 846 323.5 L 846 455.5 Q 846 459.5 850 459.5 L 850 459.5 A 8 8 0 0 1 866 459.5 L 1173 459.5 A 8 8 0 0 1 1189 459.5 L 1209 459.5 A 8 8 0 0 1 1225 459.5 L 1233.5 459.5 Q 1241 459.5 1241 467 L 1241 467 Q 1241 474.5 1248.5 474.5 L 1332 474.5" class="gradia-1b78e744" marker-end="url(#gradia-87a087f53d14-arrow)"/>
+<path d="M 764 269.5 L 789.5 269.5 Q 798 269.5 798 278 L 798 278 Q 798 286.5 806.5 286.5 L 850 286.5 A 8 8 0 0 1 866 286.5 L 904 286.5" class="gradia-1b78e744" marker-end="url(#gradia-87a087f53d14-arrow)"/>
+<path d="M 544 320.5 L 518 320.5 A 8 8 0 0 0 502 320.5 L 502 320.5 Q 498 320.5 498 324.5 L 498 461.5 Q 498 465.5 494 465.5 L 494 465.5 A 8 8 0 0 0 478 465.5 L 332 465.5" class="gradia-1b78e744" marker-end="url(#gradia-87a087f53d14-arrow)"/>
+<path d="M 764 167.5 L 781 167.5 Q 798 167.5 798 150.5 L 798 82 Q 798 62 818 62 L 921.5 62" class="gradia-1b78e744" marker-end="url(#gradia-87a087f53d14-arrow)"/>
+<path d="M 764 201.5 L 790 201.5 Q 810 201.5 810 181.5 L 810 116 Q 810 96 830 96 L 921.5 96" class="gradia-1b78e744" marker-end="url(#gradia-87a087f53d14-arrow)"/>
+<path d="M 921.5 130 L 878 130 Q 858 130 858 150 L 858 726.5 Q 858 746.5 838 746.5 L 818 746.5 A 8 8 0 0 0 802 746.5 L 494 746.5 A 8 8 0 0 0 478 746.5 L 478 746.5 Q 474 746.5 474 742.5 L 474 519.5 Q 474 499.5 454 499.5 L 332 499.5" class="gradia-1b78e744" marker-end="url(#gradia-87a087f53d14-arrow)"/>
+<path d="M 1141.5 838.5 L 1257 838.5 A 8 8 0 0 1 1273 838.5 L 1332 838.5" class="gradia-1b78e744" marker-end="url(#gradia-87a087f53d14-arrow)"/>
+<path d="M 1141.5 804.5 L 1197 804.5 Q 1217 804.5 1217 784.5 L 1217 345 Q 1217 325 1237 325 L 1299 325" class="gradia-1b78e744" marker-end="url(#gradia-87a087f53d14-arrow)"/>
+<path d="M 1332 872.5 L 1289 872.5 Q 1277 872.5 1277 884.5 L 1277 884.5 Q 1277 896.5 1265 896.5 L 458 896.5 Q 438 896.5 438 876.5 L 438 838.5 Q 438 821.5 421 821.5 L 404 821.5" class="gradia-1b78e744" marker-end="url(#gradia-87a087f53d14-arrow)"/>
+<path d="M 1141.5 559.5 L 1184.5 559.5 Q 1193 559.5 1193 551 L 1193 551 Q 1193 542.5 1201.5 542.5 L 1209 542.5 A 8 8 0 0 1 1225 542.5 L 1332 542.5" class="gradia-1b78e744" marker-end="url(#gradia-87a087f53d14-arrow)"/>
+<path d="M 1141.5 593.5 L 1196.5 593.5 Q 1205 593.5 1205 585 L 1205 580.5 Q 1205 576.5 1209 576.5 L 1209 576.5 A 8 8 0 0 1 1225 576.5 L 1332 576.5" class="gradia-1b78e744" marker-end="url(#gradia-87a087f53d14-arrow)"/>
+<path d="M 1141.5 525.5 L 1161.25 525.5 Q 1181 525.5 1181 505.75 L 1181 262 Q 1181 242 1201 242 L 1322.5 242" class="gradia-1b78e744" marker-end="url(#gradia-87a087f53d14-arrow)"/>
+<path d="M 1332 610.5 L 1237.5 610.5 Q 1229 610.5 1229 619 L 1229 623.5 Q 1229 627.5 1225 627.5 L 1225 627.5 A 8 8 0 0 0 1209 627.5 L 1141.5 627.5" class="gradia-1b78e744" marker-end="url(#gradia-87a087f53d14-arrow)"/>
+<path d="M 1332 644.5 L 1249.5 644.5 Q 1241 644.5 1241 653 L 1241 653 Q 1241 661.5 1232.5 661.5 L 1225 661.5 A 8 8 0 0 0 1209 661.5 L 1141.5 661.5" class="gradia-1b78e744" marker-end="url(#gradia-87a087f53d14-arrow)"/>
+<path d="M 1332 508.5 L 1247.5 508.5 Q 1229 508.5 1229 490 L 1229 475.5 Q 1229 471.5 1225 471.5 L 1225 471.5 A 8 8 0 0 0 1209 471.5 L 1189 471.5 A 8 8 0 0 0 1173 471.5 L 866 471.5 A 8 8 0 0 0 850 471.5 L 848 471.5 Q 834 471.5 834 457.5 L 834 357.5 Q 834 337.5 814 337.5 L 764 337.5" class="gradia-1b78e744" marker-end="url(#gradia-87a087f53d14-arrow)"/>
+<path d="M 1552 576.5 L 1579 576.5 Q 1599 576.5 1599 556.5 L 1599 420.5 Q 1599 400.5 1579 400.5 L 1479 400.5 Q 1459 400.5 1459 420.5 L 1459 452.5" class="gradia-1b78e744" marker-end="url(#gradia-87a087f53d14-arrow)"/>
+<path d="M 1552 610.5 L 1591 610.5 Q 1611 610.5 1611 590.5 L 1611 408.5 Q 1611 388.5 1591 388.5 L 1445 388.5 Q 1425 388.5 1425 408.5 L 1425 452.5" class="gradia-1b78e744" marker-end="url(#gradia-87a087f53d14-arrow)"/>
+<path d="M 1332 678.5 L 1273 678.5 Q 1253 678.5 1253 698.5 L 1253 738.5 Q 1253 758.5 1233 758.5 L 1225 758.5 A 8 8 0 0 0 1209 758.5 L 878 758.5 A 8 8 0 0 0 862 758.5 L 818 758.5 A 8 8 0 0 0 802 758.5 L 494 758.5 A 8 8 0 0 0 478 758.5 L 476 758.5 Q 462 758.5 462 744.5 L 462 553.5 Q 462 533.5 442 533.5 L 332 533.5" class="gradia-1b78e744" marker-end="url(#gradia-87a087f53d14-arrow)"/>
+<path d="M 1332 712.5 L 1285 712.5 Q 1265 712.5 1265 732.5 L 1265 852.5 Q 1265 872.5 1245 872.5 L 470 872.5 Q 450 872.5 450 852.5 L 450 627 Q 450 607 430 607 L 332 607" class="gradia-1b78e744" marker-end="url(#gradia-87a087f53d14-arrow)"/>
+<path d="M 380.5 303.5 L 442 303.5 A 8 8 0 0 1 458 303.5 L 490 303.5 Q 510 303.5 510 323.5 L 510 439.5 Q 510 459.5 530 459.5 L 778 459.5 Q 798 459.5 798 479.5 L 798 589.5 Q 798 593.5 802 593.5 L 802 593.5 A 8 8 0 0 1 818 593.5 L 850 593.5 A 8 8 0 0 1 866 593.5 L 921.5 593.5" class="gradia-1b78e744" marker-end="url(#gradia-87a087f53d14-arrow)"/>
+<path d="M 380.5 269.5 L 429.5 269.5 Q 438 269.5 438 261 L 438 261 Q 438 252.5 446.5 252.5 L 544 252.5" class="gradia-1b78e744" marker-end="url(#gradia-87a087f53d14-arrow)"/>
+<path d="M 334 401.5 L 466 401.5 Q 486 401.5 486 421.5 L 486 750.5 Q 486 770.5 506 770.5 L 802 770.5 A 8 8 0 0 1 818 770.5 L 850 770.5 Q 870 770.5 870 750.5 L 870 647.5 Q 870 627.5 890 627.5 L 921.5 627.5" class="gradia-1b78e744" marker-end="url(#gradia-87a087f53d14-arrow)"/>
+<path d="M 334 367.5 L 430 367.5 Q 450 367.5 450 347.5 L 450 306.5 Q 450 286.5 470 286.5 L 544 286.5" class="gradia-1b78e744" marker-end="url(#gradia-87a087f53d14-arrow)"/>
 <a href="#event" xlink:href="#event">
-<rect x="544" y="255" width="220" height="282" rx="6" class="gradia-ceed8dfe"/>
-<text x="654" y="383.8" class="gradia-8a074145">ENTITY</text>
-<text x="654" y="419.8" class="gradia-fc3c7305">Event</text>
+<rect x="544" y="145.5" width="220" height="282" rx="6" class="gradia-ceed8dfe"/>
+<text x="654" y="274.3" class="gradia-8a074145">ENTITY</text>
+<text x="654" y="310.3" class="gradia-fc3c7305">Event</text>
 </a>
 <a href="#agendapoint" xlink:href="#agendapoint">
 <rect x="921.5" y="40" width="220" height="112" rx="6" class="gradia-a6a22853"/>
 <text x="1031.5" y="106.8" class="gradia-769fb48f">AgendaPoint</text>
 </a>
 <a href="#channel" xlink:href="#channel">
-<rect x="921.5" y="960" width="220" height="78" rx="6" class="gradia-a6a22853"/>
-<text x="1031.5" y="1009.8" class="gradia-769fb48f">Channel</text>
+<rect x="921.5" y="782.5" width="220" height="78" rx="6" class="gradia-a6a22853"/>
+<text x="1031.5" y="832.3" class="gradia-769fb48f">Channel</text>
 </a>
 <a href="#resource" xlink:href="#resource">
-<rect x="1332" y="960" width="220" height="78" rx="6" class="gradia-a6a22853"/>
-<text x="1442" y="1009.8" class="gradia-769fb48f">Resource</text>
+<rect x="1332" y="816.5" width="220" height="78" rx="6" class="gradia-a6a22853"/>
+<text x="1442" y="866.3" class="gradia-769fb48f">Resource</text>
 </a>
 <a href="#resourceproviderparam" xlink:href="#resourceproviderparam">
-<rect x="40" y="1166" width="364" height="63" rx="6" class="gradia-a6a22853"/>
-<text x="222" y="1208.3" class="gradia-769fb48f">ResourceProviderParam</text>
+<rect x="40" y="790" width="364" height="63" rx="6" class="gradia-a6a22853"/>
+<text x="222" y="832.3" class="gradia-769fb48f">ResourceProviderParam</text>
 </a>
 <a href="#role" xlink:href="#role">
 <rect x="921.5" y="172" width="220" height="63" rx="6" class="gradia-a6a22853"/>
 <text x="1031.5" y="214.3" class="gradia-769fb48f">Role</text>
 </a>
 <a href="#user" xlink:href="#user">
-<rect x="921.5" y="647" width="220" height="180" rx="6" class="gradia-a6a22853"/>
-<text x="1031.5" y="747.8" class="gradia-769fb48f">User</text>
+<rect x="921.5" y="503.5" width="220" height="180" rx="6" class="gradia-a6a22853"/>
+<text x="1031.5" y="604.3" class="gradia-769fb48f">User</text>
 </a>
 <a href="#message" xlink:href="#message">
-<rect x="1332" y="613" width="220" height="282" rx="6" class="gradia-a6a22853"/>
-<text x="1442" y="764.8" class="gradia-769fb48f">Message</text>
+<rect x="1332" y="452.5" width="220" height="282" rx="6" class="gradia-a6a22853"/>
+<text x="1442" y="604.3" class="gradia-769fb48f">Message</text>
 </a>
 <a href="#messagetext" xlink:href="#messagetext">
-<rect x="112" y="1079" width="220" height="63" rx="6" class="gradia-a6a22853"/>
-<text x="222" y="1121.3" class="gradia-769fb48f">MessageText</text>
+<rect x="112" y="575.5" width="220" height="63" rx="6" class="gradia-a6a22853"/>
+<text x="222" y="617.8" class="gradia-769fb48f">MessageText</text>
 </a>
 <a href="#questiontag" xlink:href="#questiontag">
-<rect x="112" y="943" width="220" height="112" rx="6" class="gradia-a6a22853"/>
-<text x="222" y="1009.8" class="gradia-769fb48f">QuestionTag</text>
+<rect x="112" y="443.5" width="220" height="112" rx="6" class="gradia-a6a22853"/>
+<text x="222" y="510.3" class="gradia-769fb48f">QuestionTag</text>
 </a>
 <a href="#authorizationtoken" xlink:href="#authorizationtoken">
-<rect x="63.5" y="340" width="317" height="78" rx="6" class="gradia-a6a22853"/>
-<text x="222" y="389.8" class="gradia-769fb48f">AuthorizationToken</text>
+<rect x="63.5" y="247.5" width="317" height="78" rx="6" class="gradia-a6a22853"/>
+<text x="222" y="297.3" class="gradia-769fb48f">AuthorizationToken</text>
 </a>
 <a href="#sessiontoken" xlink:href="#sessiontoken">
-<rect x="110" y="715" width="224" height="78" rx="6" class="gradia-a6a22853"/>
-<text x="222" y="764.8" class="gradia-769fb48f">SessionToken</text>
+<rect x="110" y="345.5" width="224" height="78" rx="6" class="gradia-a6a22853"/>
+<text x="222" y="395.3" class="gradia-769fb48f">SessionToken</text>
 </a>
 <a href="#eventstatistic" xlink:href="#eventstatistic">
-<rect x="904" y="347.5" width="255" height="63" rx="6" class="gradia-a6a22853"/>
-<text x="1031.5" y="389.8" class="gradia-769fb48f">EventStatistic</text>
+<rect x="904" y="255" width="255" height="63" rx="6" class="gradia-a6a22853"/>
+<text x="1031.5" y="297.3" class="gradia-769fb48f">EventStatistic</text>
 </a>
 <a href="#channelstatistic" xlink:href="#channelstatistic">
-<rect x="1299" y="364.5" width="286" height="63" rx="6" class="gradia-a6a22853"/>
-<text x="1442" y="406.8" class="gradia-769fb48f">ChannelStatistic</text>
+<rect x="1299" y="293.5" width="286" height="63" rx="6" class="gradia-a6a22853"/>
+<text x="1442" y="335.8" class="gradia-769fb48f">ChannelStatistic</text>
 </a>
 <a href="#userstatistic" xlink:href="#userstatistic">
-<rect x="1322.5" y="172" width="239" height="63" rx="6" class="gradia-a6a22853"/>
-<text x="1442" y="214.3" class="gradia-769fb48f">UserStatistic</text>
+<rect x="1322.5" y="210.5" width="239" height="63" rx="6" class="gradia-a6a22853"/>
+<text x="1442" y="252.8" class="gradia-769fb48f">UserStatistic</text>
 </a>
-<text x="897.5" y="1020" class="gradia-8a894d87">channels</text>
-<text x="1308" y="656" class="gradia-8a894d87">messages</text>
-<text x="856" y="400" class="gradia-8a894d87">statistics</text>
-<text x="515" y="900" class="gradia-8df7aa68">correspondingTags</text>
-<text x="479" y="1147" class="gradia-8df7aa68">params</text>
-<text x="1266.72" y="696" class="gradia-8a894d87">likes</text>
-<text x="1230.78" y="764" class="gradia-8df7aa68">sender</text>
-<text x="1230.78" y="798" class="gradia-8df7aa68">liker</text>
-<text x="862" y="602" class="gradia-8df7aa68">event</text>
-<text x="1511" y="582" class="gradia-8df7aa68">replyTo</text>
-<text x="1453" y="542" class="gradia-8df7aa68">predecessor</text>
-<text x="356" y="1054" class="gradia-8df7aa68">questionTags</text>
-<text x="356" y="1131.5" class="gradia-8df7aa68">messageText</text>
-<text x="849.5" y="758" class="gradia-8a894d87">user</text>
-<text x="503.68" y="355" class="gradia-8a894d87">event</text>
-<text x="802" y="952" class="gradia-8a894d87">user</text>
-<text x="435" y="730" class="gradia-8a894d87">event</text>
+<text x="897.5" y="842.5" class="gradia-8a894d87">channels</text>
+<text x="1308" y="495.5" class="gradia-8a894d87">messages</text>
+<text x="502" y="739.5" class="gradia-8df7aa68">correspondingTags</text>
+<text x="1250.72" y="831.5" class="gradia-8a894d87">resources</text>
+<text x="466" y="917.5" class="gradia-8df7aa68">params</text>
+<text x="1266.72" y="535.5" class="gradia-8a894d87">likes</text>
+<text x="1298.5" y="263" class="gradia-8a894d87">statistics</text>
+<text x="1257" y="603.5" class="gradia-8df7aa68">sender</text>
+<text x="1165.5" y="682.5" class="gradia-8df7aa68">liker</text>
+<text x="862" y="492.5" class="gradia-8df7aa68">event</text>
+<text x="1511" y="421.5" class="gradia-8df7aa68">replyTo</text>
+<text x="1453" y="381.5" class="gradia-8df7aa68">predecessor</text>
+<text x="882" y="751.5" class="gradia-8df7aa68">questionTags</text>
+<text x="478" y="865.5" class="gradia-8df7aa68">messageText</text>
+<text x="849.5" y="614.5" class="gradia-8a894d87">user</text>
+<text x="503.68" y="245.5" class="gradia-8a894d87">event</text>
+<text x="802" y="791.5" class="gradia-8a894d87">user</text>
+<text x="503.68" y="279.5" class="gradia-8a894d87">event</text>
 <text x="897.5" y="224.5" class="gradia-8a894d87">roles</text>
-<text x="868.6" y="624.25" class="gradia-11dad4ff">accessList</text>
-<text x="567.36" y="736.6875" class="gradia-11dad4ff">availableQuestionTags</text>
-<text x="722.28" y="127.75" class="gradia-11dad4ff">activeAgendaPoint</text>
-<text x="864.9200000000001" y="173.9375" class="gradia-11dad4ff">agendaPoints</text>
-<text x="1184.75" y="1036" class="gradia-11dad4ff">resources</text>
-<text x="1262.6" y="519.125" class="gradia-11dad4ff">statistics</text>
-<text x="1191.42" y="731" class="gradia-11dad4ff">sentMessages</text>
-<text x="1157.4" y="443.25" class="gradia-11dad4ff">statistics</text>
-<text x="880.86" y="992" class="gradia-cc24e345">0..n</text>
+<text x="868.6" y="514.5" class="gradia-11dad4ff">accessList</text>
+<text x="839.6" y="306.5" class="gradia-11dad4ff">statistics</text>
+<text x="590.36" y="462.5" class="gradia-11dad4ff">availableQuestionTags</text>
+<text x="722.28" y="79" class="gradia-11dad4ff">activeAgendaPoint</text>
+<text x="755.0799999999999" y="122.5" class="gradia-11dad4ff">agendaPoints</text>
+<text x="1263.6" y="428.15625" class="gradia-11dad4ff">statistics</text>
+<text x="1191.42" y="587.5" class="gradia-11dad4ff">sentMessages</text>
+<text x="880.86" y="814.5" class="gradia-cc24e345">0..n</text>
 <text x="880.86" y="196.5" class="gradia-cc24e345">0..n</text>
-<text x="880.86" y="696" class="gradia-cc24e345">0..n</text>
-<text x="1291.36" y="628" class="gradia-cc24e345">0..n</text>
-<text x="863.36" y="372" class="gradia-cc24e345">0..n</text>
-<text x="372.64" y="958" class="gradia-cc24e345">0..n</text>
+<text x="880.86" y="552.5" class="gradia-cc24e345">0..n</text>
+<text x="1291.36" y="467.5" class="gradia-cc24e345">0..n</text>
+<text x="863.36" y="279.5" class="gradia-cc24e345">0..n</text>
+<text x="372.64" y="458.5" class="gradia-cc24e345">0..n</text>
 <text x="880.86" y="55" class="gradia-cc24e345">0..1</text>
 <text x="880.86" y="89" class="gradia-cc24e345">0..n</text>
-<text x="372.64" y="992" class="gradia-cc24e345">0..n</text>
-<text x="1291.36" y="975" class="gradia-cc24e345">1..n</text>
-<text x="1258.36" y="389" class="gradia-cc24e345">0..n</text>
-<text x="444.64" y="1190.5" class="gradia-cc24e345">0..n</text>
-<text x="1291.36" y="696" class="gradia-cc24e345">0..n</text>
-<text x="1291.36" y="730" class="gradia-cc24e345">0..n</text>
-<text x="1281.86" y="196.5" class="gradia-cc24e345">0..n</text>
-<text x="1182.14" y="764" class="gradia-cc24e345">0..1</text>
-<text x="1182.14" y="798" class="gradia-cc24e345">0..n</text>
-<text x="792.16" y="440" class="gradia-cc24e345">1</text>
-<text x="1481.6399999999999" y="592" class="gradia-cc24e345">0..1</text>
-<text x="1447.6399999999999" y="592" class="gradia-cc24e345">0..1</text>
-<text x="372.64" y="1026" class="gradia-cc24e345">0..n</text>
-<text x="372.64" y="1103.5" class="gradia-cc24e345">1..n</text>
-<text x="893.34" y="730" class="gradia-cc24e345">1</text>
-<text x="515.84" y="355" class="gradia-cc24e345">1</text>
-<text x="893.34" y="764" class="gradia-cc24e345">1</text>
-<text x="515.84" y="389" class="gradia-cc24e345">1</text>
+<text x="372.64" y="492.5" class="gradia-cc24e345">0..n</text>
+<text x="1291.36" y="831.5" class="gradia-cc24e345">1..n</text>
+<text x="1258.36" y="318" class="gradia-cc24e345">0..n</text>
+<text x="444.64" y="814.5" class="gradia-cc24e345">0..n</text>
+<text x="1291.36" y="535.5" class="gradia-cc24e345">0..n</text>
+<text x="1291.36" y="569.5" class="gradia-cc24e345">0..n</text>
+<text x="1281.86" y="235" class="gradia-cc24e345">0..n</text>
+<text x="1182.14" y="620.5" class="gradia-cc24e345">0..1</text>
+<text x="1182.14" y="654.5" class="gradia-cc24e345">0..n</text>
+<text x="792.16" y="330.5" class="gradia-cc24e345">1</text>
+<text x="1481.6399999999999" y="431.5" class="gradia-cc24e345">0..1</text>
+<text x="1447.6399999999999" y="431.5" class="gradia-cc24e345">0..1</text>
+<text x="372.64" y="526.5" class="gradia-cc24e345">0..n</text>
+<text x="372.64" y="600" class="gradia-cc24e345">1..n</text>
+<text x="893.34" y="586.5" class="gradia-cc24e345">1</text>
+<text x="515.84" y="245.5" class="gradia-cc24e345">1</text>
+<text x="893.34" y="620.5" class="gradia-cc24e345">1</text>
+<text x="515.84" y="279.5" class="gradia-cc24e345">1</text>
 </svg>

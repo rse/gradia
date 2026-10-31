@@ -49,6 +49,14 @@ ChangeLog
     stub, falls back below the line or onto the segment before the last corner, and only then
     searches along its route, while the "sequence" diagram keeps its names centered on the messages.
 
+-   IMPROVEMENT [code, othr]: pack the columns of a layered "graph" diagram vertically: instead of
+    centering every node in a row as high as its highest box, every column stacks its nodes in row
+    order, only the nodes of a direct same-row edge share a center line, a used gutter becomes a
+    band across just the columns its tracks cross, and boxes whose edges all lead downwards sink
+    towards their neighbors, while the edge-less nodes, no longer passed through the Dagre layout,
+    trail below all connected nodes in declaration order (which shrinks dense diagrams by up to a
+    third of their height).
+
 1.4.4 (2026-10-27)
 ------------------
 
