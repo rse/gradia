@@ -5,14 +5,18 @@
 */
 
 /*  internal dependencies  */
-import { Node, Edge }             from "./gradia-api-model.js"
-import { Config, ConfigEmbedded } from "./gradia-api-config.js"
-import type { Shape }             from "./gradia-api-render-shape.js"
+import { Node, Edge }                             from "./gradia-api-model.js"
+import { Config, ConfigEmbedded, ConfigFontSize } from "./gradia-api-config.js"
+import type { Shape }                             from "./gradia-api-render-shape.js"
 
 /*  rendering font size constant of the group tags (the font sizes of
     the node and edge texts and the further geometry are configurable,
     see the "size-*" and per-diagram-type options in the configuration)  */
 export const FS_GROUP = 24   /*  font size of group tags       */
+
+/*  the placement of a group tag in the top-left corner of its group box  */
+export const TAG_DX = 18  /*  left offset of the group tag  */
+export const TAG_DY = 12  /*  top offset of the group tag   */
 
 /*  the setback of an edge arity label from the arrow head it annotates
     (shared by the SVG rendering and the graph channel sizing)  */
@@ -86,6 +90,23 @@ export const escapeXML = (text: string): string =>
 
 /*  an orthogonal edge polyline  */
 export type Poly = [ number, number ][]
+
+/*  a rectangular area, given by its top-left and bottom-right corners  */
+export type Box = [ number, number, number, number ]
+
+/*  the styling of the rendered elements: instead of repeating the very
+    same lengthy style on every element, the elements reference CSS
+    classes, which the document declares once. A class is named after
+    the UUID v5 of its own declarations, so equal declarations share
+    one class, even across the diagrams embedded into the very same
+    document, where the class names are global (and where the embedding
+    document hence can declare all classes once on its own)  */
+export interface Styler {
+    text: (fill: ConfigEmbedded, size: ConfigFontSize | number,
+        options?: { bold?: boolean, middle?: boolean, end?: boolean, halo?: boolean }) => string
+    box:  (fill: ConfigEmbedded, stroke: ConfigEmbedded, width: number) => string
+    line: (stroke: ConfigEmbedded, width: number) => string
+}
 
 /*  the shapes of the pseudo-state nodes of a "state" diagram, drawn
     instead of a node box: the dot of an initial state, the bullseye of

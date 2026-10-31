@@ -63,7 +63,17 @@ scheduled by the critical path method, marking its critical path).
         recursive per-level layout with container placeholders and
         boundary gate nodes, and the stitching of the boundary-crossing
         edges
-    -   `src/gradia-api-render-svg.ts`: the final SVG document generation from a `Layout`
+    -   `src/gradia-api-render-label.ts`: the collision-free placement
+        of the edge name and arity labels (spatial area index, label
+        placer, candidate positions) and their SVG fragments
+    -   `src/gradia-api-render-element.ts`: the SVG fragments of the
+        node boxes (with badges, pseudo-state shapes, and Petri places),
+        group boxes, container boxes, and free-standing shapes
+    -   `src/gradia-api-render-icon.ts`: the badge icon paths and the
+        SVG fragments of a badge with its icon
+    -   `src/gradia-api-render-svg.ts`: the final SVG document generation
+        from a `Layout` (CSS classes, markers, edge paths, label
+        orchestration, view box, and document assembly)
     -   `src/gradia-api-type-graph.ts`: the `graph` diagram type (layered
         layout via the Dagre algorithm of `@antv/layout`, explicit `order`
         layout, and the uniform, optionally transposed, lane layout
