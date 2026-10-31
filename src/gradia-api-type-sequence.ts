@@ -39,6 +39,56 @@ interface Bar {
     pending:  number
 }
 
+/*  the kind of a message (a plain message being a synchronous call)  */
+const kindOf = (edge: Edge): EdgeKind => edge.kind ?? "sync"
+
+/*  validate the life cycle of the participants: a participant is
+    created at most once, and only by the first message it takes
+    part in, and takes part in no further message once destroyed  */
+const validateLifecycle = (edges: Edge[]): void => {
+    const seen      = new Set<string>()
+    const destroyed = new Set<string>()
+    for (const edge of edges) {
+        const message = `message "${edge.source}" --> "${edge.target}"`
+        for (const id of [ edge.source, edge.target ])
+            if (destroyed.has(id))
+                throw new Error(`${message} involves participant "${id}" after its destruction`)
+        if (kindOf(edge) === "create" && (edge.source === edge.target || seen.has(edge.target)))
+            throw new Error(`${message} cannot create participant "${edge.target}", ` +
+                "as only the first message a participant takes part in can create it")
+        seen.add(edge.source)
+        seen.add(edge.target)
+        if (kindOf(edge) === "destroy")
+            destroyed.add(edge.target)
+    }
+}
+
+/*  pair every synchronous call (or creation) with the return
+    answering it, i.e., the next return from its callee to its
+    caller, where a return answers the innermost such call still open
+    on its callee and thereby leaves all calls nested inside it
+    unanswered  */
+const pairCalls = (graph: Graph) => {
+    const paired   = new Set<number>()
+    const answerOf = new Map<number, number>()
+    const calls    = new Map<string, number[]>(Array.from(graph.nodes.keys(), (id) => [ id, [] ]))
+    graph.edges.forEach((edge, i) => {
+        if (kindOf(edge) === "sync" || kindOf(edge) === "create")
+            calls.get(edge.target)!.push(i)
+        else if (kindOf(edge) === "return") {
+            const pending = calls.get(edge.source)!
+            const k       = pending.findLastIndex((c) => graph.edges[c].source === edge.target)
+            if (k >= 0) {
+                paired.add(pending[k])
+                paired.add(i)
+                answerOf.set(pending[k], i)
+                pending.length = k
+            }
+        }
+    })
+    return { paired, answerOf }
+}
+
 /*  lay out a graph model as a sequence diagram: the nodes (in
     declaration order, or in the order of their "order" attributes) are
     the participants, drawn as regular node boxes side by side on top of
@@ -75,8 +125,8 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
             2 * (ARITY_OFF + textWidth(edge.arity, config["size-font-arity"]) + ARITY_GAP) : 0
         const box   = edge.kind === "create" ? halfOf(edge.target) : 0
         const [ a, b ] = [ column.get(edge.source)!, column.get(edge.target)! ]
-        const from  = Math.min(Math.min(a, b), gaps.length - 1)
-        return { from, to: Math.max(Math.max(a, b), from + 1), need: name + arity + box + colGap * 1.5 }
+        const from  = Math.min(a, b, gaps.length - 1)
+        return { from, to: Math.max(a, b, from + 1), need: name + arity + box + colGap * 1.5 }
     }).sort((p, q) => (p.to - p.from) - (q.to - q.from))
     for (const { from, to, need } of needs) {
         const sum = gaps.slice(from, to).reduce((s, g) => s + g, 0)
@@ -92,54 +142,15 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
     const xOf = new Map(nodes.map((node, i) => [ node.id, xs[i] ]))
     const cy  = margin + headH / 2
 
-    /*  validate the life cycle of the participants: a participant is
-        created at most once, and only by the first message it takes
-        part in, and takes part in no further message once destroyed  */
-    const kindOf    = (edge: Edge): EdgeKind => edge.kind ?? "sync"
-    const seen      = new Set<string>()
-    const destroyed = new Set<string>()
-    for (const edge of graph.edges) {
-        const message = `message "${edge.source}" --> "${edge.target}"`
-        for (const id of [ edge.source, edge.target ])
-            if (destroyed.has(id))
-                throw new Error(`${message} involves participant "${id}" after its destruction`)
-        if (kindOf(edge) === "create" && (edge.source === edge.target || seen.has(edge.target)))
-            throw new Error(`${message} cannot create participant "${edge.target}", ` +
-                "as only the first message a participant takes part in can create it")
-        seen.add(edge.source)
-        seen.add(edge.target)
-        if (kindOf(edge) === "destroy")
-            destroyed.add(edge.target)
-    }
-
-    /*  pair every synchronous call (or creation) with the return
-        answering it, i.e., the next return from its callee to its
-        caller, where a return answers the innermost such call still open
-        on its callee and thereby leaves all calls nested inside it
-        unanswered  */
-    const paired   = new Set<number>()
-    const answerOf = new Map<number, number>()
-    const calls    = new Map(nodes.map((node) => [ node.id, new Array<number>() ]))
-    graph.edges.forEach((edge, i) => {
-        if (kindOf(edge) === "sync" || kindOf(edge) === "create")
-            calls.get(edge.target)!.push(i)
-        else if (kindOf(edge) === "return") {
-            const pending = calls.get(edge.source)!
-            const k       = pending.findLastIndex((c) => graph.edges[c].source === edge.target)
-            if (k >= 0) {
-                paired.add(pending[k])
-                paired.add(i)
-                answerOf.set(pending[k], i)
-                pending.length = k
-            }
-        }
-    })
+    /*  validate the life cycle of the participants and pair their calls with their returns  */
+    validateLifecycle(graph.edges)
+    const { paired, answerOf } = pairCalls(graph)
 
     /*  ensure a duration constraint spans from a call to its return  */
     graph.edges.forEach((edge, i) => {
         if (edge.duration !== undefined && !answerOf.has(i))
             throw new Error(`message "${edge.source}" --> "${edge.target}" carries a duration, ` +
-                "but is no call answered by a return")
+                "but is not a call answered by a return")
     })
 
     /*  the activation bars of the lifelines: a paired call activates its

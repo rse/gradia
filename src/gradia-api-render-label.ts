@@ -10,7 +10,7 @@ import { Config }                                           from "./gradia-api-c
 import { Poly, Layout, Box, Styler, FS_GROUP, TAG_DX, TAG_DY, ARITY_OFF, ARITY_PAD, ARITY_GAP, ARROW_AIR,
     REGION_HEAD, arityHeight, textWidth, escapeXML }
     from "./gradia-api-render-base.js"
-import { containerHead }                                    from "./gradia-api-render-node.js"
+import { containerHead, typeOf, attrsOfNode }               from "./gradia-api-render-node.js"
 import { pointAt, segmentsOf }                              from "./gradia-api-render-path.js"
 
 /*  the parts of a transition label of the form "event [guard] / action"
@@ -137,8 +137,7 @@ export const labelPlacer = (
 } => {
     const { nodes, cx, cy, boxW, boxH } = layout
     const occupied: Box[] = nodes.map((node) => [
-        cx(node.id) - boxW.get(node.id)! / 2,
-        cy(node.id) - boxH.get(node.id)! / 2,
+        cx(node.id) - boxW.get(node.id)! / 2, cy(node.id) - boxH.get(node.id)! / 2,
         cx(node.id) + boxW.get(node.id)! / 2, cy(node.id) + boxH.get(node.id)! / 2
     ])
 
@@ -146,10 +145,15 @@ export const labelPlacer = (
     for (const group of layout.groups ?? [])
         occupied.push([ group.x + TAG_DX, group.y + TAG_DY,
             group.x + TAG_DX + textWidth(group.name, FS_GROUP), group.y + TAG_DY + FS_GROUP * 1.2 ])
-    for (const c of layout.containers ?? [])
-        occupied.push([ c.x + TAG_DX, c.y + TAG_DY,
-            c.x + TAG_DX + textWidth(c.node.name, FS_GROUP),
-            c.y + (c.style?.band !== undefined ? REGION_HEAD : containerHead(c.node, config, c.style !== undefined)) ])
+    for (const c of layout.containers ?? []) {
+        const band = c.style?.band !== undefined
+        const w    = Math.max(textWidth(c.node.name, FS_GROUP),
+            textWidth(typeOf(c.node) ?? "", config["size-font-type"]),
+            ...(c.style !== undefined && !band ? attrsOfNode(c.node).map((attr) =>
+                textWidth(`${attr.key}: ${attr.val}`, config["size-font-prop"])) : []))
+        occupied.push([ c.x + TAG_DX, c.y + TAG_DY, c.x + TAG_DX + w,
+            c.y + (band ? REGION_HEAD : containerHead(c.node, config, c.style !== undefined)) ])
+    }
 
     /*  let the labels also dodge the free-standing texts  */
     for (const shape of layout.shapes ?? [])
@@ -447,12 +451,10 @@ export const portLabels = (edge: Edge, poly: Poly, into: boolean, config: Config
     const [ a, b ] = [ poly[1], poly[0] ]
     if (a[1] !== b[1])
         return []
-    const dir   = Math.sign(b[0] - a[0])
-    const span  = (x2: number): [ number, number ] =>
-        [ Math.min(x2, x2 - dir * w), Math.max(x2, x2 - dir * w) ]
-    const below = (x2: number): Box => [ span(x2)[0], b[1] + 3, span(x2)[1], b[1] + 3 + h ]
-    const above = (x2: number): Box => [ span(x2)[0], b[1] - 3 - h, span(x2)[1], b[1] - 3 ]
-    return [ above(b[0] - dir * STUB_GAP), below(b[0] - dir * STUB_GAP) ]
+    const dir        = Math.sign(b[0] - a[0])
+    const x2         = b[0] - dir * STUB_GAP
+    const [ lo, hi ] = [ Math.min(x2, x2 - dir * w), Math.max(x2, x2 - dir * w) ]
+    return [ [ lo, b[1] - 3 - h, hi, b[1] - 3 ], [ lo, b[1] + 3, hi, b[1] + 3 + h ] ]
 }
 
 /*  generate the SVG fragment for the name label of a single edge,
@@ -486,7 +488,7 @@ export const renderEdgeName = (edge: Edge, poly: Poly, claim: (candidates: Box[]
         }
         return positions
     }
-    const mid = pointAt(poly, 0.50)
+    const mid  = pointAt(poly, 0.50)
     const near = (box: Box): number =>
         Math.abs((box[0] + box[2]) / 2 - mid.x) + Math.abs((box[1] + box[3]) / 2 - mid.y)
     const candidates: Box[] = []

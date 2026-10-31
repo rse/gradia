@@ -8,6 +8,9 @@
 import { NodeStyle, Styler, escapeXML }                     from "./gradia-api-render-base.js"
 import { type NodeBadge }                                   from "./gradia-api-render-node.js"
 
+/*  the badge radius the icons are drawn for  */
+const ICON_R = 17
+
 /*  the path of a circle (as one of several subpaths of an icon)  */
 const circlePath = (cx: number, cy: number, r: number): string =>
     `M ${cx + r} ${cy} a ${r} ${r} 0 1 0 ${-2 * r} 0 a ${r} ${r} 0 1 0 ${2 * r} 0`
@@ -38,8 +41,8 @@ const gearPath = (): string =>
     }).join(" ") + ` ${circlePath(0, 0, 5.5)} ${circlePath(0, 0, 1.5)}`
 
 /*  the icons of the badges, drawn around the origin for a badge radius
-    of 17: the stroked line path, its optional thinner stroke, and the
-    optional filled dots (center and radius)  */
+    of ICON_R: the stroked line path, its optional thinner stroke, and
+    the optional filled dots (center and radius)  */
 const badgeIcons: Record<NodeBadge, { d: string, thin?: boolean, dots?: [ number, number, number ][] }> = {
     person:   { d: `${circlePath(0, -7, 3.5)} M -7 8 q 0 -8 7 -8 q 7 0 7 8` },
     team:     { d: `${circlePath(-2.5, -4, 3)} M -8.5 8 q 0 -7 6 -7 q 6 0 6 7 ` +
@@ -81,14 +84,14 @@ const renderIcon = (badge: NodeBadge, style: NodeStyle, styler: Styler): string[
 
 /*  generate the SVG fragments of a badge of the given radius centered on
     the given point, in the colors of a node box, but with a thinner border,
-    as it sits inside the box (the icons are drawn for a badge radius of 17,
-    so they scale with the badge to keep their room around them)  */
+    as it sits inside the box (the icons are drawn for a badge radius of
+    ICON_R, so they scale with the badge to keep their room around them)  */
 export const renderBadge = (badge: NodeBadge, bx: number, by: number, r: number, style: NodeStyle,
     styler: Styler): string[] => {
     const cls  = styler.box(style.fill, style.stroke, 2)
     const dash = style.dash !== undefined ? ` stroke-dasharray="${escapeXML(style.dash)}"` : ""
     return [ `<circle cx="${bx}" cy="${by}" r="${r}" class="${cls}"${dash}/>`,
-        `<g transform="translate(${bx} ${by}) scale(${Math.round(r / 17 * 1000) / 1000})">`,
+        `<g transform="translate(${bx} ${by}) scale(${Math.round(r / ICON_R * 1000) / 1000})">`,
         ...renderIcon(badge, style, styler), "</g>" ]
 }
 

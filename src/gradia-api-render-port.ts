@@ -18,15 +18,9 @@ export const PORT_PAD = 10  /*  padding of the port band inside the box  */
 export type Side = "e" | "w" | "n"
 
 /*  the separation of the adjacent ports of a node side: the configured
-    one, raised to what the arity labels demand once any edge carries
-    one, as such a label sits ARITY_PAD below the line of the port above
-    it, whose arrow head reaches down by half its height, and needs two
-    more ARITY_PAD of air between the two, so it stays attributable to
-    its own arrow instead of drifting into the neighboring one, and
-    likewise to what a name label demands on a node side holding a
-    merged port of a named bundle, as the label then sits beside it, and
-    on a node side a named edge runs into, as its name label sits beside
-    the stub of its edge the same way, set back behind the arrow head  */
+    one, raised to the room an arity label needs below the arrow head of
+    the port above it (once any edge carries an arity), and to the room
+    a name label needs beside a merged named port or a named arriving stub  */
 export const portGapOf = (edges: Edge[], sides: { s: Side, t: Side }[], config: Config,
     merged?: (edge: number, role: "s" | "t") => string | undefined): (id: string, side: Side) => number => {
     const gap    = edges.some((edge) => edge.arity !== undefined) ?
@@ -196,9 +190,9 @@ export const assignPorts = (
         gaps.forEach((gap, j) => {
             const r     = gap.ports.length
             const step  = r > 1 ? Math.min(spacing, Math.max(gap.hi - gap.lo, 0) / (r - 1)) : spacing
-            const first = Math.min(Math.max(cy(id) + (k + j - (n - 1) / 2) * spacing, gap.lo),
+            const start = Math.min(Math.max(cy(id) + (k + j - (n - 1) / 2) * spacing, gap.lo),
                 gap.hi - (r - 1) * step)
-            gap.ports.forEach((p, i) => place(p, first + i * step))
+            gap.ports.forEach((p, i) => place(p, start + i * step))
             k += r
         })
     }

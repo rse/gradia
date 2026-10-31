@@ -12,7 +12,7 @@ import type { Shape }                             from "./gradia-api-render-shap
 /*  rendering font size constant of the group tags (the font sizes of
     the node and edge texts and the further geometry are configurable,
     see the "size-*" and per-diagram-type options in the configuration)  */
-export const FS_GROUP = 24   /*  font size of group tags       */
+export const FS_GROUP = 24
 
 /*  the placement of a group tag in the top-left corner of its group box  */
 export const TAG_DX = 18  /*  left offset of the group tag  */
@@ -40,9 +40,9 @@ export const ARITY_GAP = 8
 
 /*  the straight run an edge entering its node (or a bundle entering or
     leaving it through one merged port) keeps between its track and the
-    node box: the setback of
-    the arity from the arrow head, the arity and name labels side by side
-    above the line, and the corner and some air in front  */
+    node box: the setback of the arity from the arrow head, the arity and
+    name labels side by side above the line, and the corner and some air
+    in front  */
 export const stubRoom = (edge: Edge, config: Config): number =>
     ARITY_OFF + (edge.arity !== undefined ? textWidth(edge.arity, config["size-font-arity"]) + ARITY_GAP : 0) +
     textWidth(edge.name ?? "", config["size-font-edge"]) + ARROW_AIR + config["size-edge-corner-radius"]
@@ -174,11 +174,12 @@ export interface ContainerBox {
     diagram type (e.g. its layering), the optional "dashed" flags the
     edges drawn dashed (e.g. the cross links of a tree), the optional
     "twoway" flags the edges drawn with an arrow head at both ends (e.g.
-    the merged opposite arcs of a Petri net), the optional "crowded" flag marks a
-    layout with crowded channels/gutters, the optional "centered" flag
-    one keeping its edge names centered on their routes instead of in
-    front of their arrow heads, and the optional "transitions" flag one
-    whose edge names are transition labels "event [guard] / action")  */
+    the merged opposite arcs of a Petri net), the optional "crowded"
+    flag marks a layout with crowded channels/gutters, the optional
+    "centered" flag one keeping its edge names centered on their routes
+    instead of in front of their arrow heads, and the optional
+    "transitions" flag one whose edge names are transition labels
+    "event [guard] / action")  */
 export interface Layout {
     nodes:        Node[]
     edges:        Edge[]

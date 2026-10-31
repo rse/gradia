@@ -151,14 +151,15 @@ const assignTrackCoords = (
         const { chans, guts, gate } = plans[i]
         if (guts.length === 0)
             return
-        const sp = portPos.get(`${i}:s`)!
-        const tp = portPos.get(`${i}:t`)!
+        const sp   = portPos.get(`${i}:s`)!
+        const tp   = portPos.get(`${i}:t`)!
+        const mark = markOf?.(edge) === true
         pushTo(gutUsers, guts[0], {
             edge:    i,
             posIn:   gate === "s" ? sp.x : chanX(chans[0], i),
             posOut:  gate === "t" ? tp.x : chanX(chans[1], i),
             mirror:  sp.y > gutBase(guts[0]),
-            bundles: keysOf(i, targetKey(chans[1], edge, markOf?.(edge)), sourceKey(chans[0], edge, markOf?.(edge)))
+            bundles: keysOf(i, targetKey(chans[1], edge, mark), sourceKey(chans[0], edge, mark))
         })
     })
     const gutOff = new Map<string, number>()
@@ -219,8 +220,8 @@ const routePolys = (
         else {
             /*  a gutter-ending edge leaves the gutter straight into its
                 gate instead of turning into the gate-side channel  */
-            const ch1 = chanX(chans[0], i)
-            const ch2 = chanX(chans[1], i)
+            const ch1 = gate === "s" ? sp.x : chanX(chans[0], i)
+            const ch2 = gate === "t" ? tp.x : chanX(chans[1], i)
             const gy  = gutY(guts[0], i)
             if (gate === "t")
                 pts = [ [ sp.x, sp.y ], [ ch1, sp.y ], [ ch1, gy ], [ tp.x, gy ] ]
@@ -318,6 +319,12 @@ export const nudgeNodes = (
     route:  () => Routing,
     first:  Routing
 ): Routing => {
+    /*  skip the nudging on large graphs, as every tried shift re-routes
+        all edges, so its effort grows with the node count times the
+        edge count, while it only straightens a few direct edges  */
+    if (edges.length > NUDGE_EDGES)
+        return first
+
     /*  whether neither a gutter track nor a self-loop detour crosses a column within a gutter  */
     const gutterFree = (g: number, c: number): boolean =>
         !plans.some((plan) => plan.guts[0] === g
@@ -366,12 +373,6 @@ export const nudgeNodes = (
         routing (all shifts are relative to the current position, which
         already includes the shifts of the previous passes)  */
     let current = first
-
-    /*  skip the nudging on large graphs, as every tried shift re-routes
-        all edges, so its effort grows with the node count times the
-        edge count, while it only straightens a few direct edges  */
-    if (edges.length > NUDGE_EDGES)
-        return current
     for (let pass = 0; pass < NUDGE_PASSES; pass++) {
         let changed = false
         for (const node of nodes) {

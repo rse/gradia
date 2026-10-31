@@ -29,6 +29,43 @@ export { loopRise }                          from "./gradia-api-type-graph-grid.
 /*  the maximum number of passes sizing the crowded channels and gutters  */
 const GROW_PASSES = 4
 
+/*  place the nodes of an explicitly ordered graph onto the grid by
+    their order values (see render) and return the grid dimensions  */
+const placeOrdered = (real: Node[], maxCols: number, transposed: boolean,
+    col: Map<string, number>, row: Map<string, number>): { ncols: number, nrows: number } => {
+    const orderOrLast = (node: Node): number => orderOf(node) ?? Infinity
+    const values      = Array.from(new Set(real.map(orderOrLast))).sort((a, b) => a - b)
+    let   ncols       = 1
+    let   nrows       = 0
+    if (transposed) {
+        /*  a transposed uniform layout instead turns the order values
+            into the columns, left-to-right, the nodes of one value
+            filling their column top-down in declaration order (never
+            wrapped), and the nodes without an order the trailing column  */
+        ncols = values.length
+        nrows = 1
+        values.forEach((value, c) => {
+            real.filter((node) => orderOrLast(node) === value).forEach((node, i) => {
+                col.set(node.id, c)
+                row.set(node.id, i)
+                nrows = Math.max(nrows, i + 1)
+            })
+        })
+    }
+    else {
+        for (const value of values) {
+            const members = real.filter((node) => orderOrLast(node) === value)
+            members.forEach((node, i) => {
+                col.set(node.id, i % maxCols)
+                row.set(node.id, nrows + Math.floor(i / maxCols))
+            })
+            ncols  = Math.max(ncols, Math.min(members.length, maxCols))
+            nrows += Math.ceil(members.length / maxCols)
+        }
+    }
+    return { ncols, nrows }
+}
+
 /*  lay out a directed graph model (for a containment level: with the
     container placeholders at their fixed sizes, the edge ends attaching
     to them at their fixed ports, and the gate nodes on the boundary,
@@ -61,7 +98,7 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
 
     /*  only the layered layout packs its columns (see packColumns), as an
         explicitly ordered graph keeps its rows and a uniform one its lanes  */
-    const packed  = !ordered && uniform === undefined
+    const packed = !ordered && uniform === undefined
     if (ordered) {
         /*  an explicitly ordered graph (at least one node carrying an
             "order" attribute) bypasses the layered layout: the distinct
@@ -70,36 +107,7 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
             declaration order (wrapped into further rows beyond the
             configured maximum of side-by-side nodes), and the nodes
             without an order follow in the trailing rows  */
-        const orderOrLast = (node: Node): number => orderOf(node) ?? Infinity
-        const values      = Array.from(new Set(real.map(orderOrLast))).sort((a, b) => a - b)
-        ncols = 1
-        nrows = 0
-        if (uniform?.transposed === true) {
-            /*  a transposed uniform layout instead turns the order values
-                into the columns, left-to-right, the nodes of one value
-                filling their column top-down in declaration order (never
-                wrapped), and the nodes without an order the trailing column  */
-            ncols = values.length
-            nrows = 1
-            values.forEach((value, c) => {
-                real.filter((node) => orderOrLast(node) === value).forEach((node, i) => {
-                    col.set(node.id, c)
-                    row.set(node.id, i)
-                    nrows = Math.max(nrows, i + 1)
-                })
-            })
-        }
-        else {
-            for (const value of values) {
-                const members = real.filter((node) => orderOrLast(node) === value)
-                members.forEach((node, i) => {
-                    col.set(node.id, i % maxCols)
-                    row.set(node.id, nrows + Math.floor(i / maxCols))
-                })
-                ncols  = Math.max(ncols, Math.min(members.length, maxCols))
-                nrows += Math.ceil(members.length / maxCols)
-            }
-        }
+        ({ ncols, nrows } = placeOrdered(real, maxCols, uniform?.transposed === true, col, row))
     }
     else {
         /*  determine raw node positions with the AntV Dagre layout, for the

@@ -10,7 +10,7 @@ import { Config }                       from "./gradia-api-config.js"
 import { componentsOf }                 from "./gradia-api-algo.js"
 import { NodeShape, NodeStyle, Layout, REGION_GAP, REGION_HEAD, REGION_PAD }
     from "./gradia-api-render-base.js"
-import { defaultStyleOf, markOf, shapeRadius, shapeReach, containerHead, type NodeMark }
+import { defaultStyleOf, markOf, parentOf, shapeRadius, shapeReach, containerHead, type NodeMark }
     from "./gradia-api-render-node.js"
 import { PORT_PAD, endsOf }             from "./gradia-api-render-port.js"
 import { insetPolys }                   from "./gradia-api-render-path.js"
@@ -68,6 +68,9 @@ const regionOf = (node: Node): string | undefined =>
     with their members re-parented into them  */
 const withRegions = (graph: Graph, containment: Containment): Graph => {
     const nodes = Array.from(graph.nodes.values())
+    for (const node of nodes)
+        if (isRegion(node.id))
+            throw new Error(`node id ${JSON.stringify(node.id)} contains a reserved control character`)
     if (!nodes.some((node) => regionOf(node) !== undefined))
         return graph
     for (const [ id, children ] of containment.childrenOf) {
@@ -77,8 +80,6 @@ const withRegions = (graph: Graph, containment: Containment): Graph => {
     }
     const result = new Map<string, Node>()
     for (const node of nodes) {
-        if (isRegion(node.id))
-            throw new Error(`node id ${JSON.stringify(node.id)} contains a reserved control character`)
         const region = regionOf(node)
         if (region === undefined) {
             result.set(node.id, node)
@@ -107,7 +108,7 @@ export const prepare = (input: Graph, given: Containment, config: Config): Graph
     const containment: Containment = graph === input ? given : { parentOf: new Map(), childrenOf: new Map() }
     if (graph !== input) {
         for (const node of graph.nodes.values()) {
-            const parent = node.attrs.findLast((attr) => attr.key === "parent")?.val
+            const parent = parentOf(node)
             if (parent === undefined)
                 continue
             containment.parentOf.set(node.id, parent)
@@ -116,8 +117,10 @@ export const prepare = (input: Graph, given: Containment, config: Config): Graph
     }
     const nodes = Array.from(graph.nodes.values())
     const kind  = new Map(nodes.map((node) => [ node.id, stateOf(node) ]))
-    const outOf = (id: string): Edge[] => graph.edges.filter((edge) => edge.source === id)
-    const into  = (id: string): Edge[] => graph.edges.filter((edge) => edge.target === id)
+    const outs  = Map.groupBy(graph.edges, (edge) => edge.source)
+    const ins   = Map.groupBy(graph.edges, (edge) => edge.target)
+    const outOf = (id: string): Edge[] => outs.get(id) ?? []
+    const into  = (id: string): Edge[] => ins.get(id) ?? []
 
     /*  the members of a composite state (or region, or of the top level)
         of a kind, and the regions of a composite state  */
@@ -251,7 +254,7 @@ export const prepare = (input: Graph, given: Containment, config: Config): Graph
     while (queue.length > 0) {
         const id = queue.shift()!
         for (const edge of outOf(id)) {
-            if (!fires(edge) || (completion(edge) && !completed(id, reached)))
+            if (completion(edge) && !completed(id, reached))
                 continue
             if (kind.get(edge.target) === "join" && !into(edge.target).every((e) => reached.has(e.source)))
                 continue
@@ -303,11 +306,12 @@ export const prepare = (input: Graph, given: Containment, config: Config): Graph
         state to reach them from), the regular dead-end states, and the
         incomplete choices, junctions, and composite states (but never a
         region, as it is no state)  */
-    const marks = new Map<string, NodeMark>()
+    const marks  = new Map<string, NodeMark>()
+    const rooted = membersOf("initial").length > 0
     for (const node of nodes) {
         if (markOf(node) !== undefined || isRegion(node.id))
             continue
-        if (membersOf("initial").length > 0 && !reached.has(node.id))
+        if (rooted && !reached.has(node.id))
             marks.set(node.id, "unreachable")
         else if (incomplete(node.id))
             marks.set(node.id, "incomplete")

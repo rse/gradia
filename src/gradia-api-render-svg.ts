@@ -78,11 +78,11 @@ const viewBoxOf = (layout: Layout, boxes: Box[], margin: number): { x: number, y
 }
 
 /*  generate the SVG fragments of an arrow head marker  */
-const marker = (id: string, cls: string): string[] => [
+const marker = (id: string, cls: string, d = "M 0 1 L 9 5 L 0 9 z"): string[] => [
     `<marker id="${id}" viewBox="0 0 10 10" refX="9" refY="5" ` +
         "markerWidth=\"21\" markerHeight=\"21\" markerUnits=\"userSpaceOnUse\" " +
         "orient=\"auto-start-reverse\">",
-    `<path d="M 0 1 L 9 5 L 0 9 z" class="${cls}"/>`,
+    `<path d="${d}" class="${cls}"/>`,
     "</marker>"
 ]
 
@@ -111,7 +111,7 @@ export const renderSVG = (layout: Layout, config: Config, explicit: Partial<Conf
     const color = (key: ConfigEmbedded): string => cssValueOf(explicit, key)
 
     /*  derive the collision-free identifiers of this SVG document  */
-    const prefix  = idPrefix(seed)
+    const prefix      = idPrefix(seed)
     const idArrow     = `${prefix}-arrow`
     const idOpen      = `${prefix}-arrow-open`
     const idAlert     = `${prefix}-alert`
@@ -184,8 +184,9 @@ export const renderSVG = (layout: Layout, config: Config, explicit: Partial<Conf
     const groupsAt = (end: (poly: Poly) => [ number, number ]): Map<number, number[]> => {
         const byPort = new Map<string, number[]>()
         polys.forEach((poly, i) => {
+            const key = end(poly).join(":")
             if (layout.bundled?.[i] === true)
-                byPort.set(`${end(poly)}`, [ ...byPort.get(`${end(poly)}`) ?? [], i ])
+                byPort.set(key, [ ...byPort.get(key) ?? [], i ])
         })
         return new Map(Array.from(byPort.values()).filter((l) => l.length > 1).map((l) => [ l[0], l ]))
     }
@@ -355,13 +356,7 @@ export const renderSVG = (layout: Layout, config: Config, explicit: Partial<Conf
         "</style>",
         ...marker(idArrow, classArrow),
         ...(alerted ? marker(idAlert, classAlertArrow) : []),
-        ...(open ? [
-            `<marker id="${idOpen}" viewBox="0 0 10 10" refX="9" refY="5" ` +
-                "markerWidth=\"21\" markerHeight=\"21\" markerUnits=\"userSpaceOnUse\" " +
-                "orient=\"auto-start-reverse\">",
-            `<path d="M 0.6 1 L 9 5 L 0.6 9 z" class="${classOpen}"/>`,
-            "</marker>"
-        ] : []),
+        ...(open ? marker(idOpen, classOpen, "M 0.6 1 L 9 5 L 0.6 9 z") : []),
         ...(discs ? discMarker(idDisc, classDisc) : []),
         ...(discs && alerted ? discMarker(idDiscAlert, classDiscAlert) : []),
         "</defs>",

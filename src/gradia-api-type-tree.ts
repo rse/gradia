@@ -159,7 +159,7 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
 
     /*  the number of cross links attaching to the stacked nodes on either
         side of the trunk of a stack, which reserves a corridor beside it,
-        with an own track for every one of them  */
+        with a track of its own for every one of them  */
     const linked = new Map<string, number>()
     const sideKey = (parent: string, side: number) => `${side}:${parent}`
     graph.edges.forEach((edge, i) => {
@@ -351,10 +351,10 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
     }
 
     /*  route every cross link through the gutters in front of the levels,
-        on own tracks between the level and its bus: between two nodes of
+        on tracks of their own between the level and its bus: between two nodes of
         the same level (stacked or not) on one track directly through the
         gutter in front of it, and otherwise from the gutter in front of
-        the level of its source out to an own lane beyond the nearer side
+        the level of its source out to a lane of its own beyond the nearer side
         of the tree, along it, and back into the gutter in front of the
         level of its target, so it never crosses a node box. A node in a
         level attaches off its center (towards the lane), clear of the drop
@@ -390,12 +390,6 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
             return horizontal ?
                 [ [ x - LOOP_H, y ], [ x - LOOP_H, y + LOOP_W ], [ x + LOOP_H, y + LOOP_W ], [ x + LOOP_H, y ] ] :
                 [ [ x, y - LOOP_H ], [ x + LOOP_W, y - LOOP_H ], [ x + LOOP_W, y + LOOP_H ], [ x, y + LOOP_H ] ]
-        }
-        if (depth.get(s) === depth.get(t) && !inStack(s) && !inStack(t)) {
-            const dir  = Math.sign(crossC(t) - crossC(s)) || 1
-            const [ xs, xt ] = [ crossC(s) + dir * crossOf(s) / 4, crossC(t) - dir * crossOf(t) / 4 ]
-            const lane = track(s)
-            return [ pt(m0Of(s), xs), pt(lane, xs), pt(lane, xt), pt(m0Of(t), xt) ]
         }
         if (depth.get(s) === depth.get(t)) {
             const lane = track(s)

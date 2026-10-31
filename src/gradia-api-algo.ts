@@ -36,8 +36,9 @@ export const componentsOf = (succ: number[][]): number[] => {
                 continue
             }
             work.pop()
-            if (work.length > 0)
-                low[work[work.length - 1][0]] = Math.min(low[work[work.length - 1][0]], low[v])
+            const parent = work.at(-1)
+            if (parent !== undefined)
+                low[parent[0]] = Math.min(low[parent[0]], low[v])
             if (low[v] === index[v]) {
                 let w: number
                 do {

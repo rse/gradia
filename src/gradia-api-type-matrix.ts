@@ -57,9 +57,7 @@ const cyclesOf = (ids: string[], edges: { source: string, target: string }[]): M
     units, always taking the ready one of the lowest rank)  */
 const topoOrder = (ids: string[], edges: { source: string, target: string }[],
     unitOf: (id: string) => number): string[] => {
-    const members = new Map<number, string[]>()
-    for (const id of ids)
-        members.set(unitOf(id), [ ...(members.get(unitOf(id)) ?? []), id ])
+    const members = Map.groupBy(ids, unitOf)
     const succ  = new Map<number, Set<number>>()
     const indeg = new Map(Array.from(members.keys(), (unit) => [ unit, 0 ]))
     for (const edge of edges) {
@@ -131,6 +129,7 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
         nodes.push(...list)
     }
 
+    /*  the cluster runs, and the rows and the columns (both the ordered nodes)  */
     const { depth, runs: clusters } = clusterRuns(parts)
     const rows   = nodes
     const cols   = nodes
@@ -171,12 +170,12 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
     const rowTitle = titleOf(rows)
     const colTitle = titleOf(cols)
     const titleW   = Math.max(textWidth(rowTitle ?? "", fsNum, true), textWidth(colTitle ?? "", fsNum, true))
-    const rowW   = Math.max(headOf(rows), Math.ceil(titleW + HEAD_PAD * 2))
-    const colH   = Math.max(headOf(cols), Math.ceil(fsNum * 4))
-    const hx     = margin + band
-    const hy     = margin + band
-    const x0     = hx + rowW + HEAD_GAP
-    const y0     = hy + colH + HEAD_GAP
+    const rowW     = Math.max(headOf(rows), Math.ceil(titleW + HEAD_PAD * 2))
+    const colH     = Math.max(headOf(cols), Math.ceil(fsNum * 4))
+    const hx       = margin + band
+    const hy       = margin + band
+    const x0       = hx + rowW + HEAD_GAP
+    const y0       = hy + colH + HEAD_GAP
 
     /*  generate the shapes: the column headers (upright boxes, the node
         labels running upwards) and the row headers (the very same boxes
@@ -185,7 +184,7 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
     const header = (node: Node, x: number, y: number, w: number, h: number, upright: boolean) => {
         const style = defaultStyleOf(node)
         shapes.push(rectShape(x, y, w, h, style.stroke, 2, undefined, style.fill, 6))
-        const [ tx, ty ] = upright ? [ x + CELL / 2, y + h - HEAD_PAD - room ] : [ x + HEAD_PAD + room, y + CELL / 2 ]
+        const [ tx, ty ] = upright ? [ x + w / 2, y + h - HEAD_PAD - room ] : [ x + HEAD_PAD + room, y + h / 2 ]
         shapes.push(textShape(tx, ty, node.name, "start", textWidth(node.name, fsName, true), style.text,
             "size-font-prop", fsName, { bold: true, url: urlOf(node), halo: false, upright }))
 
@@ -207,8 +206,8 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
         the colors of the group boxes (the name in the regular font of the
         numbers, shrunk to fit a band of few cells, but at most to 70% of
         that font, beyond which the name is cut off with an ellipsis)  */
-    for (const { level, name, from, to } of clusters) {
-        const off  = margin + level * (BAND + HEAD_GAP)
+    for (const { level: k, name, from, to } of clusters) {
+        const off  = margin + k * (BAND + HEAD_GAP)
         const span = (to - from) * CELL
         const { label, fs, w } = fitLabel(name, span - 2 * BAND_PAD, fsNum, 0.7)
         shapes.push(rectShape(off, y0 + from * CELL, BAND, span, "color-group-border", 2, undefined,

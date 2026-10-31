@@ -91,8 +91,7 @@ export const composeGroups = (parts: GroupPart[], layouts: Layout[], config: Con
     let y = margin
     layouts.forEach((layout, i) => {
         const b = boundsOf(layout)
-        const w = Math.max(b.maxX - b.minX + pad * 2,
-            textWidth(parts[i].name, FS_GROUP) + pad * 2)
+        const w = Math.max(b.maxX - b.minX, textWidth(parts[i].name, FS_GROUP)) + pad * 2
         const h = b.maxY - b.minY + pad * 2 + GROUP_HEAD
         dxs.push(margin + pad - b.minX)
         dys.push(y + GROUP_HEAD + pad - b.minY)

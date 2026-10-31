@@ -287,8 +287,8 @@ export const measureNodes = (
             continue
         }
         const lines = linesOfNode(node, config)
-        const w = linesWidth(lines, config)
-        const h = MIN_H(config) + (lines.name.length - 1) * NAME_H(config) +
+        const w     = linesWidth(lines, config)
+        const h     = MIN_H(config) + (lines.name.length - 1) * NAME_H(config) +
             lines.type.length * TYPE_H(config) +
             (lines.attrs.length > 0 ? ATTR_P + (lines.attrs.length - 1) * ATTR_H(config) + ATTR_B : 0)
         const bw = Math.max(config["size-node-width-min"], Math.ceil(w) + PAD_W * 2 + badgeRoom(node, config))
@@ -326,8 +326,8 @@ export const placeLines = (node: Node, tokens: number, capacity: number | undefi
     const fsT   = config["size-font-type"]
     const fsP   = config["size-font-prop"]
     const lines = linesOfNode(node, { ...config, "size-font-node": fsP, "size-font-prop": fsT })
-    const text  = (text: string, size: ConfigFontSize, bold: boolean, h: number): PlaceLine =>
-        ({ text, size, bold, dots: 0, w: textWidth(text, config[size], bold), h, dy: 0 })
+    const text  = (content: string, size: ConfigFontSize, bold: boolean, h: number): PlaceLine =>
+        ({ text: content, size, bold, dots: 0, w: textWidth(content, config[size], bold), h, dy: 0 })
     const dots  = (): PlaceLine => {
         const extent = (k: number) =>
             Math.max(...tokenDots(tokens, config).map((dot) => Math.abs(dot[k]))) * 2 + TOKEN_R(config) * 2

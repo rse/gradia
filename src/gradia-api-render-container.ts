@@ -50,9 +50,9 @@ export type Renderer = (graph: Graph, config: Config, level?: LevelContext) => P
     container boundary continue to the inner nodes, instead of ending at
     the container border), the edge kinds it renders besides the
     synchronous default, whether it renders the edge timings (or the edge
-    durations only, e.g. as lags), whether it renders the edge types, its own
-    defaults of the rendering options (overriding
-    the general ones, but overridden by the explicit ones), its optional
+    durations only, e.g. as lags), whether it renders the edge types, its
+    own defaults of the rendering options (overriding the general ones,
+    but overridden by the explicit ones), its optional
     preparation of the graph model as a whole, before it is partitioned
     into groups and containment levels (e.g. its validation and analysis,
     deriving node annotations), whether it draws its member containers
@@ -151,32 +151,23 @@ export interface Bounds {
 export const boundsOf = (layout: Layout, extra: Poly[] = []): Bounds => {
     const { nodes, cx, cy, boxW, boxH, polys } = layout
     let [ minX, minY, maxX, maxY ] = [ Infinity, Infinity, -Infinity, -Infinity ]
-    for (const node of nodes) {
-        minX = Math.min(minX, cx(node.id) - boxW.get(node.id)! / 2)
-        minY = Math.min(minY, cy(node.id) - boxH.get(node.id)! / 2)
-        maxX = Math.max(maxX, cx(node.id) + boxW.get(node.id)! / 2)
-        maxY = Math.max(maxY, cy(node.id) + boxH.get(node.id)! / 2)
-    }
-    for (const poly of [ ...polys, ...extra ]) {
-        for (const [ px, py ] of poly) {
-            minX = Math.min(minX, px)
-            minY = Math.min(minY, py)
-            maxX = Math.max(maxX, px)
-            maxY = Math.max(maxY, py)
-        }
-    }
-    for (const { box: [ x1, y1, x2, y2 ] } of layout.shapes ?? []) {
+    const add = (x1: number, y1: number, x2 = x1, y2 = y1) => {
         minX = Math.min(minX, x1)
         minY = Math.min(minY, y1)
         maxX = Math.max(maxX, x2)
         maxY = Math.max(maxY, y2)
     }
-    for (const c of layout.containers ?? []) {
-        minX = Math.min(minX, c.x)
-        minY = Math.min(minY, c.y)
-        maxX = Math.max(maxX, c.x + c.w)
-        maxY = Math.max(maxY, c.y + c.h)
+    for (const node of nodes) {
+        const [ w, h ] = [ boxW.get(node.id)! / 2, boxH.get(node.id)! / 2 ]
+        add(cx(node.id) - w, cy(node.id) - h, cx(node.id) + w, cy(node.id) + h)
     }
+    for (const poly of [ ...polys, ...extra ])
+        for (const [ px, py ] of poly)
+            add(px, py)
+    for (const { box } of layout.shapes ?? [])
+        add(...box)
+    for (const c of layout.containers ?? [])
+        add(c.x, c.y, c.x + c.w, c.y + c.h)
     if (!Number.isFinite(minX))
         [ minX, minY, maxX, maxY ] = [ 0, 0, 0, 0 ]
     return { minX, minY, maxX, maxY }

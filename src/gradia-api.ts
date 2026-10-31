@@ -120,6 +120,7 @@ export class Gradia {
         const type   = options.type ?? diagramTypeDefault
         if (!Object.hasOwn(renderers, type))
             throw new Error(`invalid diagram type "${type}"`)
+        const spec   = renderers[type] as DiagramTypeSpec
         const format = options.format ?? diagramFormatDefault
         if (!diagramFormats.includes(format))
             throw new Error(`invalid output format "${format}"`)
@@ -130,7 +131,7 @@ export class Gradia {
             it would otherwise override its default instead of falling back
             to it)  */
         const explicit = validateConfig(options.config ?? {}, { trusted: true })
-        const config   = { ...configDefaults, ...(renderers[type] as DiagramTypeSpec).defaults, ...explicit }
+        const config   = { ...configDefaults, ...spec.defaults, ...explicit }
 
         /*  validate the graph model integrity: the map key and the id of
             a node store the same identity (the layout code mixes lookups
@@ -148,7 +149,6 @@ export class Gradia {
         /*  validate the edge kinds, types, and timings: a known kind, and
             other than the synchronous default, a known type, as well as any
             timing, only for a diagram type rendering them  */
-        const spec = renderers[type] as DiagramTypeSpec
         for (const edge of graph.edges) {
             const what = `edge "${edge.source}" --> "${edge.target}"`
             if (edge.kind !== undefined && !edgeKinds.includes(edge.kind))
@@ -170,8 +170,7 @@ export class Gradia {
 
         /*  let the diagram type prepare the graph model as a whole (with
             the containment tree determined anew for a changed model)  */
-        const prepare = (renderers[type] as DiagramTypeSpec).prepare
-        const model   = prepare !== undefined ? prepare(graph, containment, config) : graph
+        const model = spec.prepare?.(graph, containment, config) ?? graph
         if (model !== graph)
             containment = containmentOf(model, nestable)
 

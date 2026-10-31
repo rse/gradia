@@ -131,6 +131,66 @@ const kindsOf = (graph: Graph): Map<string, PetriKind> => {
     return kind
 }
 
+/*  determine the weighted input places ("pre") and output places
+    ("post") of the transitions, the weights of parallel arcs adding up,
+    and their inhibiting places ("inhib"), the lowest weight of parallel
+    inhibitor arcs winning  */
+const arcsOf = (graph: Graph, kind: Map<string, PetriKind>) => {
+    const pre   = new Map<string, Map<string, number>>()
+    const post  = new Map<string, Map<string, number>>()
+    const inhib = new Map<string, Map<string, number>>()
+    for (const node of graph.nodes.values()) {
+        if (kind.get(node.id) !== "transition")
+            continue
+        pre.set(node.id, new Map())
+        post.set(node.id, new Map())
+        inhib.set(node.id, new Map())
+    }
+    for (const edge of graph.edges) {
+        const w = weightOf(edge)
+        if (edge.kind === "inhibitor") {
+            if (kind.get(edge.source) !== "place")
+                throw new Error(`inhibitor arc "${edge.source}" --> "${edge.target}" ` +
+                    "has to lead from a place to a transition")
+            const arcs = inhib.get(edge.target)!
+            arcs.set(edge.source, Math.min(arcs.get(edge.source) ?? Infinity, w))
+            continue
+        }
+        const [ t, p, arcs ] = kind.get(edge.source) === "transition" ?
+            [ edge.source, edge.target, post ] : [ edge.target, edge.source, pre ]
+        arcs.get(t)!.set(p, (arcs.get(t)!.get(p) ?? 0) + w)
+    }
+    return { pre, post, inhib }
+}
+
+/*  determine the connected parts of a graph, ignoring the directions
+    of its arcs  */
+const partsOf = (graph: Graph): string[][] => {
+    const near = new Map<string, string[]>(Array.from(graph.nodes.keys(), (id) => [ id, [] ]))
+    for (const edge of graph.edges) {
+        near.get(edge.source)!.push(edge.target)
+        near.get(edge.target)!.push(edge.source)
+    }
+    const seen  = new Set<string>()
+    const parts = new Array<string[]>()
+    for (const id of graph.nodes.keys()) {
+        if (seen.has(id))
+            continue
+        const part = [ id ]
+        seen.add(id)
+        for (const from of part) {
+            for (const next of near.get(from)!) {
+                if (seen.has(next))
+                    continue
+                seen.add(next)
+                part.push(next)
+            }
+        }
+        parts.push(part)
+    }
+    return parts
+}
+
 /*  validate a graph model as a Petri net, with the kinds of all of its
     nodes made explicit, analyze every connected part of it, with the
     results attached to its nodes as their tooltips, and mark its dead and
@@ -157,34 +217,8 @@ export const prepare = (input: Graph, _containment: Containment, config: Config)
             capacity.set(node.id, k)
     }
 
-    /*  the weighted input places ("pre") and output places ("post") of
-        the transitions, the weights of parallel arcs adding up, and their
-        inhibiting places ("inhib"), the lowest weight of parallel inhibitor
-        arcs winning  */
-    const pre   = new Map<string, Map<string, number>>()
-    const post  = new Map<string, Map<string, number>>()
-    const inhib = new Map<string, Map<string, number>>()
-    for (const node of nodes) {
-        if (kind.get(node.id) !== "transition")
-            continue
-        pre.set(node.id, new Map())
-        post.set(node.id, new Map())
-        inhib.set(node.id, new Map())
-    }
-    for (const edge of input.edges) {
-        const w = weightOf(edge)
-        if (edge.kind === "inhibitor") {
-            if (kind.get(edge.source) !== "place")
-                throw new Error(`inhibitor arc "${edge.source}" --> "${edge.target}" ` +
-                    "has to lead from a place to a transition")
-            const arcs = inhib.get(edge.target)!
-            arcs.set(edge.source, Math.min(arcs.get(edge.source) ?? Infinity, w))
-            continue
-        }
-        const [ t, p, arcs ] = kind.get(edge.source) === "transition" ?
-            [ edge.source, edge.target, post ] : [ edge.target, edge.source, pre ]
-        arcs.get(t)!.set(p, (arcs.get(t)!.get(p) ?? 0) + w)
-    }
+    /*  the weighted input, output, and inhibiting places of the transitions  */
+    const { pre, post, inhib } = arcsOf(input, kind)
 
     /*  make the kinds of all nodes explicit, with their analysis results
         and marks attached  */
@@ -260,7 +294,7 @@ export const prepare = (input: Graph, _containment: Containment, config: Config)
         const queue: Visit[] = [ { m: initial, next: [], fires: [] } ]
         const known = new Map([ [ initial.join(","), 0 ] ])
         const fired = new Set<number>()
-        const most  = places.map(() => 0)
+        const most  = initial.slice()
         const stuck = new Map<number, Visit>()
         const grown = new Map<number, Visit>()
         let complete = markings < MARKINGS_MAX && effort <= EFFORT_MAX
@@ -416,7 +450,7 @@ export const prepare = (input: Graph, _containment: Containment, config: Config)
         const deadlock = queue.some((visit) => visit.next.length === 0)
         trans.forEach((id, i) => {
             infos.set(id, !complete ? (fired.has(i) ? "fires (analysis incomplete)" :
-                "found never firing so far (analysis incomplete)") :
+                "not fired so far (analysis incomplete)") :
                 !fired.has(i) ? "never fires" :
                     nonLive.has(i) ? "fires, but can get disabled forever (not live)" :
                         !bounded ? "fires" :
@@ -432,27 +466,8 @@ export const prepare = (input: Graph, _containment: Containment, config: Config)
     /*  analyze every connected part of the net on its own, as their
         markings evolve independently and their combinations would just
         multiply the explored markings  */
-    const near = new Map<string, string[]>(nodes.map((node) => [ node.id, [] ]))
-    for (const edge of input.edges) {
-        near.get(edge.source)!.push(edge.target)
-        near.get(edge.target)!.push(edge.source)
-    }
-    const seen = new Set<string>()
-    for (const node of nodes) {
-        if (seen.has(node.id))
-            continue
-        const part = [ node.id ]
-        seen.add(node.id)
-        for (const id of part) {
-            for (const next of near.get(id)!) {
-                if (seen.has(next))
-                    continue
-                seen.add(next)
-                part.push(next)
-            }
-        }
+    for (const part of partsOf(input))
         analyze(part)
-    }
     return result()
 }
 
@@ -491,16 +506,16 @@ export const render = async (input: Graph, config: Config, level: LevelContext =
     const twoway  = new Set<Edge>()
     const dropped = new Set<Edge>()
     input.edges.forEach((edge, i) => {
-        if (!plain(edge) || twoway.has(edge) || dropped.has(edge))
+        if (!plain(edge) || dropped.has(edge))
             return
-        const twin = input.edges.find((other, j) => j > i && plain(other)
-            && !twoway.has(other) && !dropped.has(other) && other.source === edge.target
-            && other.target === edge.source && weightOf(other) === weightOf(edge))
+        const twin = input.edges.find((other, j) => j > i && plain(other) && !dropped.has(other)
+            && other.source === edge.target && other.target === edge.source && weightOf(other) === weightOf(edge))
         if (twin === undefined)
             return
         twoway.add(edge)
         dropped.add(twin)
     })
+
     /*  start the layout at the tokens: lay out the arcs returning to the
         initially marked places as pointing backwards, and hand over these
         places and the transitions without input places first (otherwise in

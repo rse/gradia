@@ -150,9 +150,10 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
         const start = (x1 + x2) / 2 - (numberW + w) / 2
         if (numbered) {
             const nfs = config["size-font-type"]
+            const nr  = String(i + 1)
             shapes.push(rectShape(start, mid - NUMBER_R, NUMBER_R * 2, NUMBER_R * 2, "color-container-name", 2,
                 undefined, "color-container-box", NUMBER_R))
-            shapes.push(textShape(start + NUMBER_R, mid, String(i + 1), "middle", textWidth(String(i + 1), nfs, true),
+            shapes.push(textShape(start + NUMBER_R, mid, nr, "middle", textWidth(nr, nfs, true),
                 "color-container-name", "size-font-type", nfs, { bold: true, halo: false }))
         }
         shapes.push(textShape(start + numberW, mid, label, "start", w,

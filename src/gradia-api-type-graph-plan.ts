@@ -65,11 +65,11 @@ export const arrivalOf = (edge: Edge, plan: RoutePlan): { chan: number, right: b
     connects them (an edge whose gate end lies beyond that gutter ends
     in the gutter itself, as the gate merely marks the border passage)  */
 export const planRoutes = (
-    edges: Edge[],
-    col:   Map<string, number>,
-    row:   Map<string, number>,
-    sides: { s: Side, t: Side }[],
-    gates: Map<string, GateSide>,
+    edges:  Edge[],
+    col:    Map<string, number>,
+    row:    Map<string, number>,
+    sides:  { s: Side, t: Side }[],
+    gates:  Map<string, GateSide>,
     config: Config
 ): { plans: RoutePlan[], chanCnt: Map<number, number>, gutCnt: Map<number, number>,
     chanLbl: Map<number, number>, gutLbl: Map<number, number>, gutLoop: Map<number, number> } => {
@@ -193,8 +193,8 @@ export const growBoxes = (
     const portGap = portGapOf(edges, sides, config, merged)
     const portCnt = new Map<string, number>()
     edges.forEach((edge, i) => {
-        portCnt.set(`${sides[i].s}:${edge.source}`, (portCnt.get(`${sides[i].s}:${edge.source}`) ?? 0) + 1)
-        portCnt.set(`${sides[i].t}:${edge.target}`, (portCnt.get(`${sides[i].t}:${edge.target}`) ?? 0) + 1)
+        for (const key of [ `${sides[i].s}:${edge.source}`, `${sides[i].t}:${edge.target}` ])
+            portCnt.set(key, (portCnt.get(key) ?? 0) + 1)
     })
 
     /*  count the edge ends merged into one port as one  */

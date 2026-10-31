@@ -104,6 +104,43 @@ const classifyTopology = (graph: Graph): {
     return { center, inputs, outputs, nodes: [ center, ...inputs, ...outputs ], edges }
 }
 
+/*  count the edge attachment ports per node side (keyed by side and
+    node id, with the edge ends merged into one port counting as one)  */
+const countPorts = (edges: Edge[], sides: { s: Side, t: Side }[],
+    merged?: (edge: number, role: "s" | "t") => string | undefined): Map<string, number> => {
+    const portCnt = new Map<string, number>()
+    const seen    = new Set<string>()
+    edges.forEach((edge, i) => {
+        for (const [ role, id ] of [ [ "s", edge.source ], [ "t", edge.target ] ] as const) {
+            const m = merged?.(i, role)
+            if (m !== undefined && seen.has(m))
+                continue
+            if (m !== undefined)
+                seen.add(m)
+            const key = `${sides[i][role]}:${id}`
+            portCnt.set(key, (portCnt.get(key) ?? 0) + 1)
+        }
+    })
+    return portCnt
+}
+
+/*  the style of a node box: the output copy of a twice-placed node is
+    rendered as a dashed grey "ghost" box, the output clone of a
+    self-referencing primary node as a dashed, darker grey "self" box,
+    and all other boxes get the default primary/regular coloring  */
+const styleOf = (node: Node): NodeStyle =>
+    node.id.endsWith(CLONE + "out") ? {
+        fill:   "color-node-ghost-box",
+        stroke: "color-node-ghost-border",
+        text:   "color-node-ghost-name",
+        dash:   "10 6"
+    } : node.id.endsWith(CLONE + "self") ? {
+        fill:   "color-node-self-box",
+        stroke: "color-node-self-border",
+        text:   "color-node-self-name",
+        dash:   "10 6"
+    } : defaultStyleOf(node)
+
 /*  lay out a hub graph model (N input nodes, one central hub node, M
     output nodes), for a containment level with the container placeholders
     at their fixed sizes and the edge ends attaching to them at their
@@ -140,35 +177,16 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
         level are exempt)  */
     const { boxW, boxH, contentH } = measureNodes(nodes, config, () => scale / 2, level.fixedSize)
     const portGap = portGapOf(edges, sides, config, merged)
-    const portCnt = new Map<string, number>()
-    edges.forEach((edge, i) => {
-        portCnt.set(`${sides[i].s}:${edge.source}`, (portCnt.get(`${sides[i].s}:${edge.source}`) ?? 0) + 1)
-        portCnt.set(`${sides[i].t}:${edge.target}`, (portCnt.get(`${sides[i].t}:${edge.target}`) ?? 0) + 1)
-    })
-    if (merged !== undefined) {
-        const seen = new Set<string>()
-        edges.forEach((edge, i) => {
-            for (const [ role, id ] of [ [ "s", edge.source ], [ "t", edge.target ] ] as const) {
-                const m = merged(i, role)
-                if (m === undefined)
-                    continue
-                const key = `${sides[i][role]}:${id}`
-                if (seen.has(m))
-                    portCnt.set(key, portCnt.get(key)! - 1)
-                else
-                    seen.add(m)
-            }
-        })
-    }
+    const portCnt = countPorts(edges, sides, merged)
     for (const node of nodes) {
         if (level.fixedSize?.has(node.id))
             continue
         let [ extra, full ] = [ 0, 0 ]
         for (const side of [ "w", "e" ] as const) {
             const cnt = portCnt.get(`${side}:${node.id}`) ?? 0
-            const gap = portGap(node.id, side)
-            extra = Math.max(extra, Math.max(0, cnt - config["hub-node-degree-max"]) * gap)
-            full  = Math.max(full,  cnt * gap)
+            const sep = portGap(node.id, side)
+            extra = Math.max(extra, Math.max(0, cnt - config["hub-node-degree-max"]) * sep)
+            full  = Math.max(full,  cnt * sep)
         }
         boxH.set(node.id, Math.max(boxH.get(node.id)! + extra, full + PORT_PAD))
     }
@@ -389,9 +407,9 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
         const role = key.startsWith("t:") ? "t" : "s"
         if (level.fixedPort?.(i, role) !== undefined)
             continue
-        const end = `${chanOf(edges[i])}:${key}`
-        ends.set(`${i}:${role}`, end)
-        count.set(end, (count.get(end) ?? 0) + 1)
+        const bundle = `${chanOf(edges[i])}:${key}`
+        ends.set(`${i}:${role}`, bundle)
+        count.set(bundle, (count.get(bundle) ?? 0) + 1)
     }
     for (const [ end, key ] of ends)
         if (count.get(key)! < 2)
@@ -402,23 +420,7 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
             return layout
     }
 
-    /*  hand over the laid out graph for SVG rendering (the output copy
-        of a twice-placed node is rendered as a dashed grey "ghost" box,
-        the output clone of a self-referencing primary node as a dashed,
-        darker grey "self" box, and all other boxes get the default
-        primary/regular coloring)  */
-    const styleOf = (node: Node): NodeStyle =>
-        node.id.endsWith(CLONE + "out") ? {
-            fill:   "color-node-ghost-box",
-            stroke: "color-node-ghost-border",
-            text:   "color-node-ghost-name",
-            dash:   "10 6"
-        } : node.id.endsWith(CLONE + "self") ? {
-            fill:   "color-node-self-box",
-            stroke: "color-node-self-border",
-            text:   "color-node-self-name",
-            dash:   "10 6"
-        } : defaultStyleOf(node)
+    /*  hand over the laid out graph for SVG rendering  */
     return { nodes, edges, cx, cy, boxW, boxH, contentH, polys, styleOf,
         bundled: edges.map((_, i) => bundled.has(i)), crowded }
 }

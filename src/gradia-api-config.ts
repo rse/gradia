@@ -39,7 +39,7 @@ export const configDefaults = {
     "color-node-place-name":     "#555555",
     "color-node-place-box":      "#ececec",
     "color-node-place-border":   "#c0c0c0",
-    "color-edge-line":          "#999999",
+    "color-edge-line":           "#999999",
     "color-edge-name":           "#333333",
     "color-edge-arity":          "#333333",
     "color-edge-halo":           "#ffffff",
@@ -92,7 +92,7 @@ export const configDefaults = {
     "gantt-unit-width":          40,    /*  gantt: width of one time unit          */
     "gantt-unit-name":           "",    /*  gantt: name of the time unit (if any)  */
     "gantt-critical":            true,  /*  gantt: mark the critical path          */
-    "mark-violation":            true,  /*  matrix/layer/slice/state: violations   */
+    "mark-violation":            true,  /*  analyses: mark the found violations    */
     "layer-numbered":            true,  /*  layer: number the layers bottom-up     */
     "slice-numbered":            false  /*  slice: number the slices left-to-right */
 }

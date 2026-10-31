@@ -16,6 +16,7 @@ import { ClusterPart, clusterOrder, clusterRuns, fitLabel }
     from "./gradia-api-render-cluster.js"
 import { defaultStyleOf, urlOf, orderOf, typeOf, badgeOf, clusterOf, badgeRadius }
     from "./gradia-api-render-node.js"
+import { pushTo }                   from "./gradia-api-type-graph-place.js"
 
 /*  the geometry of the rows, the bars, the arrows, the headers, and the cluster bands  */
 const ROW       = 44    /*  height of a row                             */
@@ -30,6 +31,7 @@ const STRIP     = 3     /*  inset of a backward arrow into a row        */
 const RING      = 4     /*  gap around the ring of a critical milestone */
 const GUTTER    = 36    /*  room left and right of the time axis span   */
 const TICK_PAD  = 12    /*  minimum air around a tick label             */
+const TICK_MAX  = 100   /*  maximum number of time axis ticks           */
 const HEAD_PAD  = 12    /*  padding inside a header along its label     */
 const HEAD_GAP  = 8     /*  gap between the headers and the chart       */
 const BAND      = 36    /*  thickness of a cluster band                 */
@@ -143,6 +145,34 @@ const schedule = (nodes: Node[], edges: Edge[]): { times: Map<string, Times>, ti
     return { times, tight }
 }
 
+/*  a vertical arrow segment: its arrow, its feasible range, its
+    preferred position, its extent, the anchors it attaches to, and its
+    final position  */
+type Vertical = { route: number, lo: number, hi: number, pref: number,
+    ya: number, yb: number, keys: string[], x: number }
+
+/*  place the vertical segments, the shortest first: each as close to
+    its preferred position as possible, but a track off every segment
+    running alongside, or else (in a too narrow gap) joining a segment
+    sharing one of its anchors, or else with the fewest clashes  */
+const placeVerticals = (verticals: Vertical[]): void => {
+    const placed: Vertical[] = []
+    for (const v of verticals.slice().sort((p, q) => (p.yb - p.ya) - (q.yb - q.ya))) {
+        const near  = placed.filter((w) => w.route !== v.route && v.ya <= w.yb && w.ya <= v.yb)
+        const cands: number[] = []
+        for (let n = 0; n <= SHIFT; n++)
+            for (const x of n === 0 ? [ v.pref ] : [ v.pref + n, v.pref - n ])
+                if (v.lo <= x && x <= v.hi)
+                    cands.push(x)
+        const joins   = near.filter((w) => v.lo <= w.x && w.x <= v.hi && w.keys.some((key) => v.keys.includes(key)))
+        const clashes = (x: number) => near.filter((w) =>
+            Math.abs(x - w.x) < TRACK - EPS && !(x === w.x && joins.includes(w))).length
+        v.x = cands.find((x) => near.every((w) => Math.abs(x - w.x) >= TRACK - EPS)) ??
+            [ ...joins.map((w) => w.x), ...cands ].reduce((best, x) => clashes(x) < clashes(best) ? x : best)
+        placed.push(v)
+    }
+}
+
 /*  lay out a graph model as a Gantt chart: the nodes are the tasks, one
     row each with its bar over a time axis, and the edges are the
     dependencies, drawn as arrows between the bars, with the critical path
@@ -155,8 +185,8 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
     /*  schedule the tasks and determine the critical ones (marked only if
         the marking of the critical path is enabled)  */
     const { times, tight } = schedule(declared, graph.edges)
-    const zero     = (id: string) => times.get(id)!.ls - times.get(id)!.es < EPS
-    const critical = (id: string) => config["gantt-critical"] && zero(id)
+    const slackless = (id: string) => times.get(id)!.ls - times.get(id)!.es < EPS
+    const critical  = (id: string) => config["gantt-critical"] && slackless(id)
 
     /*  determine the rows: the tasks, partitioned into their clusters
         (exactly like the rows of a "matrix" diagram), and within every
@@ -174,7 +204,7 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
         const path = clusterOf(node) ?? []
         return path.length > 0 ? path : [ "default" ]
     }
-    const nameOf  = (node: Node) => pathOf(node).join("/")
+    const nameOf    = (node: Node) => pathOf(node).join("/")
     const rows: Node[] = []
     const parts: ClusterPart[] = []
     for (const name of clusterOrder(sorted.map((node) => [ nameOf(node), pathOf(node) ]))) {
@@ -205,11 +235,9 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
     })
     type Arrow = typeof arrows[number]
     const ends = new Map<string, { a: Arrow, source: boolean }[]>()
-    const side = (id: string, right: boolean, a: Arrow, source: boolean) =>
-        ends.set(`${id}:${right}`, [ ...(ends.get(`${id}:${right}`) ?? []), { a, source } ])
     for (const a of arrows) {
-        side(a.edge.source, a.fromEnd, a, true)
-        side(a.edge.target, !a.toStart, a, false)
+        pushTo(ends, `${a.edge.source}:${a.fromEnd}`, { a, source: true })
+        pushTo(ends, `${a.edge.target}:${!a.toStart}`, { a, source: false })
     }
     const ks = new Map<Arrow, number>()
     const kt = new Map<Arrow, number>()
@@ -237,13 +265,15 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
     const y0     = hy + axisH + HEAD_GAP
 
     /*  the time axis: the smallest step of 1, 2, 5, 10, 20, 50, ... time
-        units leaving room for the widest tick label, and its span up to the
-        project end, rounded up to whole steps  */
+        units leaving room for the widest tick label and keeping the ticks
+        bounded in number, and its span up to the project end, rounded up
+        to whole steps  */
     const end    = Math.max(0, ...Array.from(times.values(), (t) => t.ef))
     const stepOf = (k: number) => [ 1, 2, 5 ][k % 3] * 10 ** Math.floor(k / 3)
     const spanOf = (step: number) => Math.max(Math.ceil(end / step - EPS) * step, step)
     let k = 0
-    while (stepOf(k) * unit < textWidth(String(spanOf(stepOf(k))), fsNum) + TICK_PAD)
+    while (stepOf(k) * unit < textWidth(String(spanOf(stepOf(k))), fsNum) + TICK_PAD
+        || spanOf(stepOf(k)) / stepOf(k) > TICK_MAX)
         k++
     const step   = stepOf(k)
     const span   = spanOf(step)
@@ -328,7 +358,7 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
         const tip = `${node.name}\n` + (t.ef > t.es ?
             `earliest: ${fmt(t.es)} - ${fmt(t.ef)}\nlatest: ${fmt(t.ls)} - ${fmt(t.lf)}\n` :
             `milestone: earliest ${fmt(t.es)}, latest ${fmt(t.ls)}\n`) +
-            `slack: ${fmt(t.ls - t.es)}${zero(node.id) ? " (critical)" : ""}`
+            `slack: ${fmt(t.ls - t.es)}${slackless(node.id) ? " (critical)" : ""}`
         const style = defaultStyleOf(node)
         const [ fill, stroke ]: ConfigEmbedded[] = critical(node.id) ?
             [ "color-mark-critical", "color-mark-critical" ] : [ style.fill, style.stroke ]
@@ -378,8 +408,6 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
         its target (anywhere between its anchors, preferably where it crosses
         the fewest bars), and any other arrow loops through the free strip of
         a row (with a vertical segment outwards of each of its anchors)  */
-    type Vertical = { route: number, lo: number, hi: number, pref: number,
-        ya: number, yb: number, keys: string[], x: number }
     const verticals: Vertical[] = []
     const routes = arrows.map((a, route) => {
         const { edge, fromEnd, toStart } = a
@@ -414,25 +442,8 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
         return { edge, d1, d2, x1, y1, x2, y2, gy, vs }
     })
 
-    /*  place the vertical segments, the shortest first: each as close to
-        its preferred position as possible, but a track off every segment
-        running alongside, or else (in a too narrow gap) joining a segment
-        sharing one of its anchors, or else with the fewest clashes  */
-    const placed: Vertical[] = []
-    for (const v of verticals.slice().sort((p, q) => (p.yb - p.ya) - (q.yb - q.ya))) {
-        const near  = placed.filter((w) => w.route !== v.route && v.ya <= w.yb && w.ya <= v.yb)
-        const cands: number[] = []
-        for (let n = 0; n <= SHIFT; n++)
-            for (const x of n === 0 ? [ v.pref ] : [ v.pref + n, v.pref - n ])
-                if (v.lo <= x && x <= v.hi)
-                    cands.push(x)
-        const joins   = near.filter((w) => v.lo <= w.x && w.x <= v.hi && w.keys.some((key) => v.keys.includes(key)))
-        const clashes = (x: number) => near.filter((w) =>
-            Math.abs(x - w.x) < TRACK - EPS && !(x === w.x && joins.includes(w))).length
-        v.x = cands.find((x) => near.every((w) => Math.abs(x - w.x) >= TRACK - EPS)) ??
-            [ ...joins.map((w) => w.x), ...cands ].reduce((best, x) => clashes(x) < clashes(best) ? x : best)
-        placed.push(v)
-    }
+    /*  place the vertical segments (see placeVerticals)  */
+    placeVerticals(verticals)
 
     /*  draw the arrows, the critical ones last, staying on top where they
         join another arrow  */

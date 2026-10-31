@@ -297,7 +297,7 @@ as <name>, terminals as "...", optional parts as [ ... ], repeatable parts as
     <directive>      ::= "#config" <whitespace> { <whitespace> } <option> <whitespace> { <whitespace> } ( <string> | <word> )
                        | "#type" <whitespace> { <whitespace> } <type>
     <option>         ::= <letter> { <letter> | <digit> | "-" }
-    <type>           ::= "graph" | "hub" | "grid" | "layer" | "slice" | "tree" | "matrix" | "sequence" | "state" | "petri" | "gantt"
+    <type>           ::= ${diagramTypes.map((t) => `"${t}"`).join(" | ")}
     <word>           ::= <char> - <whitespace> { <char> - <whitespace> }
     <newline>        ::= "\\n"
     <whitespace>     ::= " " | "\\t" | "\\r"

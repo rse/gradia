@@ -81,21 +81,13 @@ const trackCrossings = (a: TrackUnit, b: TrackUnit): number => {
     return n
 }
 
-/*  the number of collinear overlaps caused by placing user a on a
-    nearer track than user b: a far-side stub of a and a near-side stub
+/*  the number of collinear overlaps caused by placing unit a on a
+    nearer track than unit b: a far-side stub of a and a near-side stub
     of b at the very same cross-axis position run on top of each other
     between the two tracks (unlike a crossing, which is still readable
     through its hop, an overlap merges the two edges visually)  */
-const trackOverlaps = (farsA: number[], nearsB: number[]): number => {
-    let n = 0
-    for (const pos of farsA)
-        for (const near of nearsB)
-            if (near === pos) {
-                n++
-                break
-            }
-    return n
-}
+const trackOverlaps = (a: TrackUnit, b: TrackUnit): number =>
+    a.fars.filter((pos) => b.nears.includes(pos)).length
 
 /*  the maximum number of users for which the crossing-minimal track
     order is determined exactly (the effort doubles with every user)  */
@@ -133,7 +125,7 @@ const minimizeCrossings = (seed: TrackUnit[]): TrackUnit[] => {
     const cost: number[] = []
     for (let i = 0; i < n; i++)
         for (let j = 0; j < n; j++)
-            cost.push((trackOverlaps(seed[i].fars, seed[j].nears) * weight +
+            cost.push((trackOverlaps(seed[i], seed[j]) * weight +
                 trackCrossings(seed[i], seed[j])) * n * n + (i > j ? 1 : 0))
     let order: number[]
     if (n <= TRACK_EXACT_MAX) {

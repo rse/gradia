@@ -6,11 +6,8 @@
 
 /*  internal dependencies  */
 import { ConfigEmbedded, ConfigFontSize } from "./gradia-api-config.js"
-import type { NodeStyle }                from "./gradia-api-render-base.js"
+import type { NodeStyle, Box }           from "./gradia-api-render-base.js"
 import type { NodeBadge }                from "./gradia-api-render-node.js"
-
-/*  a rectangular area, given by its top-left and bottom-right corners  */
-type Area = [ number, number, number, number ]
 
 /*  a free-standing drawing primitive of a diagram type beside its node
     boxes and edges (e.g. the lifelines of a "sequence" diagram), styled
@@ -23,7 +20,7 @@ export interface ShapePath {
     x:        number
     y:        number
     d:        string
-    box:      Area
+    box:      Box
     stroke:   ConfigEmbedded
     width:    number
     dash?:    string
@@ -41,7 +38,7 @@ export interface ShapeText {
     y:        number
     text:     string
     anchor:   "start" | "middle" | "end"
-    box:      Area
+    box:      Box
     fill:     ConfigEmbedded
     size:     ConfigFontSize | number
     bold?:    boolean
@@ -59,13 +56,13 @@ export interface ShapeBadge {
     r:        number
     badge:    NodeBadge
     style:    NodeStyle
-    box:      Area
+    box:      Box
 }
 export type Shape = ShapePath | ShapeText | ShapeBadge
 
 /*  create a path shape, its covered area given relative to its origin,
     exactly like its relative drawing commands  */
-export const pathShape = (x: number, y: number, d: string, [ x1, y1, x2, y2 ]: Area,
+export const pathShape = (x: number, y: number, d: string, [ x1, y1, x2, y2 ]: Box,
     stroke: ConfigEmbedded, width: number, dash?: string, fill?: ConfigEmbedded): ShapePath =>
     ({ kind: "path", x, y, d, box: [ x + x1, y + y1, x + x2, y + y2 ], stroke, width, dash, fill })
 

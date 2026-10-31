@@ -98,7 +98,7 @@ export const computeGrid = (
         return Math.min(config["graph-gutter-height-max"],
             Math.max(config["graph-gutter-height-min"], tracks,
                 lbl  > 0 ? GUT_H1 + lbl * GUT_LBL : 0,
-                loop > 0 ? LOOP_TOP + (loop - 1) * config["size-edge-track-gap"] + GUT_PAD : 0))
+                loop > 0 ? loopRise(loop, config) + GUT_PAD : 0))
     }
     const chanCap = Array.from({ length: ncols }, (_, c) => {
         const cnt = chanCnt.get(c) ?? 0
@@ -190,7 +190,7 @@ export const packColumns = (
             loopCnt.set(edge.source, (loopCnt.get(edge.source) ?? 0) + 1)
     const headRoom = (id: string) => {
         const cnt = loopCnt.get(id) ?? 0
-        return cnt > 0 ? LOOP_TOP + (cnt - 1) * config["size-edge-track-gap"] + GUT_PAD : 0
+        return cnt > 0 ? loopRise(cnt, config) + GUT_PAD : 0
     }
 
     /*  the lane span of every used gutter (from the channel of one end to
