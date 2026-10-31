@@ -7,6 +7,7 @@
 /*  internal dependencies  */
 import { Node, Graph }              from "./gradia-api-model.js"
 import { Config }                   from "./gradia-api-config.js"
+import { componentsOf }             from "./gradia-api-algo.js"
 import { Layout, textWidth }        from "./gradia-api-render-base.js"
 import { Shape, textShape, rectShape, badgeShape }
     from "./gradia-api-render-shape.js"
@@ -27,26 +28,22 @@ const BADGE_GAP = 12   /*  gap between a header label and its badge    */
     its edges, mapped onto the index of the first node of its strongly
     connected component (the nodes reaching each other)  */
 const cyclesOf = (ids: string[], edges: { source: string, target: string }[]): Map<string, number> => {
-    const succ = new Map<string, string[]>(ids.map((id) => [ id, [] ]))
+    const index = new Map(ids.map((id, k) => [ id, k ]))
+    const succ  = ids.map((): number[] => [])
     for (const edge of edges)
-        succ.get(edge.source)!.push(edge.target)
-    const reach = new Map(ids.map((id) => {
-        const seen = new Set<string>()
-        const todo = [ ...succ.get(id)! ]
-        for (let v = todo.pop(); v !== undefined; v = todo.pop()) {
-            if (!seen.has(v)) {
-                seen.add(v)
-                todo.push(...succ.get(v)!)
-            }
-        }
-        return [ id, seen ]
-    }))
+        succ[index.get(edge.source)!].push(index.get(edge.target)!)
+    const comp  = componentsOf(succ)
+    const first = new Map<number, number>()
+    const size  = new Map<number, number>()
+    comp.forEach((c, k) => {
+        if (!first.has(c))
+            first.set(c, k)
+        size.set(c, (size.get(c) ?? 0) + 1)
+    })
     const cycles = new Map<string, number>()
     ids.forEach((id, k) => {
-        if (reach.get(id)!.has(id) && !cycles.has(id))
-            for (const other of ids)
-                if (reach.get(id)!.has(other) && reach.get(other)!.has(id))
-                    cycles.set(other, k)
+        if (size.get(comp[k])! > 1 || succ[k].includes(k))
+            cycles.set(id, first.get(comp[k])!)
     })
     return cycles
 }

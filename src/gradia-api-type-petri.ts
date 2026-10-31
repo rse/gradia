@@ -7,6 +7,7 @@
 /*  internal dependencies  */
 import { Node, Edge, Graph }            from "./gradia-api-model.js"
 import { Config }                       from "./gradia-api-config.js"
+import { componentsOf }                 from "./gradia-api-algo.js"
 import { Poly, NodeStyle, Layout }      from "./gradia-api-render-base.js"
 import { defaultStyleOf, markOf, placeLines, placeRadius, PLACE_RING, type NodeMark }
     from "./gradia-api-render-node.js"
@@ -127,53 +128,6 @@ const kindsOf = (graph: Graph): Map<string, PetriKind> => {
         spread(node.id)
     }
     return kind
-}
-
-/*  determine the strongly connected components of a directed graph of
-    the given successors (with the algorithm of Tarjan, iteratively, as
-    the graph can be deep), as the component index of every vertex  */
-const componentsOf = (succ: number[][]): number[] => {
-    const n     = succ.length
-    const index = new Array<number>(n).fill(-1)
-    const low   = new Array<number>(n).fill(0)
-    const comp  = new Array<number>(n).fill(-1)
-    const stack: number[] = []
-    let counter = 0
-    let comps   = 0
-    for (let s = 0; s < n; s++) {
-        if (index[s] !== -1)
-            continue
-        index[s] = low[s] = counter++
-        stack.push(s)
-        const work: [ number, number ][] = [ [ s, 0 ] ]
-        while (work.length > 0) {
-            const top = work[work.length - 1]
-            const v   = top[0]
-            if (top[1] < succ[v].length) {
-                const w = succ[v][top[1]++]
-                if (index[w] === -1) {
-                    index[w] = low[w] = counter++
-                    stack.push(w)
-                    work.push([ w, 0 ])
-                }
-                else if (comp[w] === -1)
-                    low[v] = Math.min(low[v], index[w])
-                continue
-            }
-            work.pop()
-            if (work.length > 0)
-                low[work[work.length - 1][0]] = Math.min(low[work[work.length - 1][0]], low[v])
-            if (low[v] === index[v]) {
-                let w: number
-                do {
-                    w = stack.pop()!
-                    comp[w] = comps
-                } while (w !== v)
-                comps++
-            }
-        }
-    }
-    return comp
 }
 
 /*  validate a graph model as a Petri net, with the kinds of all of its

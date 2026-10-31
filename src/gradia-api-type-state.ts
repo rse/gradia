@@ -7,6 +7,7 @@
 /*  internal dependencies  */
 import { Node, Edge, Graph }            from "./gradia-api-model.js"
 import { Config }                       from "./gradia-api-config.js"
+import { componentsOf }                 from "./gradia-api-algo.js"
 import { Poly, NodeShape, NodeStyle, Layout, REGION_GAP, REGION_HEAD, REGION_PAD }
     from "./gradia-api-render-base.js"
 import { defaultStyleOf, markOf, shapeRadius, shapeReach, containerHead, type NodeMark }
@@ -272,32 +273,16 @@ export const prepare = (input: Graph, given: Containment, config: Config): Graph
         hold a final or terminate state, e.g. a single state without any
         transition leading out of it, or two states only leading into each
         other  */
-    const index = new Map<string, number>()
-    const low   = new Map<string, number>()
-    const stack: string[] = []
-    const trapped = new Set<string>()
-    const connect = (id: string): void => {
-        index.set(id, index.size)
-        low.set(id, index.get(id)!)
-        stack.push(id)
-        for (const next of successors(id)) {
-            if (!index.has(next)) {
-                connect(next)
-                low.set(id, Math.min(low.get(id)!, low.get(next)!))
-            }
-            else if (stack.includes(next))
-                low.set(id, Math.min(low.get(id)!, index.get(next)!))
-        }
-        if (low.get(id) === index.get(id)) {
-            const group = new Set(stack.splice(stack.indexOf(id)))
-            if (Array.from(group).every((member) => successors(member).every((next) => group.has(next)))
-                && !Array.from(group).some((member) => kind.get(member) === "final" || kind.get(member) === "terminate"))
-                group.forEach((member) => trapped.add(member))
-        }
-    }
-    for (const node of nodes)
-        if (!index.has(node.id))
-            connect(node.id)
+    const index = new Map(nodes.map((node, i) => [ node.id, i ]))
+    const succ  = nodes.map((node) => successors(node.id).map((next) => index.get(next)!))
+    const comp  = componentsOf(succ)
+    const open  = new Set<number>()
+    nodes.forEach((node, i) => {
+        if (succ[i].some((j) => comp[j] !== comp[i])
+            || kind.get(node.id) === "final" || kind.get(node.id) === "terminate")
+            open.add(comp[i])
+    })
+    const trapped = new Set(nodes.filter((_node, i) => !open.has(comp[i])).map((node) => node.id))
 
     /*  a choice or junction is incomplete if all of its outgoing transitions
         are guarded, but none by "else", and a composite state if it has a

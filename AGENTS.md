@@ -43,6 +43,9 @@ scheduled by the critical path method, marking its critical path).
         `Edge`, `EdgeKind`, `EdgeType`, `Graph`) and the lists `edgeKinds`
         and `edgeTypes`
     -   `src/gradia-api-parser.ts`: the input language parser, producing the graph model
+    -   `src/gradia-api-algo.ts`: the generic graph algorithms (the
+        strongly connected components, as used by the cycle and trap
+        analyses of the `matrix`, `state`, and `petri` diagram types)
     -   `src/gradia-api-config.ts`: the rendering options (defaults,
         validation, in-input directive parsing, CSS value resolution,
         font resolution)
