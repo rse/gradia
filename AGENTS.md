@@ -84,7 +84,17 @@ scheduled by the critical path method, marking its critical path).
     -   `src/gradia-api-type-graph.ts`: the `graph` diagram type (layered
         layout via the Dagre algorithm of `@antv/layout`, explicit `order`
         layout, and the uniform, optionally transposed, lane layout
-        underlying `layer` and `slice`)
+        underlying `layer` and `slice`), orchestrating its layout stages:
+        -   `src/gradia-api-type-graph-place.ts`: the node cell
+            assignment (grid snapping, row refinement and compaction, and
+            gate node placement)
+        -   `src/gradia-api-type-graph-plan.ts`: the coarse edge planning
+            (attachment sides, channel/gutter route plans with their label
+            and loop demands, and box growing by the edge attachments)
+        -   `src/gradia-api-type-graph-grid.ts`: the grid geometry
+            (column, row, channel, and gutter sizing, and column packing)
+        -   `src/gradia-api-type-graph-route.ts`: the fine edge routing
+            (port and track assignment, polylines, and node nudging)
     -   `src/gradia-api-type-hub.ts`: the `hub` diagram type (hub graph layout)
     -   `src/gradia-api-type-grid.ts`: the `grid` diagram type (compact grid layout)
     -   `src/gradia-api-type-layer.ts`: the `layer` diagram type (a uniform
