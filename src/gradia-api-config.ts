@@ -74,6 +74,13 @@ export const configDefaults = {
     "grid-node-height-equal":    true,  /*  grid: force equal height of node boxes */
     "sequence-column-gap":       20,    /*  sequence: min gap between participants */
     "sequence-message-gap":      40,    /*  sequence: vertical gap of messages     */
+    "tree-level-gap":            60,    /*  tree: gap between two levels           */
+    "tree-sibling-gap":          20,    /*  tree: min gap between two subtrees     */
+    "tree-row-max":              0,     /*  tree: max nodes/level before stacking  */
+    "tree-stack-min":            4,     /*  tree: min leaves of a parent to stack  */
+    "tree-stack-double":         false, /*  tree: stack on both sides of the trunk */
+    "tree-node-width-equal":     false, /*  tree: equal node box width per level   */
+    "tree-horizontal":           false, /*  tree: grow left-to-right, not top-down */
     "mark-violation":            true,  /*  matrix/layer/slice: mark violations    */
     "layer-numbered":            true,  /*  layer: number the layers bottom-up     */
     "slice-numbered":            false  /*  slice: number the slices left-to-right */

@@ -1,0 +1,36 @@
+#type tree
+
+#config tree-stack-double true
+
+eng:      "Engineering"        [ badge: team, primary: true ]
+platform: "Platform"           [ badge: cloud ]
+product:  "Product"            [ badge: package ]
+kai:      "Kai"                [ badge: person ]
+lena:     "Lena"               [ badge: person ]
+max:      "Max"                [ badge: person ]
+nora:     "Nora"               [ badge: person ]
+mobile:   "Mobile"             [ badge: mobile ]
+anna:     "Anna"               [ badge: person ]
+ben:      "Ben"                [ badge: person ]
+cara:     "Cara"               [ badge: person ]
+dan:      "Dan"                [ badge: person ]
+eva:      "Eva"                [ badge: person ]
+ios:      "iOS"                [ badge: device ]
+android:  "Android"            [ badge: device ]
+
+eng      --> platform
+eng      --> product
+platform --> kai
+platform --> lena
+platform --> max
+platform --> nora
+product  --> mobile
+product  --> anna
+product  --> ben
+product  --> cara
+product  --> dan
+product  --> eva
+mobile   --> ios
+mobile   --> android
+eva      --("pairs with")--> lena
+android  --("reports to")--> kai

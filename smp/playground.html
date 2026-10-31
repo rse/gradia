@@ -538,6 +538,108 @@ store   --> store
 users   --> logger
 mail    --> config
         </script>
+        <script type="text/x-gradia" id="sample-tree-regular">
+#type tree
+
+ceo:     "Chief Executive"      [ badge: person, primary: true ]
+cto:     "Chief Technology"     [ badge: person ]
+cfo:     "Chief Finance"        [ badge: person ]
+coo:     "Chief Operations"     [ badge: person ]
+dev:     "Development"          [ badge: team ]
+ops:     "Platform Operations"  [ badge: cloud ]
+qa:      "Quality Assurance"    [ badge: team ]
+acct:    "Accounting"           [ badge: document ]
+legal:   "Legal"                [ badge: security ]
+support: "Customer Support"     [ badge: communication ]
+
+ceo --> cto
+ceo --> cfo
+ceo --> coo
+cto --(leads)--> dev
+cto --> ops
+cto --> qa
+cfo --> acct
+cfo --> legal
+coo --> support
+support --(escalates)--> qa
+        </script>
+        <script type="text/x-gradia" id="sample-tree-stacked">
+#type tree
+
+#config tree-row-max 6
+
+root:      "Product Suite"       [ badge: package, primary: true ]
+web:       "Web Frontend"        [ badge: browser ]
+mobile:    "Mobile Apps"         [ badge: mobile ]
+backend:   "Backend Services"    [ badge: service ]
+shop:      "Shop Pages"
+account:   "Account Pages"
+admin:     "Admin Console"
+ios:       "iOS App"
+android:   "Android App"
+catalog:   "Catalog Service"
+orders:    "Order Service"
+payments:  "Payment Service"
+search:    "Search Service"
+
+root    --> web
+root    --> mobile
+root    --> backend
+web     --> shop
+web     --> account
+web     --> admin
+mobile  --> ios
+mobile  --> android
+backend --> catalog
+backend --> orders
+backend --> payments
+backend --> search
+admin   --(uses)--> orders
+        </script>
+        <script type="text/x-gradia" id="sample-tree-double">
+#type tree
+
+#config tree-stack-double true
+
+eng:      "Engineering"        [ badge: team, primary: true ]
+platform: "Platform"           [ badge: cloud ]
+product:  "Product"            [ badge: package ]
+infra:    "Infrastructure"     [ badge: network ]
+kai:      "Kai"                [ badge: person ]
+lena:     "Lena"               [ badge: person ]
+max:      "Max"                [ badge: person ]
+nora:     "Nora"               [ badge: person ]
+mobile:   "Mobile"             [ badge: mobile ]
+anna:     "Anna"               [ badge: person ]
+ben:      "Ben"                [ badge: person ]
+cara:     "Cara"               [ badge: person ]
+dan:      "Dan"                [ badge: person ]
+eva:      "Eva"                [ badge: person ]
+ios:      "iOS"                [ badge: device ]
+android:  "Android"            [ badge: device ]
+db:       "Databases"          [ badge: database ]
+net:      "Networks"           [ badge: network ]
+
+eng      --> platform
+eng      --> product
+eng      --> infra
+platform --> kai
+platform --> lena
+platform --> max
+platform --> nora
+product  --> mobile
+product  --> anna
+product  --> ben
+product  --> cara
+product  --> dan
+product  --> eva
+mobile   --> ios
+mobile   --> android
+infra    --> db
+infra    --> net
+eva      --("pairs with")--> lena
+android  --("reports to")--> kai
+        </script>
         <script type="text/x-gradia" id="sample-matrix-regular">
 #type matrix
 
@@ -631,6 +733,9 @@ gateway --("201 Created")--> client { kind: return }
                 "grid-regular":     sampleOf("sample-grid-regular"),
                 "layer-regular":    sampleOf("sample-layer-regular"),
                 "slice-regular":    sampleOf("sample-slice-regular"),
+                "tree-regular":     sampleOf("sample-tree-regular"),
+                "tree-stacked":     sampleOf("sample-tree-stacked"),
+                "tree-double":      sampleOf("sample-tree-double"),
                 "matrix-regular":   sampleOf("sample-matrix-regular"),
                 "matrix-full":      sampleOf("sample-matrix-full"),
                 "sequence-regular": sampleOf("sample-sequence-regular")

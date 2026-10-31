@@ -3,14 +3,16 @@
 **gradia** is the opinionated tooling of *Dr. Ralf S. Engelschall*
 for *Object Graph Diagram Rendering*: a small CLI for rendering
 directed graphs, described in a concise textual input language, as SVG
-diagrams. Seven diagram types are supported: `graph` (a grid-snapped
+diagrams. Eight diagram types are supported: `graph` (a grid-snapped
 layered layout of the whole graph, based on the Dagre algorithm of
 `@antv/layout`), `hub` (a hub graph, placing one primary hub node
 between its input and output nodes), `grid` (a compact grid of
 tiles for an edge-less graph), `layer` (a layered architecture of
 stacked layer bands, marking the edges against the layering), `slice`
 (a sliced architecture of side-by-side slice bands, marking the edges
-closing a direct cycle between two slices), `matrix` (a dependency
+closing a direct cycle between two slices), `tree` (a tidy tree or
+forest with bus connectors, stacked leaves, and dashed cross links),
+`matrix` (a dependency
 structure matrix, outlining its cycles), and `sequence` (a sequence
 diagram of participants, their lifelines, and their messages).
 
@@ -61,6 +63,8 @@ diagram of participants, their lifelines, and their messages).
         `graph`, its layers drawn as bands and its violations marked)
     -   `src/gradia-api-type-slice.ts`: the `slice` diagram type (a uniform
         and transposed `graph`, its slices drawn as bands and its cycles marked)
+    -   `src/gradia-api-type-tree.ts`: the `tree` diagram type (a tidy
+        tree layout with bus connectors, stacked leaves, and cross links)
     -   `src/gradia-api-type-matrix.ts`: the `matrix` diagram type (the
         headers and cells of a dependency structure matrix, as shapes)
     -   `src/gradia-api-type-sequence.ts`: the `sequence` diagram type
@@ -103,7 +107,7 @@ No test target is defined.
 ## CLI Command
 
 ```
-gradia [-t graph|hub|grid|layer|slice|matrix|sequence] [-f <format>] [-c <name>=<value>] -o <file>.svg <graph>.txt
+gradia [-t graph|hub|grid|layer|slice|tree|matrix|sequence] [-f <format>] [-c <name>=<value>] -o <file>.svg <graph>.txt
 ```
 
 Both the `-o`/`--output` option and the input file argument are
@@ -145,9 +149,11 @@ their own declarations.
 
 The rendering options (`font-family`, `font-embed`, the `color-*`
 family, the numeric geometry families `size-*`, `group-*`,
-`container-*`, `graph-*`, `hub-*`, `grid-*`, and `sequence-*`, and the booleans
-`grid-node-width-equal`, `grid-node-height-equal`, `mark-violation`,
-`layer-numbered`, and `slice-numbered`) are set through the repeatable
+`container-*`, `graph-*`, `hub-*`, `grid-*`, `sequence-*`, and
+`tree-*`, and the booleans `grid-node-width-equal`,
+`grid-node-height-equal`, `mark-violation`, `layer-numbered`,
+`slice-numbered`, `tree-stack-double`, `tree-node-width-equal`, and
+`tree-horizontal`) are set through the repeatable
 `--config <name>=<value>` command-line option, or through `#config
 <option> <value>` directives inside the input, except `font-embed` and
 WOFF2 file paths, which are command-line-only, as the input is treated

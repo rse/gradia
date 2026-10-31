@@ -14,7 +14,7 @@ About
 -----
 
 **Gradia** is a small API and CLI for rendering directed graphs,
-described in a concise textual input language, as SVG diagrams. Seven
+described in a concise textual input language, as SVG diagrams. Eight
 diagram types are supported which fit the scenario of visualizing object
 graphs:
 
@@ -27,6 +27,8 @@ graphs:
   marking the edges pointing upwards against the layering.
 - `slice`: a sliced architecture, lining up its slices as bands and
   marking the edges pointing backwards to close a cycle between slices.
+- `tree`: a tree (or forest) of parent-child edges, connecting every
+  parent with its children through a bus and marking the cross links.
 - `matrix`: a dependency structure matrix, counting the edges between
   its rows and columns and outlining its cycles.
 - `sequence`: a sequence diagram of participants and their messages.
@@ -76,6 +78,18 @@ Here are examples of the graph diagram renderings:
 
   ![sample-slice-regular](smp/sample-slice-regular.svg)
 
+- [sample-tree-regular](smp/sample-tree-regular.txt) (tree with bus connectors and a cross link):
+
+  ![sample-tree-regular](smp/sample-tree-regular.svg)
+
+- [sample-tree-stacked](smp/sample-tree-stacked.txt) (tree with stacked leaves and a cross link):
+
+  ![sample-tree-stacked](smp/sample-tree-stacked.svg)
+
+- [sample-tree-double](smp/sample-tree-double.txt) (tree with partial and two-sided stacks and cross links):
+
+  ![sample-tree-double](smp/sample-tree-double.svg)
+
 - [sample-matrix-regular](smp/sample-matrix-regular.txt) (acyclic dependency structure matrix in explicit order):
 
   ![sample-matrix-regular](smp/sample-matrix-regular.svg)
@@ -106,7 +120,7 @@ Usage
 -----
 
 ```sh
-$ gradia [-t graph|hub|grid|layer|slice|matrix|sequence] [-f <format>] [-c <name>=<value>] -o <file>.svg <graph>.txt
+$ gradia [-t graph|hub|grid|layer|slice|tree|matrix|sequence] [-f <format>] [-c <name>=<value>] -o <file>.svg <graph>.txt
 ```
 
 The diagram type is selected with the `-t` command-line option or, when
@@ -123,7 +137,7 @@ MCP Service
 -----------
 
 ```sh
-$ gradia --mcp [-t graph|hub|grid|layer|slice|matrix|sequence] [-f <format>] [-c <name>=<value>]
+$ gradia --mcp [-t graph|hub|grid|layer|slice|tree|matrix|sequence] [-f <format>] [-c <name>=<value>]
 ```
 
 With the `-m`/`--mcp` option, **Gradia** instead runs as a [Model Context
@@ -191,7 +205,7 @@ separated by `|`.
 <directive>      ::= "#config" <whitespace> { <whitespace> } <option> <whitespace> { <whitespace> } ( <string> | <word> )
                    | "#type" <whitespace> { <whitespace> } <type>
 <option>         ::= <lowercase-letter> { <lowercase-letter> | <digit> | "-" }
-<type>           ::= "graph" | "hub" | "grid" | "layer" | "slice" | "matrix" | "sequence"
+<type>           ::= "graph" | "hub" | "grid" | "layer" | "slice" | "tree" | "matrix" | "sequence"
 <word>           ::= <char> - <whitespace> { <char> - <whitespace> }
 <newline>        ::= "\n"
 <whitespace>     ::= " " | "\t" | "\r"
@@ -364,12 +378,12 @@ separated by `|`.
 
 - **Containers**: only the diagram types `graph`, `hub`, and `grid` lay
   out the members of a container. The diagram types `layer`, `slice`,
-  `matrix`, and `sequence` reject the input with an error as soon as
-  the graph contains a container.
+  `tree`, `matrix`, and `sequence` reject the input with an error as
+  soon as the graph contains a container.
 
-- **Violations**: the diagram types `layer`, `slice`, and `matrix` mark
-  their violations in the `color-mark-violation` color, unless the
-  option `mark-violation` is `false`.
+- **Violations**: the diagram types `layer`, `slice`, `tree`, and
+  `matrix` mark their violations in the `color-mark-violation` color,
+  unless the option `mark-violation` is `false`.
 
 #### Diagram Type `graph`
 
@@ -474,6 +488,55 @@ and lays out a sliced architecture:
 
 - **Numbering**: the boolean option `slice-numbered` numbers the slices
   left-to-right.
+
+#### Diagram Type `tree`
+
+The diagram type `tree` draws a tree, or a forest of trees:
+
+- **Structure**: every edge points from a parent to its child. The
+  first edge into a node makes its source the parent of the node,
+  unless it would close a cycle. The nodes without a parent are the
+  roots, and several roots form a forest of trees side by side.
+
+- **Order**: the children of a parent, and the roots, keep their
+  declaration order, or follow their `order` attributes.
+
+- **Levels**: the levels stack top-down (or, with the boolean option
+  `tree-horizontal`, left-to-right), all boxes of a level aligned at
+  its start and the levels `tree-level-gap` apart. Every parent sits
+  centered over its children, and the subtrees are packed as tightly
+  as `tree-sibling-gap` allows (a "tidy tree").
+
+- **Connectors**: a parent connects to its children through a bus: a
+  trunk out of the parent, a bar across its children, and a drop into
+  every child, which carries the arrow head, name, and arity of the
+  edge. A single child is connected directly.
+
+- **Stacking**: the leaf children of a parent are stacked along a trunk,
+  instead of side by side, as soon as the parent has at least
+  `tree-stack-min` of them (default `4`), or their level holds more
+  than `tree-row-max` nodes (each option only if positive). If all
+  children of the parent are stacked, the trunk leaves the parent box
+  itself, otherwise it hangs off the bus of the parent, at the position
+  of the first stacked leaf among its other children. With the boolean
+  option `tree-stack-double`, the stacked leaves alternate between both
+  sides of the trunk, which halves the height of the stack.
+
+- **Cross links**: every other edge (a second edge into a node, an
+  edge closing a cycle, or a self-loop) is a cross link, drawn dashed,
+  and in the `color-mark-violation` color unless `mark-violation` is
+  `false`. It runs through the gutters in front of the levels, on own
+  tracks, and between different levels along an own lane beside the
+  nearer side of the tree, so it never crosses a node box (a stacked
+  node attaches through a corridor beside its stack, and a level whose
+  gutter carries such tracks starts below the stacks above it).
+
+- **Node width**: unless configured otherwise, the diagram type `tree`
+  uses a minimum node box width (`size-node-width-min`) of `160` and a
+  maximum one (`size-node-width-max`) of `240`, so the node texts wrap
+  and the tree stays narrow. With the boolean option
+  `tree-node-width-equal`, all node boxes of a level take the width of
+  its widest one.
 
 #### Diagram Type `matrix`
 
@@ -584,8 +647,9 @@ Both texts of `duration` and `time` are drawn exactly as given, e.g.,
 ### Directives
 
 A `#type` directive sets the diagram type (`graph`, `hub`, `grid`,
-`layer`, `slice`, `matrix`, or `sequence`), which otherwise is settable
-through the `-t`/`--type` command-line option (which takes precedence).
+`layer`, `slice`, `tree`, `matrix`, or `sequence`), which otherwise is
+settable through the `-t`/`--type` command-line option (which takes
+precedence).
 The last occurrence wins and an invalid type is silently ignored.
 Without both, the type defaults to `graph`.
 
@@ -630,22 +694,31 @@ size-font-edge             16           grid-node-width-equal      true
 size-font-arity            16           grid-node-height-equal     true
 color-mark-violation       #cc3333      sequence-column-gap        20
                                         sequence-message-gap       40
+                                        tree-level-gap             60
+                                        tree-sibling-gap           20
+                                        tree-row-max               0
+                                        tree-stack-min             4
+                                        tree-stack-double          false
+                                        tree-node-width-equal      false
+                                        tree-horizontal            false
                                         mark-violation             true
                                         layer-numbered             true
                                         slice-numbered             false
 ```
 
 The `size-*`, `group-*`, `container-*`, `graph-*`, `hub-*`, `grid-*`,
-and `sequence-*` options control the rendering geometry (text font
-sizes, canvas margin, node box sizing, edge routing, group and container
-box spacing, and the per-diagram-type layout) and take non-negative
-numbers, except the booleans `grid-node-width-equal` and
-`grid-node-height-equal`.
+`sequence-*`, and `tree-*` options control the rendering geometry (text
+font sizes, canvas margin, node box sizing, edge routing, group and
+container box spacing, and the per-diagram-type layout) and take
+non-negative numbers, except the booleans `grid-node-width-equal`,
+`grid-node-height-equal`, `tree-stack-double`, `tree-node-width-equal`,
+and `tree-horizontal`.
 
 The boolean `mark-violation` option controls whether the diagram types
-`matrix`, `layer`, and `slice` mark their violations at all (in the
-`color-mark-violation` color): by default they do, while with `false`
-they render the very same diagram without any marking.
+`matrix`, `layer`, `slice`, and `tree` mark their violations at all (in
+the `color-mark-violation` color): by default they do, while with
+`false` they render the very same diagram without any marking (the
+cross links of a `tree` stay dashed, though).
 
 The `size-font-*` options control the font sizes of the node names
 (`size-font-node`), the node types (`size-font-type`), the node

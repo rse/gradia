@@ -59,6 +59,19 @@ component relationships, data flows, dependency graphs, and similar structures.
   option "slice-numbered" numbers the slices. The slices determine the order
   of the columns, so an "order" attribute is ignored. It rejects the input
   with an error if it contains a container.
+- "tree": a tree (or a forest of trees): every edge points from a parent to its
+  child, the first edge into a node (unless closing a cycle) making its source
+  the parent, and the nodes without a parent are the roots. The levels stack
+  top-down (or left-to-right with the option "tree-horizontal"), every parent
+  centered over its children, connected through a bus. The leaf children of a
+  parent stack along a trunk once there are "tree-stack-min" (default 4) of
+  them, or their level holds more than "tree-row-max" nodes, optionally on
+  both sides of the trunk ("tree-stack-double"). Every other edge is a cross
+  link, drawn dashed (and in the "color-mark-violation" color), routed around
+  the nodes. It uses node box widths between 160 and 240 unless
+  "size-node-width-min" or "size-node-width-max" are configured, optionally
+  unified per level ("tree-node-width-equal"), and rejects the input with an
+  error if it contains a container.
 - "matrix": a dependency structure matrix: the nodes are both the rows and the
   columns, a cell counts the edges from its row to its column, and the cycles
   are outlined as blocks on the diagonal, the counts of their edges closing
@@ -152,7 +165,7 @@ as <name>, terminals as "...", optional parts as [ ... ], repeatable parts as
     <directive>      ::= "#config" <whitespace> { <whitespace> } <option> <whitespace> { <whitespace> } ( <string> | <word> )
                        | "#type" <whitespace> { <whitespace> } <type>
     <option>         ::= <letter> { <letter> | <digit> | "-" }
-    <type>           ::= "graph" | "hub" | "grid" | "layer" | "slice" | "matrix" | "sequence"
+    <type>           ::= "graph" | "hub" | "grid" | "layer" | "slice" | "tree" | "matrix" | "sequence"
     <word>           ::= <char> - <whitespace> { <char> - <whitespace> }
     <newline>        ::= "\\n"
     <whitespace>     ::= " " | "\\t" | "\\r"
@@ -293,21 +306,28 @@ over them. The recognized options, with their types and built-in defaults, are:
 
 ${configOptions}
 
-The "size-*", "group-*", "container-*", "graph-*", "hub-*", "grid-*", and
-"sequence-*" options control the rendering geometry (canvas margin, node box
-sizing, edge routing, group and container box spacing, and the
-per-diagram-type layout) and take non-negative numbers, except the booleans
+The "size-*", "group-*", "container-*", "graph-*", "hub-*", "grid-*",
+"sequence-*", and "tree-*" options control the rendering geometry (canvas
+margin, node box sizing, edge routing, group and container box spacing, and
+the per-diagram-type layout) and take non-negative numbers, except the booleans
 "grid-node-width-equal" and "grid-node-height-equal", which force all node
 boxes of a "grid" diagram to the width of the widest one and to the height of
 the tallest one (a nested container box taking part in the width unification
-only). The "sequence-column-gap" and "sequence-message-gap" options set the
-minimum gap between neighboring participants and the vertical gap between
-messages of a "sequence" diagram, so lower values render it more compact.
+only), "tree-stack-double", "tree-node-width-equal", and "tree-horizontal".
+The "sequence-column-gap" and
+"sequence-message-gap" options set the minimum gap between neighboring
+participants and the vertical gap between messages of a "sequence" diagram, so
+lower values render it more compact. The "tree-level-gap" and
+"tree-sibling-gap" options set the gap between the levels and the minimum gap
+between the subtrees of a "tree" diagram, and a positive "tree-stack-min" or
+"tree-row-max" stacks the leaf children of a parent along a trunk as soon as
+the parent has that many of them or their level holds more nodes.
 
 The boolean "mark-violation" option controls whether the diagram types
-"matrix", "layer", and "slice" mark their violations at all (in the
+"matrix", "layer", "slice", and "tree" mark their violations at all (in the
 "color-mark-violation" color): by default they do, while with "false" they
-render the very same diagram without any marking.
+render the very same diagram without any marking (the cross links of a "tree"
+stay dashed, though).
 
 The "size-node-width-max" option additionally enables the word-wrapping of the
 node box texts: given a positive value, the node name, its type, and its

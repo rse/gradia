@@ -45,13 +45,15 @@ export type Renderer = (graph: Graph, config: Config, level?: LevelContext) => P
     container (and hence is valid as a "container" annotation), whether
     it supports gate nodes (and hence lets the edges crossing a
     container boundary continue to the inner nodes, instead of ending at
-    the container border), and whether it renders the edge kinds and
-    timings  */
+    the container border), whether it renders the edge kinds and
+    timings, and its own defaults of the rendering options (overriding
+    the general ones, but overridden by the explicit ones)  */
 export interface DiagramTypeSpec {
-    render:   Renderer
-    nestable: boolean
-    gated:    boolean
-    kinds:    boolean
+    render:    Renderer
+    nestable:  boolean
+    gated:     boolean
+    kinds:     boolean
+    defaults?: Partial<Config>
 }
 
 /*  the containment tree of a graph  */

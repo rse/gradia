@@ -63,6 +63,20 @@ ChangeLog
     label, below a column label) instead of behind them, with all labels aligned, while every
     badge gets a thinner border and is sized relative to the font of its label.
 
+-   FEATURE [code, othr]: add the diagram type "tree", a tree (or forest) whose edges point from the
+    parents to their children: the levels stack top-down (or left-to-right with the new option
+    "tree-horizontal"), every parent centered over its tightly packed child subtrees and
+    connected to them through a bus, all boxes of a level top-aligned (and, with the new option
+    "tree-node-width-equal", of one width), the leaf children of a parent stacked along a trunk
+    (out of the parent box, or out of its bus beside its other children, and with the new option
+    "tree-stack-double" on both sides of the trunk) as soon as the parent has "tree-stack-min" of
+    them or their level holds more than "tree-row-max" nodes, and every edge not fitting the tree
+    drawn as a dashed cross link (marked as a violation), routed through the gutters and an own
+    lane beside the nearer side of the tree around all nodes, plus the new options
+    "tree-level-gap" and "tree-sibling-gap", per-diagram-type option defaults (the "tree" using
+    node box widths between 160 and 240), the layout flags "dashed" for edges, and the new
+    "smp/sample-tree-*" samples.
+
 -   IMPROVEMENT [code]: render "sequence" diagrams more compact: keep every participant box in its
     own width (instead of the width of the widest one), space every pair of neighboring lifelines
     on its own, as far as their boxes and the names of the messages between them demand (instead

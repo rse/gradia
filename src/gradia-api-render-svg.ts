@@ -897,14 +897,16 @@ export const renderSVG = (layout: Layout, config: Config, explicit: Partial<Conf
     const grouped = new Set([ ...into.values(), ...outOf.values() ].flat())
     const repeat  = new Set(Array.from(into.values()).flatMap((l) => l.slice(1)))
 
-    /*  a return or create edge is drawn dashed, and an asynchronous,
-        return, or create edge ends in an open arrow head, an outlined
-        triangle filled with the halo color, so it covers the line ending
-        at its tip (its marker and classes are defined only on demand, so
-        diagrams without such edges stay unchanged)  */
+    /*  a return or create edge, and an edge flagged by its layout, is
+        drawn dashed, and an asynchronous, return, or create edge ends in
+        an open arrow head, an outlined triangle filled with the halo
+        color, so it covers the line ending at its tip (its marker and
+        classes are defined only on demand, so diagrams without such
+        edges stay unchanged)  */
     const kindOf    = (i: number) => edges[i].kind ?? "sync"
-    const dashed    = (i: number) => kindOf(i) === "return" || kindOf(i) === "create"
-    const hollow    = (i: number) => dashed(i) || kindOf(i) === "async"
+    const dashKind  = (i: number) => kindOf(i) === "return" || kindOf(i) === "create"
+    const dashed    = (i: number) => dashKind(i) || layout.dashed?.[i] === true
+    const hollow    = (i: number) => dashKind(i) || kindOf(i) === "async"
     const open      = polys.some((_, i) => hollow(i))
     const classOpen = open ? classOf(`fill: ${color("color-edge-halo")}; stroke: ${color("color-edge-line")}; ` +
         "stroke-width: 1.2; stroke-linejoin: round") : ""

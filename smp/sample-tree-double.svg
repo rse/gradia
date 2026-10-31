@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="20 20 1163 702" width="1163" height="702">
+<defs>
+<style>
+.gradia-3167da4d { fill: none; stroke: var(--gradia-color-edge-line, #999999); stroke-width: 3 }
+.gradia-6c7500cd { fill: var(--gradia-color-edge-line, #999999) }
+.gradia-d9926a5f { fill: none; stroke: var(--gradia-color-mark-violation, #cc3333); stroke-width: 3; stroke-dasharray: 10 6 }
+.gradia-fea79086 { fill: var(--gradia-color-mark-violation, #cc3333) }
+.gradia-8e1fb7ed { fill: none; stroke: var(--gradia-color-edge-line, #999999); stroke-width: 3; stroke-dasharray: 10 6 }
+.gradia-f8346d44 { font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; font-size: var(--gradia-size-font-edge, 16px); fill: var(--gradia-color-mark-violation, #cc3333); stroke: var(--gradia-color-edge-halo, #ffffff); stroke-width: 4.5; paint-order: stroke; stroke-linejoin: round }
+.gradia-92e1c07c { fill: var(--gradia-color-node-primary-box, #336699); stroke: var(--gradia-color-node-primary-border, #003366); stroke-width: 4 }
+.gradia-e8199b28 { fill: var(--gradia-color-node-primary-box, #336699); stroke: var(--gradia-color-node-primary-border, #003366); stroke-width: 2 }
+.gradia-47a707d0 { fill: var(--gradia-color-node-primary-name, #ffffff); stroke: var(--gradia-color-node-primary-name, #ffffff); stroke-width: 1 }
+.gradia-60d7c231 { fill: none; stroke: var(--gradia-color-node-primary-name, #ffffff); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round }
+.gradia-034f2f83 { font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; font-size: var(--gradia-size-font-node, 30px); font-weight: 600; text-anchor: middle; fill: var(--gradia-color-node-primary-name, #ffffff) }
+.gradia-c318c042 { fill: var(--gradia-color-node-regular-box, #e0f0ff); stroke: var(--gradia-color-node-regular-border, #c0d0e0); stroke-width: 4 }
+.gradia-613ab0f0 { fill: var(--gradia-color-node-regular-box, #e0f0ff); stroke: var(--gradia-color-node-regular-border, #c0d0e0); stroke-width: 2 }
+.gradia-2bb55e70 { fill: var(--gradia-color-node-regular-name, #336699); stroke: var(--gradia-color-node-regular-name, #336699); stroke-width: 1 }
+.gradia-d356e2cb { fill: none; stroke: var(--gradia-color-node-regular-name, #336699); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round }
+.gradia-f36ab1ca { font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; font-size: var(--gradia-size-font-node, 30px); font-weight: 600; text-anchor: middle; fill: var(--gradia-color-node-regular-name, #336699) }
+.gradia-cb45cba8 { fill: none; stroke: var(--gradia-color-edge-line, #999999); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round }
+</style>
+<marker id="gradia-aa85bcf57d50-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="21" markerHeight="21" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+<path d="M 0 1 L 9 5 L 0 9 z" class="gradia-6c7500cd"/>
+</marker>
+<marker id="gradia-aa85bcf57d50-alert" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="21" markerHeight="21" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+<path d="M 0 1 L 9 5 L 0 9 z" class="gradia-fea79086"/>
+</marker>
+</defs>
+<path d="M 528.4375 103 l 0 19.799999999999997" class="gradia-cb45cba8"/>
+<path d="M 268 122.8 l 520.875 0" class="gradia-cb45cba8"/>
+<path d="M 268 226 l 0 210.5" class="gradia-cb45cba8"/>
+<path d="M 788.875 226 l 0 19.80000000000001" class="gradia-cb45cba8"/>
+<path d="M 615.25 245.8 l 347.25 0" class="gradia-cb45cba8"/>
+<path d="M 962.5 245.8 l 0 273.7" class="gradia-cb45cba8"/>
+<path d="M 615.25 385 l 0 185.79999999999995" class="gradia-cb45cba8"/>
+<path d="M 516 570.8 l 198.5 0" class="gradia-cb45cba8"/>
+<path d="M 268 122.8 L 268 163" class="gradia-3167da4d" marker-end="url(#gradia-aa85bcf57d50-arrow)"/>
+<path d="M 788.875 122.8 L 788.875 163" class="gradia-3167da4d" marker-end="url(#gradia-aa85bcf57d50-arrow)"/>
+<path d="M 268 353.5 L 228 353.5" class="gradia-3167da4d" marker-end="url(#gradia-aa85bcf57d50-arrow)"/>
+<path d="M 268 353.5 L 308 353.5" class="gradia-3167da4d" marker-end="url(#gradia-aa85bcf57d50-arrow)"/>
+<path d="M 268 436.5 L 228 436.5" class="gradia-3167da4d" marker-end="url(#gradia-aa85bcf57d50-arrow)"/>
+<path d="M 268 436.5 L 308 436.5" class="gradia-3167da4d" marker-end="url(#gradia-aa85bcf57d50-arrow)"/>
+<path d="M 615.25 245.8 L 615.25 322" class="gradia-3167da4d" marker-end="url(#gradia-aa85bcf57d50-arrow)"/>
+<path d="M 962.5 353.5 L 922.5 353.5" class="gradia-3167da4d" marker-end="url(#gradia-aa85bcf57d50-arrow)"/>
+<path d="M 962.5 353.5 L 1002.5 353.5" class="gradia-3167da4d" marker-end="url(#gradia-aa85bcf57d50-arrow)"/>
+<path d="M 962.5 436.5 L 922.5 436.5" class="gradia-3167da4d" marker-end="url(#gradia-aa85bcf57d50-arrow)"/>
+<path d="M 962.5 436.5 L 1002.5 436.5" class="gradia-3167da4d" marker-end="url(#gradia-aa85bcf57d50-arrow)"/>
+<path d="M 962.5 519.5 L 922.5 519.5" class="gradia-3167da4d" marker-end="url(#gradia-aa85bcf57d50-arrow)"/>
+<path d="M 516 570.8 L 516 639" class="gradia-3167da4d" marker-end="url(#gradia-aa85bcf57d50-arrow)"/>
+<path d="M 714.5 570.8 L 714.5 639" class="gradia-3167da4d" marker-end="url(#gradia-aa85bcf57d50-arrow)"/>
+<path d="M 762.5 519.5 L 748.5 519.5 Q 734.5 519.5 734.5 505.5 L 734.5 314 Q 734.5 294 714.5 294 L 623.25 294 A 8 8 0 0 0 607.25 294 L 516 294 Q 496 294 496 314 L 496 339.5 Q 496 353.5 482 353.5 L 468 353.5" class="gradia-d9926a5f" marker-end="url(#gradia-aa85bcf57d50-alert)"/>
+<path d="M 665.25 639 L 665.25 625 Q 665.25 611 651.25 611 L 524 611 A 8 8 0 0 0 508 611 L 60 611 Q 40 611 40 591 L 40 367.5 Q 40 353.5 54 353.5 L 68 353.5" class="gradia-d9926a5f" marker-end="url(#gradia-aa85bcf57d50-alert)"/>
+<rect x="398.9375" y="40" width="259" height="63" rx="6" class="gradia-92e1c07c"/>
+<circle cx="431.9375" cy="71.5" r="18" class="gradia-e8199b28"/>
+<g transform="translate(431.9375 71.5) scale(1.059)">
+<path d="M 0.5 -4 a 3 3 0 1 0 -6 0 a 3 3 0 1 0 6 0 M -8.5 8 q 0 -7 6 -7 q 6 0 6 7 M 7 -6.5 a 2.5 2.5 0 1 0 -5 0 a 2.5 2.5 0 1 0 5 0 M 4 -1.5 q 4.5 0 4.5 5" class="gradia-60d7c231"/>
+</g>
+<text x="553.7375" y="82.3" class="gradia-034f2f83">Engineering</text>
+<rect x="162" y="163" width="212" height="63" rx="6" class="gradia-c318c042"/>
+<circle cx="195" cy="194.5" r="18" class="gradia-613ab0f0"/>
+<g transform="translate(195 194.5) scale(1.059)">
+<path d="M 0 -5.5 A 4.04 4.04 0 0 1 6.65 -3.43 A 2.86 2.86 0 0 1 8.29 1.22 A 3.44 3.44 0 0 1 3.69 4.96 A 4.28 4.28 0 0 1 -3.69 4.96 A 3.44 3.44 0 0 1 -8.29 1.22 A 2.86 2.86 0 0 1 -6.65 -3.43 A 4.04 4.04 0 0 1 0 -5.5 z" class="gradia-d356e2cb"/>
+</g>
+<text x="293.4" y="205.3" class="gradia-f36ab1ca">Platform</text>
+<rect x="690.375" y="163" width="197" height="63" rx="6" class="gradia-c318c042"/>
+<circle cx="723.375" cy="194.5" r="18" class="gradia-613ab0f0"/>
+<g transform="translate(723.375 194.5) scale(1.059)">
+<path d="M 0 -8.5 l 7.5 4 v 9 l -7.5 4 l -7.5 -4 v -9 z M -7.5 -4.5 l 7.5 4 l 7.5 -4 M 0 -0.5 v 9" class="gradia-d356e2cb"/>
+</g>
+<text x="813.975" y="205.3" class="gradia-f36ab1ca">Product</text>
+<rect x="68" y="322" width="160" height="63" rx="6" class="gradia-c318c042"/>
+<circle cx="101" cy="353.5" r="18" class="gradia-613ab0f0"/>
+<g transform="translate(101 353.5) scale(1.059)">
+<path d="M 3.5 -7 a 3.5 3.5 0 1 0 -7 0 a 3.5 3.5 0 1 0 7 0 M -7 8 q 0 -8 7 -8 q 7 0 7 8" class="gradia-d356e2cb"/>
+</g>
+<text x="160.4" y="364.3" class="gradia-f36ab1ca">Kai</text>
+<rect x="308" y="322" width="160" height="63" rx="6" class="gradia-c318c042"/>
+<circle cx="341" cy="353.5" r="18" class="gradia-613ab0f0"/>
+<g transform="translate(341 353.5) scale(1.059)">
+<path d="M 3.5 -7 a 3.5 3.5 0 1 0 -7 0 a 3.5 3.5 0 1 0 7 0 M -7 8 q 0 -8 7 -8 q 7 0 7 8" class="gradia-d356e2cb"/>
+</g>
+<text x="408.2" y="364.3" class="gradia-f36ab1ca">Lena</text>
+<rect x="68" y="405" width="160" height="63" rx="6" class="gradia-c318c042"/>
+<circle cx="101" cy="436.5" r="18" class="gradia-613ab0f0"/>
+<g transform="translate(101 436.5) scale(1.059)">
+<path d="M 3.5 -7 a 3.5 3.5 0 1 0 -7 0 a 3.5 3.5 0 1 0 7 0 M -7 8 q 0 -8 7 -8 q 7 0 7 8" class="gradia-d356e2cb"/>
+</g>
+<text x="160.4" y="447.3" class="gradia-f36ab1ca">Max</text>
+<rect x="308" y="405" width="160" height="63" rx="6" class="gradia-c318c042"/>
+<circle cx="341" cy="436.5" r="18" class="gradia-613ab0f0"/>
+<g transform="translate(341 436.5) scale(1.059)">
+<path d="M 3.5 -7 a 3.5 3.5 0 1 0 -7 0 a 3.5 3.5 0 1 0 7 0 M -7 8 q 0 -8 7 -8 q 7 0 7 8" class="gradia-d356e2cb"/>
+</g>
+<text x="408.2" y="447.3" class="gradia-f36ab1ca">Nora</text>
+<rect x="524.75" y="322" width="181" height="63" rx="6" class="gradia-c318c042"/>
+<circle cx="557.75" cy="353.5" r="18" class="gradia-613ab0f0"/>
+<g transform="translate(557.75 353.5) scale(1.059)">
+<path d="M -2.5 -8.5 h 5 q 2 0 2 2 v 13 q 0 2 -2 2 h -5 q -2 0 -2 -2 v -13 q 0 -2 2 -2 z M -1.5 5 h 3" class="gradia-d356e2cb"/>
+</g>
+<text x="640.55" y="364.3" class="gradia-f36ab1ca">Mobile</text>
+<rect x="762.5" y="322" width="160" height="63" rx="6" class="gradia-c318c042"/>
+<circle cx="795.5" cy="353.5" r="18" class="gradia-613ab0f0"/>
+<g transform="translate(795.5 353.5) scale(1.059)">
+<path d="M 3.5 -7 a 3.5 3.5 0 1 0 -7 0 a 3.5 3.5 0 1 0 7 0 M -7 8 q 0 -8 7 -8 q 7 0 7 8" class="gradia-d356e2cb"/>
+</g>
+<text x="862.7" y="364.3" class="gradia-f36ab1ca">Anna</text>
+<rect x="1002.5" y="322" width="160" height="63" rx="6" class="gradia-c318c042"/>
+<circle cx="1035.5" cy="353.5" r="18" class="gradia-613ab0f0"/>
+<g transform="translate(1035.5 353.5) scale(1.059)">
+<path d="M 3.5 -7 a 3.5 3.5 0 1 0 -7 0 a 3.5 3.5 0 1 0 7 0 M -7 8 q 0 -8 7 -8 q 7 0 7 8" class="gradia-d356e2cb"/>
+</g>
+<text x="1094.9" y="364.3" class="gradia-f36ab1ca">Ben</text>
+<rect x="762.5" y="405" width="160" height="63" rx="6" class="gradia-c318c042"/>
+<circle cx="795.5" cy="436.5" r="18" class="gradia-613ab0f0"/>
+<g transform="translate(795.5 436.5) scale(1.059)">
+<path d="M 3.5 -7 a 3.5 3.5 0 1 0 -7 0 a 3.5 3.5 0 1 0 7 0 M -7 8 q 0 -8 7 -8 q 7 0 7 8" class="gradia-d356e2cb"/>
+</g>
+<text x="862.7" y="447.3" class="gradia-f36ab1ca">Cara</text>
+<rect x="1002.5" y="405" width="160" height="63" rx="6" class="gradia-c318c042"/>
+<circle cx="1035.5" cy="436.5" r="18" class="gradia-613ab0f0"/>
+<g transform="translate(1035.5 436.5) scale(1.059)">
+<path d="M 3.5 -7 a 3.5 3.5 0 1 0 -7 0 a 3.5 3.5 0 1 0 7 0 M -7 8 q 0 -8 7 -8 q 7 0 7 8" class="gradia-d356e2cb"/>
+</g>
+<text x="1094.9" y="447.3" class="gradia-f36ab1ca">Dan</text>
+<rect x="762.5" y="488" width="160" height="63" rx="6" class="gradia-c318c042"/>
+<circle cx="795.5" cy="519.5" r="18" class="gradia-613ab0f0"/>
+<g transform="translate(795.5 519.5) scale(1.059)">
+<path d="M 3.5 -7 a 3.5 3.5 0 1 0 -7 0 a 3.5 3.5 0 1 0 7 0 M -7 8 q 0 -8 7 -8 q 7 0 7 8" class="gradia-d356e2cb"/>
+</g>
+<text x="854.9" y="530.3" class="gradia-f36ab1ca">Eva</text>
+<rect x="436" y="639" width="160" height="63" rx="6" class="gradia-c318c042"/>
+<circle cx="469" cy="670.5" r="18" class="gradia-613ab0f0"/>
+<g transform="translate(469 670.5) scale(1.059)">
+<path d="M -7 -7 h 14 v 10 h -14 z M -4 7 h 8 M 0 3 v 4" class="gradia-d356e2cb"/>
+</g>
+<text x="528.4" y="681.3" class="gradia-f36ab1ca">iOS</text>
+<rect x="616" y="639" width="197" height="63" rx="6" class="gradia-c318c042"/>
+<circle cx="649" cy="670.5" r="18" class="gradia-613ab0f0"/>
+<g transform="translate(649 670.5) scale(1.059)">
+<path d="M -7 -7 h 14 v 10 h -14 z M -4 7 h 8 M 0 3 v 4" class="gradia-d356e2cb"/>
+</g>
+<text x="739.6" y="681.3" class="gradia-f36ab1ca">Android</text>
+<text x="524" y="287" class="gradia-f8346d44">pairs with</text>
+<text x="68" y="604" class="gradia-f8346d44">reports to</text>
+</svg>

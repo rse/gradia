@@ -1,0 +1,23 @@
+#type tree
+
+ceo:     "Chief Executive"      [ badge: person, primary: true ]
+cto:     "Chief Technology"     [ badge: person ]
+cfo:     "Chief Finance"        [ badge: person ]
+coo:     "Chief Operations"     [ badge: person ]
+dev:     "Development"          [ badge: team ]
+ops:     "Platform Operations"  [ badge: cloud ]
+qa:      "Quality Assurance"    [ badge: team ]
+acct:    "Accounting"           [ badge: document ]
+legal:   "Legal"                [ badge: security ]
+support: "Customer Support"     [ badge: communication ]
+
+ceo --> cto
+ceo --> cfo
+ceo --> coo
+cto --(leads)--> dev
+cto --> ops
+cto --> qa
+cfo --> acct
+cfo --> legal
+coo --> support
+support --(escalates)--> qa

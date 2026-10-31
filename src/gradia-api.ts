@@ -18,6 +18,7 @@ import { render as renderHub }                     from "./gradia-api-type-hub.j
 import { render as renderGrid }                    from "./gradia-api-type-grid.js"
 import { render as renderLayer }                   from "./gradia-api-type-layer.js"
 import { render as renderSlice }                   from "./gradia-api-type-slice.js"
+import { render as renderTree }                    from "./gradia-api-type-tree.js"
 import { render as renderMatrix }                  from "./gradia-api-type-matrix.js"
 import { render as renderSequence }                from "./gradia-api-type-sequence.js"
 
@@ -29,13 +30,16 @@ export type { Config }                             from "./gradia-api-config.js"
     the members of a container, whether they let the edges crossing a
     container boundary continue to the inner nodes, and whether they
     render the edge kinds other than the synchronous default and the
-    edge timings  */
+    edge timings, plus their own defaults of the rendering options (a
+    tree, e.g., wraps its node texts by default to stay narrow)  */
 const renderers = {
     graph:    { render: renderGraph,    nestable: true,  gated: true,  kinds: false },
     hub:      { render: renderHub,      nestable: true,  gated: false, kinds: false },
     grid:     { render: renderGrid,     nestable: true,  gated: false, kinds: false },
     layer:    { render: renderLayer,    nestable: false, gated: false, kinds: false },
     slice:    { render: renderSlice,    nestable: false, gated: false, kinds: false },
+    tree:     { render: renderTree,     nestable: false, gated: false, kinds: false,
+        defaults: { "size-node-width-min": 160, "size-node-width-max": 240 } },
     matrix:   { render: renderMatrix,   nestable: false, gated: false, kinds: false },
     sequence: { render: renderSequence, nestable: false, gated: false, kinds: true  }
 } satisfies Record<string, DiagramTypeSpec>
@@ -61,7 +65,8 @@ const parseTypeDirective = (input: string): DiagramType | undefined => {
 /*  the options entering the identifier seed only once deviating from
     their default, keeping the identifiers of all older diagrams stable  */
 const seedLate = new Set<string>([ "color-mark-violation", "mark-violation", "layer-numbered", "slice-numbered",
-    "sequence-column-gap", "sequence-message-gap" ])
+    "sequence-column-gap", "sequence-message-gap", "tree-level-gap", "tree-sibling-gap", "tree-row-max",
+    "tree-stack-min", "tree-stack-double", "tree-node-width-equal", "tree-horizontal" ])
 
 /*  the supported output formats  */
 export const diagramFormats = [ "svg:standalone", "svg:embedded", "url:xml", "url:base64" ] as const
@@ -100,11 +105,13 @@ export class Gradia {
         if (!diagramFormats.includes(format))
             throw new Error(`invalid output format "${format}"`)
 
-        /*  validate and layer the rendering configuration (an option
-            explicitly set to "undefined" is dropped, as it would otherwise
-            override its default instead of falling back to it)  */
+        /*  validate and layer the rendering configuration: the general
+            defaults, the defaults of the diagram type, and the explicit
+            options (an option explicitly set to "undefined" is dropped, as
+            it would otherwise override its default instead of falling back
+            to it)  */
         const explicit = validateConfig(options.config ?? {}, { trusted: true })
-        const config   = { ...configDefaults, ...explicit }
+        const config   = { ...configDefaults, ...(renderers[type] as DiagramTypeSpec).defaults, ...explicit }
 
         /*  validate the graph model integrity: the map key and the id of
             a node store the same identity (the layout code mixes lookups

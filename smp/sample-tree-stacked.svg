@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="20 20 968 781" width="968" height="781">
+<defs>
+<style>
+.gradia-3167da4d { fill: none; stroke: var(--gradia-color-edge-line, #999999); stroke-width: 3 }
+.gradia-6c7500cd { fill: var(--gradia-color-edge-line, #999999) }
+.gradia-d9926a5f { fill: none; stroke: var(--gradia-color-mark-violation, #cc3333); stroke-width: 3; stroke-dasharray: 10 6 }
+.gradia-fea79086 { fill: var(--gradia-color-mark-violation, #cc3333) }
+.gradia-8e1fb7ed { fill: none; stroke: var(--gradia-color-edge-line, #999999); stroke-width: 3; stroke-dasharray: 10 6 }
+.gradia-770ec772 { font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; font-size: var(--gradia-size-font-edge, 16px); text-anchor: end; fill: var(--gradia-color-mark-violation, #cc3333); stroke: var(--gradia-color-edge-halo, #ffffff); stroke-width: 4.5; paint-order: stroke; stroke-linejoin: round }
+.gradia-92e1c07c { fill: var(--gradia-color-node-primary-box, #336699); stroke: var(--gradia-color-node-primary-border, #003366); stroke-width: 4 }
+.gradia-e8199b28 { fill: var(--gradia-color-node-primary-box, #336699); stroke: var(--gradia-color-node-primary-border, #003366); stroke-width: 2 }
+.gradia-47a707d0 { fill: var(--gradia-color-node-primary-name, #ffffff); stroke: var(--gradia-color-node-primary-name, #ffffff); stroke-width: 1 }
+.gradia-60d7c231 { fill: none; stroke: var(--gradia-color-node-primary-name, #ffffff); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round }
+.gradia-034f2f83 { font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; font-size: var(--gradia-size-font-node, 30px); font-weight: 600; text-anchor: middle; fill: var(--gradia-color-node-primary-name, #ffffff) }
+.gradia-c318c042 { fill: var(--gradia-color-node-regular-box, #e0f0ff); stroke: var(--gradia-color-node-regular-border, #c0d0e0); stroke-width: 4 }
+.gradia-613ab0f0 { fill: var(--gradia-color-node-regular-box, #e0f0ff); stroke: var(--gradia-color-node-regular-border, #c0d0e0); stroke-width: 2 }
+.gradia-2bb55e70 { fill: var(--gradia-color-node-regular-name, #336699); stroke: var(--gradia-color-node-regular-name, #336699); stroke-width: 1 }
+.gradia-d356e2cb { fill: none; stroke: var(--gradia-color-node-regular-name, #336699); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round }
+.gradia-f36ab1ca { font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; font-size: var(--gradia-size-font-node, 30px); font-weight: 600; text-anchor: middle; fill: var(--gradia-color-node-regular-name, #336699) }
+.gradia-cb45cba8 { fill: none; stroke: var(--gradia-color-edge-line, #999999); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round }
+</style>
+<marker id="gradia-3a914201e02d-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="21" markerHeight="21" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+<path d="M 0 1 L 9 5 L 0 9 z" class="gradia-6c7500cd"/>
+</marker>
+<marker id="gradia-3a914201e02d-alert" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="21" markerHeight="21" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+<path d="M 0 1 L 9 5 L 0 9 z" class="gradia-fea79086"/>
+</marker>
+</defs>
+<path d="M 444.5 142 l 0 19.80000000000001" class="gradia-cb45cba8"/>
+<path d="M 146 161.8 l 597 0" class="gradia-cb45cba8"/>
+<path d="M 64 304 l 0 245.5" class="gradia-cb45cba8"/>
+<path d="M 392 304 l 0 162.5" class="gradia-cb45cba8"/>
+<path d="M 661 304 l 0 426" class="gradia-cb45cba8"/>
+<path d="M 146 161.8 L 146 202" class="gradia-3167da4d" marker-end="url(#gradia-3a914201e02d-arrow)"/>
+<path d="M 458.5 161.8 L 458.5 202" class="gradia-3167da4d" marker-end="url(#gradia-3a914201e02d-arrow)"/>
+<path d="M 743 161.8 L 743 202" class="gradia-3167da4d" marker-end="url(#gradia-3a914201e02d-arrow)"/>
+<path d="M 64 383.5 L 104 383.5" class="gradia-3167da4d" marker-end="url(#gradia-3a914201e02d-arrow)"/>
+<path d="M 64 466.5 L 104 466.5" class="gradia-3167da4d" marker-end="url(#gradia-3a914201e02d-arrow)"/>
+<path d="M 64 549.5 L 104 549.5" class="gradia-3167da4d" marker-end="url(#gradia-3a914201e02d-arrow)"/>
+<path d="M 392 383.5 L 432 383.5" class="gradia-3167da4d" marker-end="url(#gradia-3a914201e02d-arrow)"/>
+<path d="M 392 466.5 L 432 466.5" class="gradia-3167da4d" marker-end="url(#gradia-3a914201e02d-arrow)"/>
+<path d="M 661 403 L 701 403" class="gradia-3167da4d" marker-end="url(#gradia-3a914201e02d-arrow)"/>
+<path d="M 661 505.5 L 701 505.5" class="gradia-3167da4d" marker-end="url(#gradia-3a914201e02d-arrow)"/>
+<path d="M 661 608 L 701 608" class="gradia-3167da4d" marker-end="url(#gradia-3a914201e02d-arrow)"/>
+<path d="M 661 730 L 701 730" class="gradia-3167da4d" marker-end="url(#gradia-3a914201e02d-arrow)"/>
+<path d="M 343 549.5 L 357 549.5 Q 371 549.5 371 535.5 L 371 344 Q 371 324 391 324 L 948 324 Q 968 324 968 344 L 968 491.5 Q 968 505.5 954 505.5 L 940 505.5" class="gradia-d9926a5f" marker-end="url(#gradia-3a914201e02d-alert)"/>
+<rect x="346" y="40" width="197" height="102" rx="6" class="gradia-92e1c07c"/>
+<circle cx="379" cy="91" r="18" class="gradia-e8199b28"/>
+<g transform="translate(379 91) scale(1.059)">
+<path d="M 0 -8.5 l 7.5 4 v 9 l -7.5 4 l -7.5 -4 v -9 z M -7.5 -4.5 l 7.5 4 l 7.5 -4 M 0 -0.5 v 9" class="gradia-60d7c231"/>
+</g>
+<text x="469.6" y="84.8" class="gradia-034f2f83">Product</text>
+<text x="469.6" y="118.8" class="gradia-034f2f83">Suite</text>
+<rect x="40" y="202" width="212" height="102" rx="6" class="gradia-c318c042"/>
+<circle cx="73" cy="253" r="18" class="gradia-613ab0f0"/>
+<g transform="translate(73 253) scale(1.059)">
+<path d="M -8 -6.5 h 16 v 13 h -16 z M -8 -2.5 h 16" class="gradia-d356e2cb"/>
+</g>
+<text x="171.4" y="246.8" class="gradia-f36ab1ca">Web</text>
+<text x="171.4" y="280.8" class="gradia-f36ab1ca">Frontend</text>
+<rect x="368" y="202" width="181" height="102" rx="6" class="gradia-c318c042"/>
+<circle cx="401" cy="253" r="18" class="gradia-613ab0f0"/>
+<g transform="translate(401 253) scale(1.059)">
+<path d="M -2.5 -8.5 h 5 q 2 0 2 2 v 13 q 0 2 -2 2 h -5 q -2 0 -2 -2 v -13 q 0 -2 2 -2 z M -1.5 5 h 3" class="gradia-d356e2cb"/>
+</g>
+<text x="483.8" y="246.8" class="gradia-f36ab1ca">Mobile</text>
+<text x="483.8" y="280.8" class="gradia-f36ab1ca">Apps</text>
+<rect x="637" y="202" width="212" height="102" rx="6" class="gradia-c318c042"/>
+<circle cx="670" cy="253" r="18" class="gradia-613ab0f0"/>
+<g transform="translate(670 253) scale(1.059)">
+<path d="M 5.5 0 L 8 0 M 3.89 3.89 L 5.66 5.66 M 0 5.5 L 0 8 M -3.89 3.89 L -5.66 5.66 M -5.5 0 L -8 0 M -3.89 -3.89 L -5.66 -5.66 M 0 -5.5 L 0 -8 M 3.89 -3.89 L 5.66 -5.66 M 5.5 0 a 5.5 5.5 0 1 0 -11 0 a 5.5 5.5 0 1 0 11 0 M 1.5 0 a 1.5 1.5 0 1 0 -3 0 a 1.5 1.5 0 1 0 3 0" class="gradia-d356e2cb"/>
+</g>
+<text x="768.4" y="246.8" class="gradia-f36ab1ca">Backend</text>
+<text x="768.4" y="280.8" class="gradia-f36ab1ca">Services</text>
+<rect x="104" y="352" width="192" height="63" rx="6" class="gradia-c318c042"/>
+<text x="200" y="394.3" class="gradia-f36ab1ca">Shop Pages</text>
+<rect x="104" y="435" width="239" height="63" rx="6" class="gradia-c318c042"/>
+<text x="223.5" y="477.3" class="gradia-f36ab1ca">Account Pages</text>
+<rect x="104" y="518" width="239" height="63" rx="6" class="gradia-c318c042"/>
+<text x="223.5" y="560.3" class="gradia-f36ab1ca">Admin Console</text>
+<rect x="432" y="352" width="160" height="63" rx="6" class="gradia-c318c042"/>
+<text x="512" y="394.3" class="gradia-f36ab1ca">iOS App</text>
+<rect x="432" y="435" width="208" height="63" rx="6" class="gradia-c318c042"/>
+<text x="536" y="477.3" class="gradia-f36ab1ca">Android App</text>
+<rect x="701" y="352" width="160" height="102" rx="6" class="gradia-c318c042"/>
+<text x="781" y="396.8" class="gradia-f36ab1ca">Catalog</text>
+<text x="781" y="430.8" class="gradia-f36ab1ca">Service</text>
+<rect x="701" y="474" width="239" height="63" rx="6" class="gradia-c318c042"/>
+<text x="820.5" y="516.3" class="gradia-f36ab1ca">Order Service</text>
+<rect x="701" y="557" width="160" height="102" rx="6" class="gradia-c318c042"/>
+<text x="781" y="601.8" class="gradia-f36ab1ca">Payment</text>
+<text x="781" y="635.8" class="gradia-f36ab1ca">Service</text>
+<rect x="701" y="679" width="160" height="102" rx="6" class="gradia-c318c042"/>
+<text x="781" y="723.8" class="gradia-f36ab1ca">Search</text>
+<text x="781" y="757.8" class="gradia-f36ab1ca">Service</text>
+<text x="940" y="317" class="gradia-770ec772">uses</text>
+</svg>

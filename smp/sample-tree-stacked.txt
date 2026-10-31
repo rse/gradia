@@ -1,0 +1,31 @@
+#type tree
+
+#config tree-row-max 6
+
+root:      "Product Suite"       [ badge: package, primary: true ]
+web:       "Web Frontend"        [ badge: browser ]
+mobile:    "Mobile Apps"         [ badge: mobile ]
+backend:   "Backend Services"    [ badge: service ]
+shop:      "Shop Pages"
+account:   "Account Pages"
+admin:     "Admin Console"
+ios:       "iOS App"
+android:   "Android App"
+catalog:   "Catalog Service"
+orders:    "Order Service"
+payments:  "Payment Service"
+search:    "Search Service"
+
+root    --> web
+root    --> mobile
+root    --> backend
+web     --> shop
+web     --> account
+web     --> admin
+mobile  --> ios
+mobile  --> android
+backend --> catalog
+backend --> orders
+backend --> payments
+backend --> search
+admin   --(uses)--> orders
