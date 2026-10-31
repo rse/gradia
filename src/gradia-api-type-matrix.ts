@@ -12,7 +12,7 @@ import { Shape, textShape, rectShape, badgeShape }
     from "./gradia-api-render-shape.js"
 import { LevelContext, rejectContainers }
     from "./gradia-api-render-container.js"
-import { defaultStyleOf, urlOf, orderOf, typeOf, badgeOf, clusterOf, BADGE_R }
+import { defaultStyleOf, urlOf, orderOf, typeOf, badgeOf, clusterOf, badgeRadius }
     from "./gradia-api-render-node.js"
 
 /*  the geometry of the cells, the headers, and the cluster bands  */
@@ -185,9 +185,14 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
     const fsName = config["size-font-prop"]
     const fsNum  = config["size-font-type"]
     const band   = depth * (BAND + HEAD_GAP)
+
+    /*  the room in front of every header label for the badges, reserved
+        in all headers as soon as one node carries a badge, so the labels
+        stay aligned  */
+    const radius = badgeRadius(fsName)
+    const room   = nodes.some((node) => badgeOf(node) !== undefined) ? radius * 2 + BADGE_GAP : 0
     const headOf = (list: Node[]) =>
-        Math.ceil(list.reduce((w, node) => Math.max(w, textWidth(node.name, fsName, true) +
-            (badgeOf(node) !== undefined ? BADGE_GAP + BADGE_R * 2 : 0)), 0) + HEAD_PAD * 2)
+        Math.ceil(list.reduce((w, node) => Math.max(w, textWidth(node.name, fsName, true)), 0) + room + HEAD_PAD * 2)
 
     /*  the titles of the rows and the columns: the type shared by all of
         their nodes, if any  */
@@ -212,17 +217,18 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
     const header = (node: Node, x: number, y: number, w: number, h: number, upright: boolean) => {
         const style = defaultStyleOf(node)
         shapes.push(rectShape(x, y, w, h, style.stroke, 2, undefined, style.fill, 6))
-        const [ tx, ty ] = upright ? [ x + CELL / 2, y + h - HEAD_PAD ] : [ x + HEAD_PAD, y + CELL / 2 ]
+        const [ tx, ty ] = upright ? [ x + CELL / 2, y + h - HEAD_PAD - room ] : [ x + HEAD_PAD + room, y + CELL / 2 ]
         shapes.push(textShape(tx, ty, node.name, "start", textWidth(node.name, fsName, true), style.text,
             "size-font-prop", fsName, { bold: true, url: urlOf(node), halo: false, upright }))
 
         /*  the optional badge, centered at the end of the box the label
-            runs towards (see "headOf" for the room reserved for it)  */
+            starts from (left of a row label, below a column label), like
+            inside a regular node box (see "room" for the room reserved for it)  */
         const badge = badgeOf(node)
         if (badge !== undefined)
             shapes.push(upright ?
-                badgeShape(x + w / 2, y + HEAD_PAD + BADGE_R, BADGE_R, badge, style) :
-                badgeShape(x + w - HEAD_PAD - BADGE_R, y + h / 2, BADGE_R, badge, style))
+                badgeShape(x + w / 2, y + h - HEAD_PAD - radius, radius, badge, style) :
+                badgeShape(x + HEAD_PAD + radius, y + h / 2, radius, badge, style))
     }
     cols.forEach((node, c) => header(node, x0 + c * CELL, hy, CELL, colH, true))
     rows.forEach((node, r) => header(node, hx, y0 + r * CELL, rowW, CELL, false))

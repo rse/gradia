@@ -12,8 +12,7 @@ import { Graph, Node, Edge }                 from "./gradia-api-model.js"
 import { Config }                            from "./gradia-api-config.js"
 import { Poly, ARITY_OFF, textWidth, arrowRoom, stubRoom, extentOf, Layout }
     from "./gradia-api-render-base.js"
-import { measureNodes, orderOf, badgeExtent }
-    from "./gradia-api-render-node.js"
+import { measureNodes, orderOf }             from "./gradia-api-render-node.js"
 import { LevelContext, GateSide }            from "./gradia-api-render-container.js"
 import { Side, TrackUser, simplifyPoly, assignPorts, assignTracks, computeHops,
     portGapOf, PORT_PAD }
@@ -491,11 +490,9 @@ const computeGrid = (
 ): Grid => {
     const colWidth  = Array.from({ length: ncols }, () => 0)
     const rowHeight = Array.from({ length: nrows }, () => 0)
-    const rowRise   = Array.from({ length: nrows }, () => 0)
     for (const node of nodes) {
         colWidth[col.get(node.id)!]  = Math.max(colWidth[col.get(node.id)!],  boxW.get(node.id)!)
         rowHeight[row.get(node.id)!] = Math.max(rowHeight[row.get(node.id)!], boxH.get(node.id)!)
-        rowRise[row.get(node.id)!]   = Math.max(rowRise[row.get(node.id)!],   badgeExtent(node))
     }
 
     /*  size the channels and gutters by their actual edge usage, grown
@@ -533,8 +530,7 @@ const computeGrid = (
     if (even && need.gut.size > 0)
         gutH.fill(Math.max(0, ...gutH))
 
-    /*  derive the column and row center positions (a row keeps the
-        badges of its boxes clear of the gutter above it)  */
+    /*  derive the column and row center positions  */
     const colCX: number[] = []
     const rowCY: number[] = []
     let x = config["size-canvas-margin"]
@@ -544,8 +540,8 @@ const computeGrid = (
     }
     let y = config["size-canvas-margin"]
     for (let r = 0; r < rowHeight.length; r++) {
-        rowCY.push(y + rowRise[r] + rowHeight[r] / 2)
-        y += rowRise[r] + rowHeight[r] + gutH[r]
+        rowCY.push(y + rowHeight[r] / 2)
+        y += rowHeight[r] + gutH[r]
     }
     const gutCY = rowCY.map((cy, g) => cy + rowHeight[g] / 2 + gutH[g] / 2)
     return { colWidth, rowHeight, chanCap, gutCap, chanW, gutH, colCX, rowCY, gutCY }
@@ -598,16 +594,14 @@ const packColumns = (
     for (const node of nodes)
         pushTo(byRow[row.get(node.id)!], find(node.id), node)
 
-    /*  the room above every box: of its self-loop detours or its badge  */
+    /*  the room above every box: of its self-loop detours  */
     const loopCnt = new Map<string, number>()
     for (const edge of edges)
         if (edge.source === edge.target)
             loopCnt.set(edge.source, (loopCnt.get(edge.source) ?? 0) + 1)
-    const nodeOf   = new Map(nodes.map((node) => [ node.id, node ]))
     const headRoom = (id: string) => {
         const cnt = loopCnt.get(id) ?? 0
-        return Math.max(cnt > 0 ? LOOP_TOP + (cnt - 1) * config["size-edge-track-gap"] + GUT_PAD : 0,
-            badgeExtent(nodeOf.get(id)!))
+        return cnt > 0 ? LOOP_TOP + (cnt - 1) * config["size-edge-track-gap"] + GUT_PAD : 0
     }
 
     /*  the lane span of every used gutter (from the channel of one end to

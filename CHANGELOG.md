@@ -56,6 +56,13 @@ ChangeLog
     closing a cycle and the dashed cycle outlines), "layer", and "slice" (the dashed edges in the
     "color-mark-violation" color), while keeping their layout unchanged.
 
+-   IMPROVEMENT [code]: draw the node "badge" inside the node box, vertically centered at its left
+    end, with the box widened and its text shifted to keep the text clear of it, instead of on the
+    top border of the box, so no layout has to reserve room for the badges above the boxes anymore,
+    and likewise in the headers of a "matrix" diagram in front of their labels (left of a row
+    label, below a column label) instead of behind them, with all labels aligned, while every
+    badge gets a thinner border and is sized relative to the font of its label.
+
 -   BUGFIX [code]: in a "matrix" diagram, outline the part of a cycle within a cluster only if it
     holds at least one edge among its own members, as an empty dashed block suggested a local cycle
     which only closes through other clusters.

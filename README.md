@@ -271,8 +271,9 @@ separated by `|`.
 
     - `order: <number>` places the node explicitly (see below),
 
-    - `badge: <icon>` draws a round badge with an icon on the top border
-      of the node box, near its left end: `person`, `team` (two persons),
+    - `badge: <icon>` draws a round badge with an icon inside the node
+      box, vertically centered at its left end, with the box widened to
+      keep its text clear of it: `person`, `team` (two persons),
       `bot` (a robot head), `device` (a monitor), `mobile` (a phone),
       `browser` (a window), `service` (a gear), `function` (a lambda),
       `api` (a ball and socket), `code` (angle brackets with a slash),
@@ -469,9 +470,9 @@ The diagram type `matrix` draws a dependency structure matrix (DSM):
   their titles in the corner.
 
 - **Badges**: a node `badge` is drawn inside its headers, at the end
-  their labels run towards (right of a row label, above a column
-  label), with the headers widened to keep it clear of the longest
-  label.
+  their labels start from (left of a row label, below a column label),
+  like inside a regular node box. As soon as one node carries a badge,
+  all labels are set back by its room, so they stay aligned.
 
 - **Cells**: the cell of row X and column Y counts the edges from X to
   Y (an edge whose arity is a plain non-negative integer counting as

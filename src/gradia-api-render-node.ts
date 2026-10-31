@@ -68,29 +68,34 @@ export const clusterOf = (node: Node): string[] | undefined => {
 const ATTRS_SPECIAL = new Set([ "url", "type", "primary", "group", "parent", "container", "order",
     "badge", "multiple", "cluster" ])
 
-/*  the special "badge" annotation (the icon in a badge on the top border
-    of the node box, an unknown value being ignored)  */
+/*  the special "badge" annotation (the icon in a badge at the left end
+    inside the node box, an unknown value being ignored)  */
 const nodeBadges = [ "person", "team", "bot", "device", "mobile", "browser", "service", "function",
     "api", "code", "package", "database", "cache", "queue", "document", "mail", "communication", "clock",
     "security", "cloud", "network" ] as const
 export type NodeBadge = typeof nodeBadges[number]
-export const BADGE_R = 13.5 /*  radius of the badge on the top border of a box      */
+export const BADGE_F = 0.6  /*  radius of a badge relative to its label font size   */
 export const BADGE_X = 15   /*  gap between the left end of a box and its badge     */
 export const badgeOf = (node: Node): NodeBadge | undefined => {
     const val = node.attrs.findLast((attr) => attr.key === "badge")?.val
     return nodeBadges.find((badge) => badge === val)
 }
 
+/*  the radius of a badge beside a label of the given font size, so it
+    keeps its look relative to the label at every font size  */
+export const badgeRadius = (fs: number): number =>
+    fs * BADGE_F
+
+/*  the room a badge claims at the left end of its box, in front of the
+    left text padding (none for a node without a badge)  */
+export const badgeRoom = (node: Node, config: Config): number =>
+    badgeOf(node) !== undefined ? BADGE_X + badgeRadius(config["size-font-node"]) * 2 : 0
+
 /*  the special "multiple" annotation (the node box drawn as a front box
     with copies behind it, offset towards the bottom-right)  */
 export const MULTI_OFF = 16  /*  offset of the rearmost copy behind the front box  */
 export const isMultiple = (node: Node): boolean =>
     node.attrs.findLast((attr) => attr.key === "multiple")?.val === "true"
-
-/*  the extent a node occupies above its box: the upper half of its
-    badge plus some clearance  */
-export const badgeExtent = (node: Node): number =>
-    badgeOf(node) !== undefined ? BADGE_R + 2 : 0
 
 /*  split the attributes rendered as text lines from the special ones  */
 export const attrsOfNode = (node: Node): Attr[] =>
@@ -152,11 +157,12 @@ export interface NodeLines {
 }
 
 /*  break the textual content of a node into its rendered lines, word-wrapped
-    to the configured maximum box width (shared by the measuring and the text
-    placement, so both can never disagree on the resulting line count)  */
+    to the configured maximum box width, less the room of its badge (shared by
+    the measuring and the text placement, so both can never disagree on the
+    resulting line count)  */
 export const linesOfNode = (node: Node, config: Config): NodeLines => {
     const max  = config["size-node-width-max"] > 0 ?
-        config["size-node-width-max"] - PAD_W * 2 : 0
+        config["size-node-width-max"] - PAD_W * 2 - badgeRoom(node, config) : 0
     const type = typeOf(node)
     return {
         name:  textWrap(node.name, config["size-font-node"], max),
@@ -165,6 +171,13 @@ export const linesOfNode = (node: Node, config: Config): NodeLines => {
             textWrap(`${attr.key}: ${attr.val}`, config["size-font-prop"], max))
     }
 }
+
+/*  the width of the widest text line of a node box  */
+export const linesWidth = (lines: NodeLines, config: Config): number =>
+    Math.max(0,
+        ...lines.name.map((line)  => textWidth(line, config["size-font-node"])),
+        ...lines.type.map((line)  => textWidth(line, config["size-font-type"])),
+        ...lines.attrs.map((line) => textWidth(line, config["size-font-prop"])))
 
 /*  determine node box sizes from their textual content (boxes are
     scaled up in height by a per-node factor, but never below the
@@ -192,14 +205,11 @@ export const measureNodes = (
             continue
         }
         const lines = linesOfNode(node, config)
-        const w = Math.max(0,
-            ...lines.name.map((line)  => textWidth(line, config["size-font-node"])),
-            ...lines.type.map((line)  => textWidth(line, config["size-font-type"])),
-            ...lines.attrs.map((line) => textWidth(line, config["size-font-prop"])))
+        const w = linesWidth(lines, config)
         const h = MIN_H(config) + (lines.name.length - 1) * NAME_H(config) +
             lines.type.length * TYPE_H(config) +
             (lines.attrs.length > 0 ? ATTR_P + (lines.attrs.length - 1) * ATTR_H(config) + ATTR_B : 0)
-        const bw = Math.max(config["size-node-width-min"], Math.ceil(w) + PAD_W * 2)
+        const bw = Math.max(config["size-node-width-min"], Math.ceil(w) + PAD_W * 2 + badgeRoom(node, config))
         const bh = Math.max(h, Math.ceil(h * scaleOf(node)))
 
         /*  a multiple node claims the room of the copies behind its front box  */

@@ -68,7 +68,7 @@ component relationships, data flows, dependency graphs, and similar structures.
   node carries one. The "cluster" attribute partitions the matrix (consecutive
   rows and columns, labeled and outlined as blocks on the diagonal, a
   "/"-separated cluster path nesting sub-clusters). A node "badge" is drawn
-  inside its row and column headers, at the end of their labels. It rejects
+  inside its row and column headers, in front of their labels. It rejects
   the input with an error if it contains a container.
 - "sequence": a sequence diagram: the nodes are the participants on top of
   their lifelines, left-to-right in declaration order or in ascending order of
@@ -218,8 +218,9 @@ as <name>, terminals as "...", optional parts as [ ... ], repeatable parts as
     out with the diagram type <type> ("graph", "hub", or "grid"), even if it
     has no members at all,
   - "order: <number>" places the node explicitly (see below),
-  - "badge: <icon>" draws a round badge with an icon on the top border of the
-    node box, near its left end: "person", "team" (two persons), "bot" (a
+  - "badge: <icon>" draws a round badge with an icon inside the node box,
+    vertically centered at its left end, with the box widened to keep its text
+    clear of it: "person", "team" (two persons), "bot" (a
     robot head), "device" (a monitor), "mobile" (a phone), "browser" (a
     window), "service" (a gear), "function" (a lambda), "api" (a ball and
     socket), "code" (angle brackets with a slash), "package" (a cube),

@@ -54,6 +54,7 @@ export interface ShapeBadge {
     kind:     "badge"
     x:        number
     y:        number
+    r:        number
     badge:    NodeBadge
     style:    NodeStyle
     box:      Area
@@ -92,7 +93,7 @@ export const rectShape = (x: number, y: number, w: number, h: number,
 
 /*  create a badge shape of the given radius, centered on its origin  */
 export const badgeShape = (x: number, y: number, r: number, badge: NodeBadge, style: NodeStyle): ShapeBadge =>
-    ({ kind: "badge", x, y, badge, style, box: [ x - r, y - r, x + r, y + r ] })
+    ({ kind: "badge", x, y, r, badge, style, box: [ x - r, y - r, x + r, y + r ] })
 
 /*  shift a shape by an offset (e.g. into its group box)  */
 export const shiftShape = (shape: Shape, dx: number, dy: number): Shape =>

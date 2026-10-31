@@ -1,5 +1,7 @@
 #type graph
 
+#config size-node-width-max 380
+
 user:      "Attendee"            [ badge: person ]
 staff:     "Venue Staff"         [ badge: team ]
 assistant: "Chat Assistant"      [ badge: bot ]
@@ -10,7 +12,7 @@ cdn:       "Edge CDN"            [ badge: cloud ]
 lan:       "Venue Network"       [ badge: network ]
 gateway:   "API Gateway"         [ badge: api ]
 auth:      "Identity Provider"   [ badge: security ]
-tickets:   "Ticket Service"      [ multiple: true, badge: service ]
+tickets:   "Mega Hyper Ticket Service" [ multiple: true, badge: service ]
 pricing:   "Pricing Library"     [ badge: package ]
 rules:     "Pricing Rules"       [ badge: code ]
 sessions:  "Session Cache"       [ badge: cache ]

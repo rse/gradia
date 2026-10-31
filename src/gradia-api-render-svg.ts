@@ -15,8 +15,8 @@ import { Poly, NodeStyle, Layout, GroupBox, ContainerBox,
     FS_GROUP, ARITY_OFF, ARITY_PAD, ARITY_GAP, ARROW_AIR, arityHeight, textWidth, escapeXML }
     from "./gradia-api-render-base.js"
 import { Shape }                                            from "./gradia-api-render-shape.js"
-import { linesOfNode, urlOf, typeOf, defaultStyleOf, containerHead, badgeOf, isMultiple, badgeExtent,
-    MULTI_OFF, BADGE_R, BADGE_X, type NodeBadge, MIN_H, NAME_H, ATTR_H, ATTR_P, TYPE_H, TYPE_D, HEAD_H }
+import { linesOfNode, linesWidth, urlOf, typeOf, defaultStyleOf, containerHead, badgeOf, badgeRoom, isMultiple,
+    MULTI_OFF, BADGE_X, PAD_W, badgeRadius, type NodeBadge, MIN_H, NAME_H, ATTR_H, ATTR_P, TYPE_H, TYPE_D, HEAD_H }
     from "./gradia-api-render-node.js"
 import { computeHops, piecesOf, pathOf, pointAt, segmentsOf, junctionsOf }
     from "./gradia-api-render-edge.js"
@@ -187,7 +187,7 @@ const labelPlacer = (
     const { nodes, cx, cy, boxW, boxH } = layout
     const occupied: Box[] = nodes.map((node) => [
         cx(node.id) - boxW.get(node.id)! / 2,
-        cy(node.id) - boxH.get(node.id)! / 2 - badgeExtent(node),
+        cy(node.id) - boxH.get(node.id)! / 2,
         cx(node.id) + boxW.get(node.id)! / 2, cy(node.id) + boxH.get(node.id)! / 2
     ])
 
@@ -408,27 +408,29 @@ const renderIcon = (badge: NodeBadge, style: NodeStyle, styler: Styler): string[
 
 /*  generate the SVG fragments of the outline of a node box: a single
     box, or, for a multiple node, a front box with two copies behind it,
-    offset towards the bottom-right, and an optional badge on the top
-    border of the (front) box, at a fixed distance from its left end  */
-const renderOutline = (badge: NodeBadge | undefined, multi: number, x: number, y: number, w: number, h: number,
-    style: NodeStyle, styler: Styler): string[] => {
+    offset towards the bottom-right, and an optional badge inside the
+    (front) box, vertically centered, at a fixed distance from its left end  */
+const renderOutline = (badge: NodeBadge | undefined, r: number, multi: number, x: number, y: number,
+    w: number, h: number, style: NodeStyle, styler: Styler): string[] => {
     const cls   = styler.box(style.fill, style.stroke, 4)
     const dash  = style.dash !== undefined ? ` stroke-dasharray="${escapeXML(style.dash)}"` : ""
     const parts = (multi > 0 ? [ multi, multi / 2, 0 ] : [ 0 ]).map((d) =>
         `<rect x="${x + d}" y="${y + d}" width="${w - multi}" height="${h - multi}" rx="6" class="${cls}"${dash}/>`)
     if (badge !== undefined)
-        parts.push(...renderBadge(badge, x + BADGE_X + BADGE_R, y, style, styler))
+        parts.push(...renderBadge(badge, x + BADGE_X + r, y + (h - multi) / 2, r, style, styler))
     return parts
 }
 
-/*  generate the SVG fragments of a badge centered on the given point, in
-    the colors of a node box (the icons are drawn for a badge radius of
-    17, so they scale with the badge to keep their room around them)  */
-const renderBadge = (badge: NodeBadge, bx: number, by: number, style: NodeStyle, styler: Styler): string[] => {
-    const cls  = styler.box(style.fill, style.stroke, 4)
+/*  generate the SVG fragments of a badge of the given radius centered on
+    the given point, in the colors of a node box, but with a thinner border,
+    as it sits inside the box (the icons are drawn for a badge radius of 17,
+    so they scale with the badge to keep their room around them)  */
+const renderBadge = (badge: NodeBadge, bx: number, by: number, r: number, style: NodeStyle,
+    styler: Styler): string[] => {
+    const cls  = styler.box(style.fill, style.stroke, 2)
     const dash = style.dash !== undefined ? ` stroke-dasharray="${escapeXML(style.dash)}"` : ""
-    return [ `<circle cx="${bx}" cy="${by}" r="${BADGE_R}" class="${cls}"${dash}/>`,
-        `<g transform="translate(${bx} ${by}) scale(${Math.round(BADGE_R / 17 * 1000) / 1000})">`,
+    return [ `<circle cx="${bx}" cy="${by}" r="${r}" class="${cls}"${dash}/>`,
+        `<g transform="translate(${bx} ${by}) scale(${Math.round(r / 17 * 1000) / 1000})">`,
         ...renderIcon(badge, style, styler), "</g>" ]
 }
 
@@ -444,11 +446,14 @@ const renderNode = (node: Node, layout: Layout, style: NodeStyle, styler: Styler
     const lines = linesOfNode(node, config)
     const multi = isMultiple(node) ? MULTI_OFF : 0
 
-    /*  the text sits centered on the front box of a multiple node  */
-    const tx    = cx(node.id) - multi / 2
+    /*  the text sits centered on the front box of a multiple node, but
+        shifted right as far as needed to keep it clear of the badge  */
+    const half  = linesWidth(lines, config) / 2
+    const tx    = Math.max(cx(node.id) - multi / 2, x + badgeRoom(node, config) + PAD_W + half)
     const ty0   = -multi / 2
     const url   = urlOf(node)
-    const parts = renderOutline(badgeOf(node), multi, x, y, w, h, style, styler)
+    const parts = renderOutline(badgeOf(node), badgeRadius(config["size-font-node"]), multi, x, y, w, h,
+        style, styler)
 
     /*  vertically center the textual content block within the box, with
         the optional type lines shifting the name and attributes down and
@@ -778,7 +783,7 @@ const renderContainer = (c: ContainerBox, styler: Styler, config: Config): strin
 /*  generate the SVG fragment for a single free-standing shape  */
 const renderShape = (shape: Shape, styler: Styler): string => {
     if (shape.kind === "badge")
-        return renderBadge(shape.badge, shape.x, shape.y, shape.style, styler).join("")
+        return renderBadge(shape.badge, shape.x, shape.y, shape.r, shape.style, styler).join("")
     if (shape.kind === "path")
         return `<path d="M ${shape.x} ${shape.y} ${shape.d}" class="${shape.fill !== undefined ?
             styler.box(shape.fill, shape.stroke, shape.width) : styler.line(shape.stroke, shape.width)}"` +
