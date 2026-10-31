@@ -56,6 +56,25 @@ ChangeLog
     closing a cycle and the dashed cycle outlines), "layer", and "slice" (the dashed edges in the
     "color-mark-violation" color), while keeping their layout unchanged.
 
+-   BUGFIX [code]: in a "matrix" diagram, outline the part of a cycle within a cluster only if it
+    holds at least one edge among its own members, as an empty dashed block suggested a local cycle
+    which only closes through other clusters.
+
+-   IMPROVEMENT [othr]: extend the playground to all samples (and hence all diagram types), and
+    rename the samples after their diagram type ("broadcast-graph" to "sample-graph-regular",
+    "broadcast-crowded" to "sample-graph-crowded", "huica-sample" to "sample-graph-simple",
+    "container-sample" to "sample-graph-container", "badge-sample" to "sample-graph-badges",
+    "broadcast-hub" to "sample-hub-regular", "broadcast-grid" to "sample-grid-regular",
+    "matrix-acyclic" to "sample-matrix-regular", "matrix-clusters" to "sample-matrix-full", and
+    "sequence-sample" to "sample-sequence-regular"), merge the samples "layer-sample",
+    "layer-clusters", and "layer-violations" into the new sample "sample-layer-regular", merge the
+    samples "slice-violations" and "slice-clusters" into the new sample "sample-slice-regular", and
+    remove the samples "matrix-sample", "matrix-cycles", "matrix-topological", and "slice-sample".
+
+-   IMPROVEMENT [othr]: add the sample "sample-hub-crowded", a "hub" diagram (derived from the
+    "Service" component of the Broadcast regression diagrams) whose input and output columns both
+    wrap into two staggered sub-columns through the option "hub-node-count-max".
+
 -   IMPROVEMENT [code]: bundle the edges of crowded channels and gutters (whose parallel tracks do
     not fit at the full "size-edge-track-gap") instead of squeezing their tracks into one grey bar:
     the edges of the same name leading to the same target node side with the same arity, or else

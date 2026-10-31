@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="20 20 2771 1186" width="2771" height="1186">
+<defs>
+<style>
+.gradia-3167da4d { fill: none; stroke: var(--gradia-color-edge-line, #999999); stroke-width: 3 }
+.gradia-6c7500cd { fill: var(--gradia-color-edge-line, #999999) }
+.gradia-88d12a47 { font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; font-size: var(--gradia-size-font-edge, 16px); text-anchor: end; fill: var(--gradia-color-edge-name, #333333); stroke: var(--gradia-color-edge-halo, #ffffff); stroke-width: 4.5; paint-order: stroke; stroke-linejoin: round }
+.gradia-92e1c07c { fill: var(--gradia-color-node-primary-box, #336699); stroke: var(--gradia-color-node-primary-border, #003366); stroke-width: 4 }
+.gradia-168938dc { font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; font-size: var(--gradia-size-font-type, 16px); text-anchor: middle; fill: var(--gradia-color-node-primary-name, #ffffff) }
+.gradia-034f2f83 { font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; font-size: var(--gradia-size-font-node, 30px); font-weight: 600; text-anchor: middle; fill: var(--gradia-color-node-primary-name, #ffffff) }
+.gradia-c318c042 { fill: var(--gradia-color-node-regular-box, #e0f0ff); stroke: var(--gradia-color-node-regular-border, #c0d0e0); stroke-width: 4 }
+.gradia-7838a2f5 { font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; font-size: var(--gradia-size-font-type, 16px); text-anchor: middle; fill: var(--gradia-color-node-regular-name, #336699) }
+.gradia-f36ab1ca { font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; font-size: var(--gradia-size-font-node, 30px); font-weight: 600; text-anchor: middle; fill: var(--gradia-color-node-regular-name, #336699) }
+</style>
+<marker id="gradia-0a3dbd0b2bea-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="21" markerHeight="21" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+<path d="M 0 1 L 9 5 L 0 9 z" class="gradia-6c7500cd"/>
+</marker>
+</defs>
+<path d="M 513 86.5 L 1146 86.5 Q 1166 86.5 1166 106.5 L 1166 305 Q 1166 325 1186 325 L 1301.2 325" class="gradia-3167da4d" marker-end="url(#gradia-0a3dbd0b2bea-arrow)"/>
+<path d="M 1042 145 L 1134 145 Q 1154 145 1154 165 L 1154 337 Q 1154 357 1174 357 L 1301.2 357" class="gradia-3167da4d" marker-end="url(#gradia-0a3dbd0b2bea-arrow)"/>
+<path d="M 513 203.5 L 1122 203.5 Q 1142 203.5 1142 223.5 L 1142 369 Q 1142 389 1162 389 L 1301.2 389" class="gradia-3167da4d" marker-end="url(#gradia-0a3dbd0b2bea-arrow)"/>
+<path d="M 1042 262 L 1110 262 Q 1130 262 1130 282 L 1130 401 Q 1130 421 1150 421 L 1301.2 421" class="gradia-3167da4d" marker-end="url(#gradia-0a3dbd0b2bea-arrow)"/>
+<path d="M 513 320.5 L 1098 320.5 Q 1118 320.5 1118 340.5 L 1118 433 Q 1118 453 1138 453 L 1301.2 453" class="gradia-3167da4d" marker-end="url(#gradia-0a3dbd0b2bea-arrow)"/>
+<path d="M 1042 379 L 1086 379 Q 1106 379 1106 399 L 1106 465 Q 1106 485 1126 485 L 1301.2 485" class="gradia-3167da4d" marker-end="url(#gradia-0a3dbd0b2bea-arrow)"/>
+<path d="M 513 437.5 L 1074 437.5 Q 1094 437.5 1094 457.5 L 1094 497 Q 1094 517 1114 517 L 1301.2 517" class="gradia-3167da4d" marker-end="url(#gradia-0a3dbd0b2bea-arrow)"/>
+<path d="M 1042 496 L 1062 496 Q 1082 496 1082 516 L 1082 529 Q 1082 549 1102 549 L 1301.2 549" class="gradia-3167da4d" marker-end="url(#gradia-0a3dbd0b2bea-arrow)"/>
+<path d="M 513 554.5 L 1056.75 554.5 Q 1070 554.5 1070 567.75 L 1070 567.75 Q 1070 581 1083.25 581 L 1301.2 581" class="gradia-3167da4d" marker-end="url(#gradia-0a3dbd0b2bea-arrow)"/>
+<path d="M 1042 613 L 1301.2 613" class="gradia-3167da4d" marker-end="url(#gradia-0a3dbd0b2bea-arrow)"/>
+<path d="M 513 671.5 L 1056.75 671.5 Q 1070 671.5 1070 658.25 L 1070 658.25 Q 1070 645 1083.25 645 L 1301.2 645" class="gradia-3167da4d" marker-end="url(#gradia-0a3dbd0b2bea-arrow)"/>
+<path d="M 1042 730 L 1062 730 Q 1082 730 1082 710 L 1082 697 Q 1082 677 1102 677 L 1301.2 677" class="gradia-3167da4d" marker-end="url(#gradia-0a3dbd0b2bea-arrow)"/>
+<path d="M 513 788.5 L 1074 788.5 Q 1094 788.5 1094 768.5 L 1094 729 Q 1094 709 1114 709 L 1301.2 709" class="gradia-3167da4d" marker-end="url(#gradia-0a3dbd0b2bea-arrow)"/>
+<path d="M 1042 847 L 1086 847 Q 1106 847 1106 827 L 1106 761 Q 1106 741 1126 741 L 1301.2 741" class="gradia-3167da4d" marker-end="url(#gradia-0a3dbd0b2bea-arrow)"/>
+<path d="M 513 905.5 L 1098 905.5 Q 1118 905.5 1118 885.5 L 1118 793 Q 1118 773 1138 773 L 1301.2 773" class="gradia-3167da4d" marker-end="url(#gradia-0a3dbd0b2bea-arrow)"/>
+<path d="M 1042 964 L 1110 964 Q 1130 964 1130 944 L 1130 825 Q 1130 805 1150 805 L 1301.2 805" class="gradia-3167da4d" marker-end="url(#gradia-0a3dbd0b2bea-arrow)"/>
+<path d="M 513 1022.5 L 1122 1022.5 Q 1142 1022.5 1142 1002.5 L 1142 857 Q 1142 837 1162 837 L 1301.2 837" class="gradia-3167da4d" marker-end="url(#gradia-0a3dbd0b2bea-arrow)"/>
+<path d="M 1042 1081 L 1134 1081 Q 1154 1081 1154 1061 L 1154 889 Q 1154 869 1174 869 L 1301.2 869" class="gradia-3167da4d" marker-end="url(#gradia-0a3dbd0b2bea-arrow)"/>
+<path d="M 513 1139.5 L 1146 1139.5 Q 1166 1139.5 1166 1119.5 L 1166 921 Q 1166 901 1186 901 L 1301.2 901" class="gradia-3167da4d" marker-end="url(#gradia-0a3dbd0b2bea-arrow)"/>
+<path d="M 1521.2 457 L 1541.2 457 Q 1561.2 457 1561.2 437 L 1561.2 252.75 Q 1561.2 232.75 1581.2 232.75 L 1768.4 232.75" class="gradia-3167da4d" marker-end="url(#gradia-0a3dbd0b2bea-arrow)"/>
+<path d="M 1521.2 481 L 1553.2 481 Q 1573.2 481 1573.2 461 L 1573.2 311.25 Q 1573.2 291.25 1593.2 291.25 L 2312.4 291.25" class="gradia-3167da4d" marker-end="url(#gradia-0a3dbd0b2bea-arrow)"/>
+<path d="M 1521.2 505 L 1565.2 505 Q 1585.2 505 1585.2 485 L 1585.2 369.75 Q 1585.2 349.75 1605.2 349.75 L 1768.4 349.75" class="gradia-3167da4d" marker-end="url(#gradia-0a3dbd0b2bea-arrow)"/>
+<path d="M 1521.2 529 L 1577.2 529 Q 1597.2 529 1597.2 509 L 1597.2 428.25 Q 1597.2 408.25 1617.2 408.25 L 2312.4 408.25" class="gradia-3167da4d" marker-end="url(#gradia-0a3dbd0b2bea-arrow)"/>
+<path d="M 1521.2 553 L 1589.2 553 Q 1609.2 553 1609.2 533 L 1609.2 486.75 Q 1609.2 466.75 1629.2 466.75 L 1768.4 466.75" class="gradia-3167da4d" marker-end="url(#gradia-0a3dbd0b2bea-arrow)"/>
+<path d="M 1521.2 577 L 1601.2 577 Q 1621.2 577 1621.2 557 L 1621.2 545.25 Q 1621.2 525.25 1641.2 525.25 L 2312.4 525.25" class="gradia-3167da4d" marker-end="url(#gradia-0a3dbd0b2bea-arrow)"/>
+<path d="M 1521.2 625 L 1624.575 625 Q 1633.2 625 1633.2 633.625 L 1633.2 633.625 Q 1633.2 642.25 1641.825 642.25 L 2312.4 642.25" class="gradia-3167da4d" marker-end="url(#gradia-0a3dbd0b2bea-arrow)"/>
+<path d="M 1521.2 649 L 1601.2 649 Q 1621.2 649 1621.2 669 L 1621.2 680.75 Q 1621.2 700.75 1641.2 700.75 L 1768.4 700.75" class="gradia-3167da4d" marker-end="url(#gradia-0a3dbd0b2bea-arrow)"/>
+<path d="M 1521.2 673 L 1589.2 673 Q 1609.2 673 1609.2 693 L 1609.2 739.25 Q 1609.2 759.25 1629.2 759.25 L 2312.4 759.25" class="gradia-3167da4d" marker-end="url(#gradia-0a3dbd0b2bea-arrow)"/>
+<path d="M 1521.2 697 L 1577.2 697 Q 1597.2 697 1597.2 717 L 1597.2 797.75 Q 1597.2 817.75 1617.2 817.75 L 1768.4 817.75" class="gradia-3167da4d" marker-end="url(#gradia-0a3dbd0b2bea-arrow)"/>
+<path d="M 1521.2 721 L 1565.2 721 Q 1585.2 721 1585.2 741 L 1585.2 856.25 Q 1585.2 876.25 1605.2 876.25 L 2312.4 876.25" class="gradia-3167da4d" marker-end="url(#gradia-0a3dbd0b2bea-arrow)"/>
+<path d="M 1521.2 745 L 1553.2 745 Q 1573.2 745 1573.2 765 L 1573.2 914.75 Q 1573.2 934.75 1593.2 934.75 L 1768.4 934.75" class="gradia-3167da4d" marker-end="url(#gradia-0a3dbd0b2bea-arrow)"/>
+<path d="M 1521.2 769 L 1541.2 769 Q 1561.2 769 1561.2 789 L 1561.2 973.25 Q 1561.2 993.25 1581.2 993.25 L 2312.4 993.25" class="gradia-3167da4d" marker-end="url(#gradia-0a3dbd0b2bea-arrow)"/>
+<path d="M 1521.2 793 L 1535.2 793 Q 1549.2 793 1549.2 807 L 1549.2 1031.75 Q 1549.2 1051.75 1569.2 1051.75 L 1768.4 1051.75" class="gradia-3167da4d" marker-end="url(#gradia-0a3dbd0b2bea-arrow)"/>
+<path d="M 1521.2 601 L 1624.575 601 Q 1633.2 601 1633.2 592.375 L 1633.2 592.375 Q 1633.2 583.75 1641.825 583.75 L 1768.4 583.75" class="gradia-3167da4d" marker-end="url(#gradia-0a3dbd0b2bea-arrow)"/>
+<path d="M 1521.2 433 L 1535.2 433 Q 1549.2 433 1549.2 419 L 1549.2 194.25 Q 1549.2 174.25 1569.2 174.25 L 2312.4 174.25" class="gradia-3167da4d" marker-end="url(#gradia-0a3dbd0b2bea-arrow)"/>
+<rect x="1301.2" y="304" width="220" height="618" rx="6" class="gradia-92e1c07c"/>
+<text x="1411.2" y="600.8" class="gradia-168938dc">COMPONENT</text>
+<text x="1411.2" y="636.8" class="gradia-034f2f83">Service</text>
+<rect x="293" y="40" width="220" height="93" rx="6" class="gradia-c318c042"/>
+<text x="403" y="74.3" class="gradia-7838a2f5">COMPONENT</text>
+<text x="403" y="110.3" class="gradia-f36ab1ca">Relay</text>
+<rect x="662" y="98.5" width="380" height="93" rx="6" class="gradia-c318c042"/>
+<text x="852" y="132.8" class="gradia-7838a2f5">COMPONENT</text>
+<text x="852" y="168.8" class="gradia-f36ab1ca">Authentication Service</text>
+<rect x="180" y="157" width="333" height="93" rx="6" class="gradia-c318c042"/>
+<text x="346.5" y="191.3" class="gradia-7838a2f5">COMPONENT</text>
+<text x="346.5" y="227.3" class="gradia-f36ab1ca">Translation Service</text>
+<rect x="725" y="215.5" width="317" height="93" rx="6" class="gradia-c318c042"/>
+<text x="883.5" y="249.8" class="gradia-7838a2f5">COMPONENT</text>
+<text x="883.5" y="285.8" class="gradia-f36ab1ca">Statistics Service</text>
+<rect x="196" y="274" width="317" height="93" rx="6" class="gradia-c318c042"/>
+<text x="354.5" y="308.3" class="gradia-7838a2f5">UNIT</text>
+<text x="354.5" y="344.3" class="gradia-f36ab1ca">Service Event Loop</text>
+<rect x="631" y="332.5" width="411" height="93" rx="6" class="gradia-c318c042"/>
+<text x="836.5" y="366.8" class="gradia-7838a2f5">CONCERN</text>
+<text x="836.5" y="402.8" class="gradia-f36ab1ca">Config-File Provisioning</text>
+<rect x="102" y="391" width="411" height="93" rx="6" class="gradia-c318c042"/>
+<text x="307.5" y="425.3" class="gradia-7838a2f5">TACTIC</text>
+<text x="307.5" y="461.3" class="gradia-f36ab1ca">Live Failover Continuity</text>
+<rect x="740" y="449.5" width="302" height="93" rx="6" class="gradia-c318c042"/>
+<text x="891" y="483.79999999999995" class="gradia-7838a2f5">TACTIC</text>
+<text x="891" y="519.8" class="gradia-f36ab1ca">Privacy by Design</text>
+<rect x="165" y="508" width="348" height="93" rx="6" class="gradia-c318c042"/>
+<text x="339" y="542.3" class="gradia-7838a2f5">TACTIC</text>
+<text x="339" y="578.3" class="gradia-f36ab1ca">Real-Time Reactivity</text>
+<rect x="756" y="566.5" width="286" height="93" rx="6" class="gradia-c318c042"/>
+<text x="899" y="600.8" class="gradia-7838a2f5">TACTIC</text>
+<text x="899" y="636.8" class="gradia-f36ab1ca">Abuse Resistance</text>
+<rect x="133" y="625" width="380" height="93" rx="6" class="gradia-c318c042"/>
+<text x="323" y="659.3" class="gradia-7838a2f5">TACTIC</text>
+<text x="323" y="695.3" class="gradia-f36ab1ca">Shared Typed Contracts</text>
+<rect x="694" y="683.5" width="348" height="93" rx="6" class="gradia-c318c042"/>
+<text x="868" y="717.8" class="gradia-7838a2f5">DECISION</text>
+<text x="868" y="753.8" class="gradia-f36ab1ca">MQTT over WebSockets</text>
+<rect x="71" y="742" width="442" height="93" rx="6" class="gradia-c318c042"/>
+<text x="292" y="776.3" class="gradia-7838a2f5">DECISION</text>
+<text x="292" y="812.3" class="gradia-f36ab1ca">No Permanent User Accounts</text>
+<rect x="553" y="800.5" width="489" height="93" rx="6" class="gradia-c318c042"/>
+<text x="797.5" y="834.8" class="gradia-7838a2f5">DECISION</text>
+<text x="797.5" y="870.8" class="gradia-f36ab1ca">Channels apart from Resources</text>
+<rect x="55" y="859" width="458" height="93" rx="6" class="gradia-c318c042"/>
+<text x="284" y="893.3" class="gradia-7838a2f5">DECISION</text>
+<text x="284" y="929.3" class="gradia-f36ab1ca">One Modular Service Process</text>
+<rect x="740" y="917.5" width="302" height="93" rx="6" class="gradia-c318c042"/>
+<text x="891" y="951.8" class="gradia-7838a2f5">DECISION</text>
+<text x="891" y="987.8" class="gradia-f36ab1ca">Typed SQL Builder</text>
+<rect x="40" y="976" width="473" height="93" rx="6" class="gradia-c318c042"/>
+<text x="276.5" y="1010.3" class="gradia-7838a2f5">CODE-PATTERN</text>
+<text x="276.5" y="1046.3" class="gradia-f36ab1ca">Declarative Permission Check</text>
+<rect x="787" y="1034.5" width="255" height="93" rx="6" class="gradia-c318c042"/>
+<text x="914.5" y="1068.8" class="gradia-7838a2f5">CODE-PATTERN</text>
+<text x="914.5" y="1104.8" class="gradia-f36ab1ca">DAO per Entity</text>
+<rect x="149" y="1093" width="364" height="93" rx="6" class="gradia-c318c042"/>
+<text x="331" y="1127.3" class="gradia-7838a2f5">CODE-PATTERN</text>
+<text x="331" y="1163.3" class="gradia-f36ab1ca">Version-Checked Write</text>
+<rect x="2312.4" y="127.75" width="220" height="93" rx="6" class="gradia-c318c042"/>
+<text x="2422.4" y="162.05" class="gradia-7838a2f5">COMPONENT</text>
+<text x="2422.4" y="198.05" class="gradia-f36ab1ca">Database</text>
+<rect x="1768.4" y="186.25" width="239" height="93" rx="6" class="gradia-c318c042"/>
+<text x="1887.9" y="220.55" class="gradia-7838a2f5">REQUIREMENT</text>
+<text x="1887.9" y="256.55" class="gradia-f36ab1ca">Ask Questions</text>
+<rect x="2312.4" y="244.75" width="239" height="93" rx="6" class="gradia-c318c042"/>
+<text x="2431.9" y="279.05" class="gradia-7838a2f5">REQUIREMENT</text>
+<text x="2431.9" y="315.05" class="gradia-f36ab1ca">Chat Messages</text>
+<rect x="1768.4" y="303.25" width="458" height="93" rx="6" class="gradia-c318c042"/>
+<text x="1997.4" y="337.55" class="gradia-7838a2f5">REQUIREMENT</text>
+<text x="1997.4" y="373.55" class="gradia-f36ab1ca">Moderate Chat and Questions</text>
+<rect x="2312.4" y="361.75" width="458" height="93" rx="6" class="gradia-c318c042"/>
+<text x="2541.4" y="396.05" class="gradia-7838a2f5">REQUIREMENT</text>
+<text x="2541.4" y="432.05" class="gradia-f36ab1ca">Forward Inputs to Presenter</text>
+<rect x="1768.4" y="420.25" width="504" height="93" rx="6" class="gradia-c318c042"/>
+<text x="2020.4" y="454.55" class="gradia-7838a2f5">REQUIREMENT</text>
+<text x="2020.4" y="490.55" class="gradia-f36ab1ca">Live Configuration Propagation</text>
+<rect x="2312.4" y="478.75" width="286" height="93" rx="6" class="gradia-c318c042"/>
+<text x="2455.4" y="513.05" class="gradia-7838a2f5">PATTERN</text>
+<text x="2455.4" y="549.05" class="gradia-f36ab1ca">Modular Monolith</text>
+<rect x="1768.4" y="537.25" width="333" height="93" rx="6" class="gradia-c318c042"/>
+<text x="1934.9" y="571.55" class="gradia-7838a2f5">INTERFACE</text>
+<text x="1934.9" y="607.55" class="gradia-f36ab1ca">Server Command Line</text>
+<rect x="2312.4" y="595.75" width="220" height="93" rx="6" class="gradia-c318c042"/>
+<text x="2422.4" y="630.05" class="gradia-7838a2f5">ENTITY</text>
+<text x="2422.4" y="666.05" class="gradia-f36ab1ca">Event</text>
+<rect x="1768.4" y="654.25" width="220" height="93" rx="6" class="gradia-c318c042"/>
+<text x="1878.4" y="688.55" class="gradia-7838a2f5">ENTITY</text>
+<text x="1878.4" y="724.55" class="gradia-f36ab1ca">AgendaPoint</text>
+<rect x="2312.4" y="712.75" width="220" height="93" rx="6" class="gradia-c318c042"/>
+<text x="2422.4" y="747.05" class="gradia-7838a2f5">ENTITY</text>
+<text x="2422.4" y="783.05" class="gradia-f36ab1ca">Channel</text>
+<rect x="1768.4" y="771.25" width="220" height="93" rx="6" class="gradia-c318c042"/>
+<text x="1878.4" y="805.55" class="gradia-7838a2f5">ENTITY</text>
+<text x="1878.4" y="841.55" class="gradia-f36ab1ca">Resource</text>
+<rect x="2312.4" y="829.75" width="220" height="93" rx="6" class="gradia-c318c042"/>
+<text x="2422.4" y="864.05" class="gradia-7838a2f5">ENTITY</text>
+<text x="2422.4" y="900.05" class="gradia-f36ab1ca">Role</text>
+<rect x="1768.4" y="888.25" width="220" height="93" rx="6" class="gradia-c318c042"/>
+<text x="1878.4" y="922.55" class="gradia-7838a2f5">ENTITY</text>
+<text x="1878.4" y="958.55" class="gradia-f36ab1ca">Message</text>
+<rect x="2312.4" y="946.75" width="220" height="93" rx="6" class="gradia-c318c042"/>
+<text x="2422.4" y="981.05" class="gradia-7838a2f5">ENTITY</text>
+<text x="2422.4" y="1017.05" class="gradia-f36ab1ca">MessageText</text>
+<rect x="1768.4" y="1005.25" width="220" height="93" rx="6" class="gradia-c318c042"/>
+<text x="1878.4" y="1039.55" class="gradia-7838a2f5">ENTITY</text>
+<text x="1878.4" y="1075.55" class="gradia-f36ab1ca">QuestionTag</text>
+<text x="1277.2" y="318" class="gradia-88d12a47">depends-on</text>
+<text x="1277.2" y="350" class="gradia-88d12a47">part-of</text>
+<text x="1277.2" y="382" class="gradia-88d12a47">part-of</text>
+<text x="1277.2" y="414" class="gradia-88d12a47">part-of</text>
+<text x="1277.2" y="446" class="gradia-88d12a47">hosts</text>
+<text x="1277.2" y="478" class="gradia-88d12a47">elements</text>
+<text x="1277.2" y="510" class="gradia-88d12a47">affects</text>
+<text x="1277.2" y="542" class="gradia-88d12a47">affects</text>
+<text x="1277.2" y="574" class="gradia-88d12a47">affects</text>
+<text x="1277.2" y="606" class="gradia-88d12a47">affects</text>
+<text x="1277.2" y="638" class="gradia-88d12a47">affects</text>
+<text x="1277.2" y="670" class="gradia-88d12a47">affects</text>
+<text x="1277.2" y="702" class="gradia-88d12a47">affects</text>
+<text x="1277.2" y="734" class="gradia-88d12a47">affects</text>
+<text x="1277.2" y="766" class="gradia-88d12a47">affects</text>
+<text x="1277.2" y="798" class="gradia-88d12a47">affects</text>
+<text x="1277.2" y="830" class="gradia-88d12a47">applies-to</text>
+<text x="1277.2" y="862" class="gradia-88d12a47">applies-to</text>
+<text x="1277.2" y="894" class="gradia-88d12a47">applies-to</text>
+<text x="1744.4" y="225.75" class="gradia-88d12a47">realizes</text>
+<text x="2288.4" y="284.25" class="gradia-88d12a47">realizes</text>
+<text x="1744.4" y="342.75" class="gradia-88d12a47">realizes</text>
+<text x="1760.4" y="401.25" class="gradia-88d12a47">realizes</text>
+<text x="1744.4" y="459.75" class="gradia-88d12a47">realizes</text>
+<text x="1760.4" y="518.25" class="gradia-88d12a47">patterns</text>
+<text x="2288.4" y="635.25" class="gradia-88d12a47">owns</text>
+<text x="1744.4" y="693.75" class="gradia-88d12a47">owns</text>
+<text x="2288.4" y="752.25" class="gradia-88d12a47">owns</text>
+<text x="1744.4" y="810.75" class="gradia-88d12a47">owns</text>
+<text x="2288.4" y="869.25" class="gradia-88d12a47">owns</text>
+<text x="1744.4" y="927.75" class="gradia-88d12a47">owns</text>
+<text x="2288.4" y="986.25" class="gradia-88d12a47">owns</text>
+<text x="1744.4" y="1044.75" class="gradia-88d12a47">owns</text>
+<text x="1744.4" y="576.75" class="gradia-88d12a47">provides</text>
+<text x="2288.4" y="167.25" class="gradia-88d12a47">depends-on</text>
+</svg>

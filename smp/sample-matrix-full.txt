@@ -3,9 +3,9 @@
 web:      "Web Client"        [ type: Component, cluster: Frontend, badge: browser ]
 mobile:   "Mobile App"        [ type: Component, cluster: Frontend, badge: mobile ]
 gateway:  "API Gateway"       [ type: Component, cluster: Backend,  badge: api, primary: true ]
-orders:   "Order Service"     [ type: Component, cluster: Backend/Services,  badge: service ]
-billing:  "Billing Service"   [ type: Component, cluster: Backend/Services,  badge: service ]
-events:   "Event Bus"         [ type: Component, cluster: Backend/Msg,       badge: queue ]
+orders:   "Order Service"     [ type: Component, cluster: Backend,  badge: service ]
+billing:  "Billing Service"   [ type: Component, cluster: Backend,  badge: service ]
+events:   "Event Bus"         [ type: Component, cluster: Backend,  badge: queue ]
 repo:     "Order Repository"  [ type: Component, cluster: Data,     badge: database ]
 ledger:   "Ledger Store"      [ type: Component, cluster: Data,     badge: database ]
 

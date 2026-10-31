@@ -2,7 +2,7 @@
 
 client:  "Web Client"     [ type: ACTOR ]
 gateway: "API Gateway"    [ type: BOUNDARY ]
-service: "Order Service"  [ type: CONTROL ]
+service: "Order Service"  [ type: CONTROL, primary: true ]
 order:   "Order"          [ type: ENTITY ]
 db:      "Order Database" [ type: ENTITY ]
 audit:   "Audit Log"

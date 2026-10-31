@@ -1,0 +1,23 @@
+#type slice
+
+profile: "Profile Page"     [ slice: Users,    cluster: Identity ]
+users:   "User Service"     [ slice: Users,    cluster: Identity ]
+feed:    "Feed Page"        [ slice: Posts,    cluster: Social/Publishing ]
+posts:   "Post Service"     [ slice: Posts,    cluster: Social/Publishing, primary: true ]
+store:   "Post Store"       [ slice: Posts,    cluster: Social/Publishing ]
+inbox:   "Inbox Page"       [ slice: Messages, cluster: Social/Messaging ]
+mail:    "Message Service"  [ slice: Messages, cluster: Social/Messaging ]
+logger:  "Logger"
+config:  "Configuration"
+
+profile --> users
+users   --(recent)--> posts
+feed    --> posts
+posts   --> store
+posts   --(author)--> users
+inbox   --> mail
+mail    --> users
+mail    --(notify)--> posts
+store   --> store
+users   --> logger
+mail    --> config

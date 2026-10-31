@@ -1,0 +1,77 @@
+#type hub
+
+#config hub-node-count-max 8
+
+service:      "Service"                        [ type: COMPONENT, primary: true ]
+relay:        "Relay"                          [ type: COMPONENT ]
+auth:         "Authentication Service"         [ type: COMPONENT ]
+translation:  "Translation Service"            [ type: COMPONENT ]
+statistics:   "Statistics Service"             [ type: COMPONENT ]
+database:     "Database"                       [ type: COMPONENT ]
+questions:    "Ask Questions"                  [ type: REQUIREMENT ]
+chat:         "Chat Messages"                  [ type: REQUIREMENT ]
+moderation:   "Moderate Chat and Questions"    [ type: REQUIREMENT ]
+forward:      "Forward Inputs to Presenter"    [ type: REQUIREMENT ]
+propagation:  "Live Configuration Propagation" [ type: REQUIREMENT ]
+monolith:     "Modular Monolith"               [ type: PATTERN ]
+cli:          "Server Command Line"            [ type: INTERFACE ]
+event:        "Event"                          [ type: ENTITY ]
+agendapoint:  "AgendaPoint"                    [ type: ENTITY ]
+channel:      "Channel"                        [ type: ENTITY ]
+resource:     "Resource"                       [ type: ENTITY ]
+role:         "Role"                           [ type: ENTITY ]
+message:      "Message"                        [ type: ENTITY ]
+messagetext:  "MessageText"                    [ type: ENTITY ]
+questiontag:  "QuestionTag"                    [ type: ENTITY ]
+loop:         "Service Event Loop"             [ type: UNIT ]
+provisioning: "Config-File Provisioning"       [ type: CONCERN ]
+failover:     "Live Failover Continuity"       [ type: TACTIC ]
+privacy:      "Privacy by Design"              [ type: TACTIC ]
+reactivity:   "Real-Time Reactivity"           [ type: TACTIC ]
+abuse:        "Abuse Resistance"               [ type: TACTIC ]
+contracts:    "Shared Typed Contracts"         [ type: TACTIC ]
+mqtt:         "MQTT over WebSockets"           [ type: DECISION ]
+accounts:     "No Permanent User Accounts"     [ type: DECISION ]
+decoupling:   "Channels apart from Resources"  [ type: DECISION ]
+modular:      "One Modular Service Process"    [ type: DECISION ]
+sql:          "Typed SQL Builder"              [ type: DECISION ]
+permission:   "Declarative Permission Check"   [ type: CODE-PATTERN ]
+dao:          "DAO per Entity"                 [ type: CODE-PATTERN ]
+versioning:   "Version-Checked Write"          [ type: CODE-PATTERN ]
+
+relay        --(depends-on)--> service
+auth         --(part-of)--> service
+translation  --(part-of)--> service
+statistics   --(part-of)--> service
+loop         --(hosts)--> service
+provisioning --(elements)--> service
+failover     --(affects)--> service
+privacy      --(affects)--> service
+reactivity   --(affects)--> service
+abuse        --(affects)--> service
+contracts    --(affects)--> service
+mqtt         --(affects)--> service
+accounts     --(affects)--> service
+decoupling   --(affects)--> service
+modular      --(affects)--> service
+sql          --(affects)--> service
+permission   --(applies-to)--> service
+dao          --(applies-to)--> service
+versioning   --(applies-to)--> service
+
+service --(realizes)--> questions
+service --(realizes)--> chat
+service --(realizes)--> moderation
+service --(realizes)--> forward
+service --(realizes)--> propagation
+service --(patterns)--> monolith
+service --(owns)--> event
+service --(owns)--> agendapoint
+service --(owns)--> channel
+service --(owns)--> resource
+service --(owns)--> role
+service --(owns)--> message
+service --(owns)--> messagetext
+service --(owns)--> questiontag
+service --(provides)--> cli
+service --(depends-on)--> database

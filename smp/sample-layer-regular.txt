@@ -1,0 +1,28 @@
+#type layer
+
+web:     "Web Client"       [ layer: Presentation,   cluster: Client ]
+admin:   "Admin Console"    [ layer: Presentation,   cluster: Client ]
+sdk:     "Client SDK"       [ layer: Access,         cluster: Client ]
+api:     "REST API"         [ layer: Interface,      cluster: Server/Frontend ]
+auth:    "Auth Gateway"     [ layer: Interface,      cluster: Server/Frontend ]
+orders:  "Order Service"    [ layer: Application,    cluster: Server/Backend ]
+billing: "Billing Service"  [ layer: Application,    cluster: Server/Backend ]
+model:   "Domain Model"     [ layer: Domain,         cluster: Server/Backend ]
+store:   "Order Repository" [ layer: Infrastructure, cluster: Platform ]
+bus:     "Event Bus"        [ layer: Infrastructure, cluster: Platform ]
+logger:  "Logger"
+config:  "Configuration"
+
+web     --> sdk
+admin   --> sdk
+sdk     --> api
+sdk     --> auth
+api     --> orders
+auth    --> billing
+orders  --> model
+billing --> model
+orders  --> store
+billing --> bus
+store   --(callback)--> orders
+orders  --> logger
+auth    --> config

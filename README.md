@@ -36,41 +36,41 @@ Examples
 
 Here are examples of the graph diagram renderings:
 
-- [broadcast-graph](smp/broadcast-graph.txt):
+- [sample-graph-regular](smp/sample-graph-regular.txt):
 
-  ![broadcast-graph](smp/broadcast-graph.svg)
+  ![sample-graph-regular](smp/sample-graph-regular.svg)
 
-- [broadcast-hub](smp/broadcast-hub.txt):
+- [sample-hub-regular](smp/sample-hub-regular.txt):
 
-  ![broadcast-hub](smp/broadcast-hub.svg)
+  ![sample-hub-regular](smp/sample-hub-regular.svg)
 
-- [broadcast-grid](smp/broadcast-grid.txt):
+- [sample-grid-regular](smp/sample-grid-regular.txt):
 
-  ![broadcast-grid](smp/broadcast-grid.svg)
+  ![sample-grid-regular](smp/sample-grid-regular.svg)
 
-- [container-sample](smp/container-sample.txt) (nested containers):
+- [sample-graph-container](smp/sample-graph-container.txt) (nested containers):
 
-  ![container-sample](smp/container-sample.svg)
+  ![sample-graph-container](smp/sample-graph-container.svg)
 
-- [badge-sample](smp/badge-sample.txt) (node badges and multiple nodes):
+- [sample-graph-badges](smp/sample-graph-badges.txt) (node badges and multiple nodes):
 
-  ![badge-sample](smp/badge-sample.svg)
+  ![sample-graph-badges](smp/sample-graph-badges.svg)
 
-- [layer-sample](smp/layer-sample.txt) (layered architecture):
+- [sample-layer-regular](smp/sample-layer-regular.txt) (layered architecture):
 
-  ![layer-sample](smp/layer-sample.svg)
+  ![sample-layer-regular](smp/sample-layer-regular.svg)
 
-- [slice-sample](smp/slice-sample.txt) (sliced architecture):
+- [sample-slice-regular](smp/sample-slice-regular.txt) (sliced architecture):
 
-  ![slice-sample](smp/slice-sample.svg)
+  ![sample-slice-regular](smp/sample-slice-regular.svg)
 
-- [matrix-sample](smp/matrix-sample.txt) (dependency structure matrix):
+- [sample-matrix-full](smp/sample-matrix-full.txt) (dependency structure matrix):
 
-  ![matrix-sample](smp/matrix-sample.svg)
+  ![sample-matrix-full](smp/sample-matrix-full.svg)
 
-- [sequence-sample](smp/sequence-sample.txt) (sequence diagram):
+- [sample-sequence-regular](smp/sample-sequence-regular.txt) (sequence diagram):
 
-  ![sequence-sample](smp/sequence-sample.svg)
+  ![sample-sequence-regular](smp/sample-sequence-regular.svg)
 
 Playground
 ----------
@@ -501,8 +501,10 @@ The diagram type `matrix` draws a dependency structure matrix (DSM):
 
 - **Cross-cluster edges**: the edges between the clusters are counted
   outside the cluster blocks. A cycle spanning several clusters is
-  outlined per cluster, except a single member split off from the rest
-  of its cycle, which only its counts mark.
+  outlined per cluster, but only where its members within that cluster
+  have an edge among themselves, as an empty block would suggest a local
+  cycle which only closes through other clusters. Otherwise only the
+  counts of its edges mark the cycle.
 
 #### Diagram Type `sequence`
 

@@ -293,10 +293,10 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
 
     /*  outline every cycle as a dashed block on the diagonal, one per run
         of its consecutive members within a cluster (a cycle spanning several
-        clusters is split by them), except a single member split off from
-        the rest of its cycle (a run of one is outlined only for a cycle of
-        one, i.e., a self-loop), as only its counts mark it (and none at all
-        if the marking of the violations is disabled)  */
+        clusters is split by them), but only a run with at least one edge
+        among its own members, as an empty block would suggest a local cycle
+        which only closes through other clusters, where its counts mark it
+        (and none at all if the marking of the violations is disabled)  */
     const runs: number[][] = []
     nodes.forEach((node, i) => {
         const k    = cycles.get(node.id)
@@ -309,9 +309,9 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
         else
             runs.push([ i ])
     })
-    const sizeOf = (k: number) => nodes.filter((node) => cycles.get(node.id) === k).length
     for (const members of runs) {
-        if (members.length === 1 && sizeOf(cycles.get(nodes[members[0]].id)!) > 1)
+        const inside = new Set(members)
+        if (!graph.edges.some((edge) => inside.has(rowOf.get(edge.source)!) && inside.has(rowOf.get(edge.target)!)))
             continue
         const [ x, y ] = [ x0 + members[0] * CELL, y0 + members[0] * CELL ]
         const size     = members.length * CELL
