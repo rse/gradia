@@ -529,7 +529,8 @@ The diagram type `sequence` draws a sequence diagram:
 
 - **Participants**: the participants (the nodes) are ordered by
   declaration or by their `order` attributes (left-to-right in
-  ascending order, the nodes without one following). The dashed
+  ascending order, the nodes without one following). Their boxes keep
+  their own widths, but share the height of the highest one. The dashed
   lifelines are colored by the `color-node-lifeline` option.
 
 - **Messages**: the messages (the edges) run top-down in declaration
@@ -627,8 +628,8 @@ size-font-type             16           grid-gap-horizontal        40
 size-font-prop             22           grid-gap-vertical          20
 size-font-edge             16           grid-node-width-equal      true
 size-font-arity            16           grid-node-height-equal     true
-color-mark-violation       #cc3333      sequence-column-gap        60
-                                        sequence-message-gap       56
+color-mark-violation       #cc3333      sequence-column-gap        20
+                                        sequence-message-gap       40
                                         mark-violation             true
                                         layer-numbered             true
                                         slice-numbered             false
@@ -735,10 +736,11 @@ but keeps its row as tall as itself.
 The `sequence-column-gap` and `sequence-message-gap` options control the
 spacing of a `sequence` diagram: the former is the minimum horizontal
 gap between two neighboring participant boxes, the latter the vertical
-gap between two consecutive messages. Every pair of neighboring
-lifelines is spaced on its own, i.e., it is widened beyond that minimum
-only as far as the names of the messages between them demand, so a
-single long message name does not widen the whole diagram.
+gap between two consecutive messages. Every participant box keeps its
+own width, and every pair of neighboring lifelines is spaced on its
+own, i.e., it is widened beyond that minimum only as far as the names
+of the messages between them demand, so neither a single wide box nor
+a single long message name widens the whole diagram.
 
 The `font-family` and `color-*` options are embedded directly into the
 generated SVG. When such an option is *not* explicitly configured, the

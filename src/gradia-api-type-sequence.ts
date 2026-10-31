@@ -53,26 +53,27 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
         .sort((a, b) => (orderOf(a) ?? Infinity) - (orderOf(b) ?? Infinity) || 0)
     rejectContainers("sequence", nodes, level)
 
-    /*  measure the participant boxes, unified onto the size of the
-        largest one, and space every pair of neighboring lifelines on its
-        own, wide enough for the widest box and for the names of the
-        messages between them (centered, a name keeps clear of the arity
-        label set back from its arrow head, a creation ends already at the
-        side of the box it creates, a self message needs the gap right of
-        its lifeline, and a message spanning several gaps widens the ones
-        it spans evenly, the shorter messages first, until their sum fits)  */
+    /*  measure the participant boxes, each in its own width, but unified
+        onto the height of the highest one, and space every pair of
+        neighboring lifelines on its own, wide enough for the halves of
+        their boxes and for the names of the messages between them
+        (centered, a name keeps clear of the arity label set back from its
+        arrow head, a creation ends already at the side of the box it
+        creates, a self message needs the gap right of its lifeline, and a
+        message spanning several gaps widens the ones it spans evenly, the
+        shorter messages first, until their sum fits)  */
     const { boxW, boxH, contentH } = measureNodes(nodes, config, () => config["size-node-height-scale"] / 2)
     const margin = config["size-canvas-margin"]
     const colGap = config["sequence-column-gap"]
     const msgGap = config["sequence-message-gap"]
-    const widest = nodes.reduce((w, node) => Math.max(w, boxW.get(node.id)!), 0)
     const column = new Map(nodes.map((node, i) => [ node.id, i ]))
-    const gaps   = nodes.slice(1).map(() => widest + colGap)
+    const halfOf = (id: string) => boxW.get(id)! / 2
+    const gaps   = nodes.slice(1).map((node, i) => halfOf(nodes[i].id) + halfOf(node.id) + colGap)
     const needs  = gaps.length === 0 ? [] : graph.edges.map((edge) => {
         const name  = textWidth(edge.name ?? "", config["size-font-edge"])
         const arity = edge.name !== undefined && edge.arity !== undefined ?
             2 * (ARITY_OFF + textWidth(edge.arity, config["size-font-arity"]) + ARITY_GAP) : 0
-        const box   = edge.kind === "create" ? widest / 2 : 0
+        const box   = edge.kind === "create" ? halfOf(edge.target) : 0
         const [ a, b ] = [ column.get(edge.source)!, column.get(edge.target)! ]
         const from  = Math.min(Math.min(a, b), gaps.length - 1)
         return { from, to: Math.max(Math.max(a, b), from + 1), need: name + arity + box + colGap * 1.5 }
@@ -84,11 +85,10 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
                 gaps[k] += (need - sum) / (to - from)
     }
     const headH  = nodes.reduce((h, node) => Math.max(h, boxH.get(node.id)!), 0)
-    for (const node of nodes) {
-        boxW.set(node.id, widest)
+    for (const node of nodes)
         boxH.set(node.id, headH)
-    }
-    const xs  = gaps.reduce((list, g) => [ ...list, list[list.length - 1] + g ], [ margin + widest / 2 ])
+    const xs  = gaps.reduce((list, g) => [ ...list, list[list.length - 1] + g ],
+        [ margin + (nodes.length > 0 ? halfOf(nodes[0].id) : 0) ])
     const xOf = new Map(nodes.map((node, i) => [ node.id, xs[i] ]))
     const cy  = margin + headH / 2
 
@@ -256,7 +256,7 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
         /*  end a creation at the side of the box it places, and a
             destruction at the cross it draws  */
         if (kind === "create") {
-            tx = xOf.get(edge.target)! - dir * widest / 2
+            tx = xOf.get(edge.target)! - dir * halfOf(edge.target)
             cyOf.set(edge.target, y)
             starts.set(edge.target, y + headH / 2)
         }
@@ -281,8 +281,8 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
     const end    = y - msgGap + TAIL
     const shapes: Shape[] = nodes.map((node) => {
         const [ top, bottom ] = [ starts.get(node.id)!, ends.get(node.id) ?? end ]
-        return pathShape(xOf.get(node.id)!, top, `v ${bottom - top}`, [ -1, 0, 1, bottom - top ],
-            "color-node-lifeline", 2, "8 6")
+        return pathShape(xOf.get(node.id)!, top, `v ${bottom - top}`, [ -2, 0, 2, bottom - top ],
+            "color-node-lifeline", 4, "8 6")
     })
     for (const bar of bars) {
         const h = Math.max(bar.y1 - bar.y0, BAR_MIN)
