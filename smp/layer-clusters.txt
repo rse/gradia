@@ -1,5 +1,4 @@
 #type layer
-#config layer-numbered true
 
 ui:      "Browser UI"       [ layer: Presentation,   cluster: Client ]
 cli:     "Command Line"     [ layer: Presentation,   cluster: Client ]

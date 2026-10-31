@@ -353,7 +353,8 @@ as columns left of the bands, spanning the bands of their layers, with
 their names running upwards (the layers of a cluster are kept together,
 all nodes of a layer have to name the same path, and the edges may
 freely cross the clusters), and the boolean
-option `layer-numbered` numbers the layers top-down. All node boxes take
+option `layer-numbered` numbers the layers top-down (by default, as the
+layers have a rank). All node boxes take
 the width of the widest one and the boxes of a layer the height of the
 highest one, and the boxes of a layer stay aligned in its band. The
 layers determine the order of the rows, so an `order` attribute of a
@@ -488,7 +489,7 @@ size-font-type             16           grid-gap-horizontal        40
 size-font-prop             22           grid-gap-vertical          20
 size-font-edge             16           grid-node-width-equal      true
 size-font-arity            16           grid-node-height-equal     true
-color-mark-violation       #cc3333      layer-numbered             false
+color-mark-violation       #cc3333      layer-numbered             true
 ```
 
 The `size-*`, `group-*`, `container-*`, `graph-*`, `hub-*`, and
