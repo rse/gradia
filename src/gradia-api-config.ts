@@ -32,7 +32,11 @@ export const configDefaults = {
     "color-container-name":      "#666666",
     "color-container-box":       "#f6f6f6",
     "color-container-border":    "#a0a0a0",
-    "color-edge-line":           "#999999",
+    "color-composite-border":    "#c0c0c0",
+    "color-node-pseudo-name":    "#ffffff",
+    "color-node-pseudo-box":     "#707070",
+    "color-node-pseudo-border":  "#444444",
+    "color-edge-line":          "#999999",
     "color-edge-name":           "#333333",
     "color-edge-arity":          "#333333",
     "color-edge-halo":           "#ffffff",
@@ -81,7 +85,7 @@ export const configDefaults = {
     "tree-stack-double":         false, /*  tree: stack on both sides of the trunk */
     "tree-node-width-equal":     false, /*  tree: equal node box width per level   */
     "tree-horizontal":           false, /*  tree: grow left-to-right, not top-down */
-    "mark-violation":            true,  /*  matrix/layer/slice: mark violations    */
+    "mark-violation":            true,  /*  matrix/layer/slice/state: violations   */
     "layer-numbered":            true,  /*  layer: number the layers bottom-up     */
     "slice-numbered":            false  /*  slice: number the slices left-to-right */
 }

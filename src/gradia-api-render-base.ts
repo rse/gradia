@@ -87,13 +87,24 @@ export const escapeXML = (text: string): string =>
 /*  an orthogonal edge polyline  */
 export type Poly = [ number, number ][]
 
+/*  the shapes of the pseudo-state nodes of a "state" diagram, drawn
+    instead of a node box: the dot of an initial state, the bullseye of
+    a final state, the diamond of a choice, and the circled "H" (or "H*")
+    of a shallow (or deep) history state  */
+export type NodeShape = "initial" | "final" | "choice" | "history" | "deep-history" |
+    "junction" | "fork" | "join" | "entry-point" | "exit-point" | "terminate"
+
 /*  the node box coloring (given as configuration option keys which
-    are resolved into CSS color values at SVG generation time)  */
+    are resolved into CSS color values at SVG generation time), with
+    the optional shape drawn instead of the box, and whether a line
+    divides the name from the attribute lines  */
 export interface NodeStyle {
-    fill:   ConfigEmbedded
-    stroke: ConfigEmbedded
-    text:   ConfigEmbedded
-    dash?:  string
+    fill:     ConfigEmbedded
+    stroke:   ConfigEmbedded
+    text:     ConfigEmbedded
+    dash?:    string
+    shape?:   NodeShape
+    divided?: boolean
 }
 
 /*  a decorated group box surrounding the nodes of a named group  */
@@ -105,13 +116,16 @@ export interface GroupBox {
     h:    number
 }
 
-/*  a decorated container box surrounding the members of a container node  */
+/*  a decorated container box surrounding the members of a container node
+    (drawn in the given node style instead of the container colors, e.g.
+    for a composite state)  */
 export interface ContainerBox {
-    node: Node
-    x:    number
-    y:    number
-    w:    number
-    h:    number
+    node:   Node
+    x:      number
+    y:      number
+    w:      number
+    h:      number
+    style?: NodeStyle
 }
 
 /*  the laid out graph handed over for SVG generation (the optional
@@ -120,27 +134,29 @@ export interface ContainerBox {
     optional "marked" flags likewise mark the edges violating their
     diagram type (e.g. its layering), the optional "dashed" flags the
     edges drawn dashed (e.g. the cross links of a tree), the optional "crowded" flag marks a
-    layout with crowded channels/gutters, and the optional "centered"
-    flag one keeping its edge names centered on their routes instead of
-    in front of their arrow heads)  */
+    layout with crowded channels/gutters, the optional "centered" flag
+    one keeping its edge names centered on their routes instead of in
+    front of their arrow heads, and the optional "transitions" flag one
+    whose edge names are transition labels "event [guard] / action")  */
 export interface Layout {
-    nodes:       Node[]
-    edges:       Edge[]
-    cx:          (id: string) => number
-    cy:          (id: string) => number
-    boxW:        Map<string, number>
-    boxH:        Map<string, number>
-    contentH:    Map<string, number>
-    polys:       Poly[]
-    styleOf?:    (node: Node) => NodeStyle
-    groups?:     GroupBox[]
-    containers?: ContainerBox[]
-    shapes?:     Shape[]
-    marked?:     boolean[]
-    dashed?:     boolean[]
-    bundled?:    boolean[]
-    crowded?:    boolean
-    centered?:   boolean
+    nodes:        Node[]
+    edges:        Edge[]
+    cx:           (id: string) => number
+    cy:           (id: string) => number
+    boxW:         Map<string, number>
+    boxH:         Map<string, number>
+    contentH:     Map<string, number>
+    polys:        Poly[]
+    styleOf?:     (node: Node) => NodeStyle
+    groups?:      GroupBox[]
+    containers?:  ContainerBox[]
+    shapes?:      Shape[]
+    marked?:      boolean[]
+    dashed?:      boolean[]
+    bundled?:     boolean[]
+    crowded?:     boolean
+    centered?:    boolean
+    transitions?: boolean
 }
 
 /*  the area of the bounding box of the node boxes and edge lines of a

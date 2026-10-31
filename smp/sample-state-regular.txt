@@ -1,0 +1,26 @@
+#type state
+
+#   the pseudo-states
+Start   [ state: initial ]
+Check   [ state: choice ]
+Stop    [ state: final ]
+
+#   the regular and composite states
+Idle    [ entry: "reset()" ]
+Begin   [ state: initial, parent: Active ]
+Running [ parent: Active, do: "work()" ]
+Paused  [ parent: Active ]
+Failed  [ entry: "alarm()" ]
+Legacy  [ entry: "migrate()" ]
+
+#   the transitions
+Start   --> Idle
+Idle    --("start / spawn()")--> Active
+Begin   --> Running
+Running --("pause")--> Paused
+Paused  --("resume")--> Running
+Active  --("stop")--> Check
+Check   --("[done]")--> Stop
+Check   --("[else]")--> Idle
+Check   --("[error] / log()")--> Failed
+Legacy  --("upgrade")--> Idle

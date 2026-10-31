@@ -104,6 +104,50 @@ component relationships, data flows, dependency graphs, and similar structures.
   caller lifeline from the call to the return, with the text beside it; a call
   without such a return cannot carry one. A "time" of any message (e.g.
   "t=now") is drawn as the text beside the sender lifeline at its start.
+- "state": a state machine: the nodes are the states and the edges the
+  transitions, laid out like a "graph" (but with up to 8 instead of 4
+  side-by-side nodes unless "graph-columns-max" is configured, as a state
+  machine reads as a left-to-right flow), with every transition drawn on
+  its own (never bundled), its name being its label (e.g.
+  "evt [guard] / action", quoted, as it contains whitespace), drawn with its
+  guard in italics and its action dimmed, the guards of the transitions
+  leaving a choice or junction placed at their start. The attribute
+  "state: <kind>" turns a node into a pseudo-state, drawn without its texts
+  in the "color-node-pseudo-*" colors: "initial" (a filled dot), "final" (a
+  bullseye), "terminate" (a cross), "choice" (a diamond), "junction" (a small
+  dot), "fork" and "join" (a bar), and, inside a composite state only,
+  "history" and "deep-history" (a circled "H" and "H*") and "entry-point"
+  and "exit-point" (a hollow and a crossed-out circle). The attributes of a
+  state (e.g. its behaviors, as "entry: <action>", "do: <activity>", and
+  "exit: <action>") are drawn below a line dividing them from its name.
+  Containers act as composite states, drawn as solid grey boxes (bordered in
+  the "color-composite-border" color) with their name and attributes above a
+  dividing line: a transition into a container enters its initial state, one
+  into its history state resumes it, a transition out of it leaves any of its
+  members, and an unlabeled one out of it is a completion transition, firing
+  once an inner final state is reached. A join fires once all of its sources
+  are reached. It rejects the input with an error if an initial state has an
+  incoming transition, a final or terminate state has an outgoing one, a
+  choice, junction, fork, join, or entry point has none, a history state or
+  join has more than one, a fork has more than one incoming one, a history
+  state, entry point, or exit point is not inside a composite state, a
+  history state without a default transition is inside a composite state
+  without an initial state, a containment level (or the top level) has more
+  than one initial (or history, or deep-history) state, a transition enters a
+  composite state without an initial state, or a pseudo-state has members.
+  Once the top level has an initial state, every state not reachable from it
+  is marked "unreachable" (its border and outgoing transitions drawn dashed in
+  the "color-mark-violation" color), every regular state which is trapped
+  (belongs to a group of states no transition leads out of and holding no
+  final or terminate state, e.g. a single state without a transition leading
+  out of it, a self-loop not counting, or two states only leading into each
+  other) is marked "dead-end", and every choice or junction whose outgoing
+  transitions are all guarded, but none by "[else]", and every composite state
+  with a final state but no completion transition is marked "incomplete" (both
+  with their border drawn solid in that color), unless the node carries an
+  explicit "mark" attribute already. The transitions leaving the same state
+  (except a fork) on the same event with the same (or no) guard conflict and
+  are drawn dashed in that color, too.
 
 ### Diagram Type Constraints
 
@@ -165,7 +209,7 @@ as <name>, terminals as "...", optional parts as [ ... ], repeatable parts as
     <directive>      ::= "#config" <whitespace> { <whitespace> } <option> <whitespace> { <whitespace> } ( <string> | <word> )
                        | "#type" <whitespace> { <whitespace> } <type>
     <option>         ::= <letter> { <letter> | <digit> | "-" }
-    <type>           ::= "graph" | "hub" | "grid" | "layer" | "slice" | "tree" | "matrix" | "sequence"
+    <type>           ::= "graph" | "hub" | "grid" | "layer" | "slice" | "tree" | "matrix" | "sequence" | "state"
     <word>           ::= <char> - <whitespace> { <char> - <whitespace> }
     <newline>        ::= "\\n"
     <whitespace>     ::= " " | "\\t" | "\\r"
@@ -208,7 +252,7 @@ as <name>, terminals as "...", optional parts as [ ... ], repeatable parts as
   with arbitrary texts. Only the "sequence" type renders them, while the other
   types reject a kind other than "sync", as well as a "duration" or "time",
   with an error. Any other key is rejected with an error, too.
-- Ten attribute keys are reserved and consumed by the renderer instead of
+- Eleven attribute keys are reserved and consumed by the renderer instead of
   being displayed as a regular "<key>: <val>" line:
   - "url: <url>" renders the node box as a hyperlink. Only relative URLs and
     the schemes "http", "https", and "mailto" are honored; any other URL is
@@ -228,8 +272,8 @@ as <name>, terminals as "...", optional parts as [ ... ], repeatable parts as
   - "parent: <id>" nests the node into the container node <id> (a node which
     is implicitly declared if never referenced otherwise),
   - "container: <type>" marks the node as a container whose members are laid
-    out with the diagram type <type> ("graph", "hub", or "grid"), even if it
-    has no members at all,
+    out with the diagram type <type> ("graph", "hub", "grid", or "state"),
+    even if it has no members at all,
   - "order: <number>" places the node explicitly (see below),
   - "badge: <icon>" draws a round badge with an icon inside the node box,
     vertically centered at its left end, with the box widened to keep its text
@@ -243,7 +287,12 @@ as <name>, terminals as "...", optional parts as [ ... ], repeatable parts as
     (three linked nodes), an unknown icon being ignored,
   - "multiple: true" draws the node box as several instances: the front box
     with two copies behind it, offset towards the bottom-right. The value has
-    to be the literal string "true".
+    to be the literal string "true",
+  - "mark: unreachable|dead-end|incomplete" marks the node (or container) as
+    a violation: its border is drawn in the "color-mark-violation" color, for
+    "unreachable" dashed and with its outgoing edges marked, too. It is
+    usually derived by the diagram type "state", but honored by every diagram
+    type drawing node boxes, unless the option "mark-violation" is "false".
   Both "badge" and "multiple" are ignored on a container node.
 - A "graph" (a "graph" container level, too) with at least one node carrying an
   "order" attribute is laid out in that explicit order instead of by the layered
@@ -271,12 +320,13 @@ as <name>, terminals as "...", optional parts as [ ... ], repeatable parts as
   and the container then takes part in the layout of the enclosing level as a
   single box. Edges may connect any two nodes, across container boundaries and
   to container nodes themselves, except a container with one of its own
-  members. An edge crossing the boundary of a container laid out as "graph" is
-  routed through the box border to the inner node (entering on the west and
-  leaving on the east side), while an edge crossing the boundary of a container
-  laid out as "hub" or "grid" ends at the box border instead. The diagram type
-  constraints apply to every container level (e.g., a "hub" container needs its
-  own primary node, and a "grid" container permits no edges among its members).
+  members. An edge crossing the boundary of a container laid out as "graph" or
+  "state" is routed through the box border to the inner node (entering on the
+  west and leaving on the east side), while an edge crossing the boundary of a
+  container laid out as "hub" or "grid" ends at the box border instead. The
+  diagram type constraints apply to every container level (e.g., a "hub"
+  container needs its own primary node, and a "grid" container permits no
+  edges among its members).
 - Use containers (not groups) to visualize zones, tiers, deployment units, or
   packages whose members are connected to the outside world.
 - All remaining attributes are displayed as "<key>: <val>" lines inside the node
@@ -324,10 +374,10 @@ between the subtrees of a "tree" diagram, and a positive "tree-stack-min" or
 the parent has that many of them or their level holds more nodes.
 
 The boolean "mark-violation" option controls whether the diagram types
-"matrix", "layer", "slice", and "tree" mark their violations at all (in the
-"color-mark-violation" color): by default they do, while with "false" they
-render the very same diagram without any marking (the cross links of a "tree"
-stay dashed, though).
+"matrix", "layer", "slice", "tree", and "state" mark their violations at all
+(in the "color-mark-violation" color), and whether a "mark" attribute is
+honored: by default they do, while with "false" they render the very same
+diagram without any marking (the cross links of a "tree" stay dashed, though).
 
 The "size-node-width-max" option additionally enables the word-wrapping of the
 node box texts: given a positive value, the node name, its type, and its

@@ -11,14 +11,15 @@ import UUID                                                 from "pure-uuid"
 import { Node, Edge }                                       from "./gradia-api-model.js"
 import { Config, ConfigEmbedded, ConfigFontSize, resolveFont, cssValueOf, cssSizeOf }
     from "./gradia-api-config.js"
-import { Poly, NodeStyle, Layout, GroupBox, ContainerBox,
+import { Poly, NodeStyle, NodeShape, Layout, GroupBox, ContainerBox,
     FS_GROUP, ARITY_OFF, ARITY_PAD, ARITY_GAP, ARROW_AIR, arityHeight, textWidth, escapeXML }
     from "./gradia-api-render-base.js"
 import { Shape }                                            from "./gradia-api-render-shape.js"
 import { linesOfNode, linesWidth, urlOf, typeOf, defaultStyleOf, containerHead, badgeOf, badgeRoom, isMultiple,
-    MULTI_OFF, BADGE_X, PAD_W, badgeRadius, type NodeBadge, MIN_H, NAME_H, ATTR_H, ATTR_P, TYPE_H, TYPE_D, HEAD_H }
+    MULTI_OFF, BADGE_X, PAD_W, badgeRadius, type NodeBadge, MIN_H, NAME_H, ATTR_H, ATTR_P, TYPE_H, TYPE_D, HEAD_H,
+    markOf, markedStyleOf, shapeRadius, attrsOfNode, HEAD_X }
     from "./gradia-api-render-node.js"
-import { computeHops, piecesOf, pathOf, pointAt, segmentsOf, junctionsOf }
+import { computeHops, piecesOf, pathOf, pointAt, segmentsOf, junctionsOf, transitionOf }
     from "./gradia-api-render-edge.js"
 
 /*  escape a string for use inside a CSS string literal (the XML escaping
@@ -64,6 +65,11 @@ type Box = [ number, number, number, number ]
 /*  the placement of a group tag in the top-left corner of its group box  */
 const TAG_DX = 18  /*  left offset of the group tag  */
 const TAG_DY = 12  /*  top offset of the group tag   */
+
+/*  the offset of the line dividing the head of a container drawn in a
+    node style from its members, below the head (clear of the descenders
+    of its name, but within the padding above the members)  */
+const HEAD_D = 18
 
 /*  the half width of the box an edge line segment occupies  */
 const LINE_PAD = 2
@@ -197,7 +203,7 @@ const labelPlacer = (
             group.x + TAG_DX + textWidth(group.name, FS_GROUP), group.y + TAG_DY + FS_GROUP * 1.2 ])
     for (const c of layout.containers ?? [])
         occupied.push([ c.x + TAG_DX, c.y + TAG_DY,
-            c.x + TAG_DX + textWidth(c.node.name, FS_GROUP), c.y + containerHead(c.node, config) ])
+            c.x + TAG_DX + textWidth(c.node.name, FS_GROUP), c.y + containerHead(c.node, config, c.style !== undefined) ])
 
     /*  let the labels also dodge the free-standing texts  */
     for (const shape of layout.shapes ?? [])
@@ -434,13 +440,55 @@ const renderBadge = (badge: NodeBadge, bx: number, by: number, r: number, style:
         ...renderIcon(badge, style, styler), "</g>" ]
 }
 
+/*  generate the SVG fragments of a pseudo-state shape centered on the
+    given point within its box of the given size (see "shapeRadius"): the
+    bullseye of a final state as a dot within a ring, the circle of a
+    history state with its "H" (or "H*") inside, and the bar of a fork or
+    join filling its box  */
+const renderPseudo = (shape: NodeShape, x: number, y: number, w: number, h: number, style: NodeStyle,
+    styler: Styler, config: Config): string[] => {
+    const cls  = styler.box(style.fill, style.stroke, 2)
+    const dash = style.dash !== undefined ? ` stroke-dasharray="${escapeXML(style.dash)}"` : ""
+    const r    = shapeRadius(shape, Math.min(w, h) / 2)
+    if (shape === "choice")
+        return [ `<polygon points="${x},${y - r} ${x + r},${y} ${x},${y + r} ${x - r},${y}" class="${cls}"${dash}/>` ]
+    else if (shape === "fork" || shape === "join")
+        return [ `<rect x="${x - w / 2}" y="${y - h / 2}" width="${w}" height="${h}" rx="2" class="${cls}"${dash}/>` ]
+    else if (shape === "final")
+        return [ `<circle cx="${x}" cy="${y}" r="${r - 1}" ` +
+            `class="${styler.box("color-container-box", style.stroke, 2)}"${dash}/>`,
+        `<circle cx="${x}" cy="${y}" r="${r / 2}" class="${cls}"/>` ]
+    else if (shape === "history" || shape === "deep-history")
+        return [ `<circle cx="${x}" cy="${y}" r="${r - 1}" class="${cls}"${dash}/>`,
+            `<text x="${x}" y="${y + config["size-font-prop"] * 0.36}" ` +
+            `class="${styler.text(style.text, "size-font-prop", { bold: true, middle: true })}">` +
+            `${shape === "history" ? "H" : "H*"}</text>` ]
+    else if (shape === "entry-point" || shape === "exit-point") {
+        /*  an entry point as a hollow circle, an exit point crossed out  */
+        const d = (r - 1) * Math.SQRT1_2
+        return [ `<circle cx="${x}" cy="${y}" r="${r - 1}" ` +
+            `class="${styler.box("color-container-box", style.stroke, 2)}"${dash}/>`,
+        ...(shape === "exit-point" ? [
+            `<path d="M ${x - d} ${y - d} L ${x + d} ${y + d} M ${x - d} ${y + d} L ${x + d} ${y - d}" ` +
+                `class="${styler.line(style.stroke, 2)}"/>` ] : []) ]
+    }
+    else if (shape === "terminate")
+        return [ `<path d="M ${x - r} ${y - r} L ${x + r} ${y + r} M ${x - r} ${y + r} L ${x + r} ${y - r}" ` +
+            `class="${styler.line(style.stroke, 4)}"${dash}/>` ]
+    else
+        return [ `<circle cx="${x}" cy="${y}" r="${r}" class="${cls}"${dash}/>` ]
+}
+
 /*  generate the SVG fragments for a single node box (a node with a
-    "url" attribute becomes a hyperlink covering the whole box)  */
+    "url" attribute becomes a hyperlink covering the whole box, and a
+    pseudo-state is drawn as its shape, without any texts)  */
 const renderNode = (node: Node, layout: Layout, style: NodeStyle, styler: Styler,
     config: Config): string[] => {
     const { cx, cy, boxW, boxH, contentH } = layout
     const w     = boxW.get(node.id)!
     const h     = boxH.get(node.id)!
+    if (style.shape !== undefined)
+        return renderPseudo(style.shape, cx(node.id), cy(node.id), w, h, style, styler, config)
     const x     = cx(node.id) - w / 2
     const y     = cy(node.id) - h / 2
     const lines = linesOfNode(node, config)
@@ -462,8 +510,12 @@ const renderNode = (node: Node, layout: Layout, style: NodeStyle, styler: Styler
     const th    = lines.type.length * TYPE_H(config)
     const nh    = (lines.name.length - 1) * NAME_H(config)
     const asc   = config["size-font-node"] * 0.36
+    const split = style.divided === true && lines.attrs.length > 0
+    const lift  = split ? config["size-font-prop"] * 0.3 : 0
+    const drop  = split ? config["size-font-prop"] * 0.4 : 0
+    const attrY = ty + th + nh + MIN_H(config) + ATTR_P + drop
     const nameY = lines.attrs.length > 0 ?
-        ty + th + MIN_H(config) / 2 + asc : cy(node.id) + ty0 + th / 2 + asc - nh / 2
+        ty + th + MIN_H(config) / 2 + asc - lift : cy(node.id) + ty0 + th / 2 + asc - nh / 2
     lines.type.forEach((line, k) => {
         parts.push(`<text x="${tx}" ` +
             `y="${nameY - TYPE_D(config) - (lines.type.length - 1 - k) * TYPE_H(config)}" ` +
@@ -474,9 +526,19 @@ const renderNode = (node: Node, layout: Layout, style: NodeStyle, styler: Styler
             `class="${styler.text(style.text, "size-font-node", { bold: true, middle: true })}">` +
             `${escapeXML(line)}</text>`)
     })
+    if (split) {
+        /*  divide the (dropped) attribute lines from the (lifted) name by a
+            line across the box, midway between the descenders of the last
+            name line and the ascenders of the first attribute line  */
+        const bottom = nameY + nh + config["size-font-node"] * 0.22
+        const top    = attrY - config["size-font-prop"] * 0.72
+        const dy     = (bottom + top) / 2
+        parts.push(`<line x1="${x}" y1="${dy}" x2="${x + w - multi}" y2="${dy}" ` +
+            `class="${styler.line(style.stroke, 2)}"/>`)
+    }
     lines.attrs.forEach((line, k) => {
         parts.push(`<text x="${tx}" ` +
-            `y="${ty + th + nh + MIN_H(config) + ATTR_P + k * ATTR_H(config)}" ` +
+            `y="${attrY + k * ATTR_H(config)}" ` +
             `class="${styler.text(style.text, "size-font-prop", { middle: true })}">${escapeXML(line)}</text>`)
     })
     if (url === undefined)
@@ -687,7 +749,7 @@ const portLabels = (edge: Edge, poly: Poly, into: boolean, config: Config): Box[
     position through the "claim" of the label placer), or, for a
     bundled edge, preferably at one of its given stub positions  */
 const renderEdgeName = (edge: Edge, poly: Poly, claim: (candidates: Box[], dodge?: boolean) => Box,
-    styler: Styler, config: Config, alert: boolean, preferred: Box[] = []): string[] => {
+    styler: Styler, config: Config, alert: boolean, preferred: Box[] = [], styled = false): string[] => {
     if (edge.name === undefined)
         return []
     const w = textWidth(edge.name, config["size-font-edge"])
@@ -734,18 +796,33 @@ const renderEdgeName = (edge: Edge, poly: Poly, claim: (candidates: Box[], dodge
     }
     candidates.sort((a, b) => near(a) - near(b))
     candidates.unshift(...preferred)
-    return nameText(edge, claim(candidates), styler, alert)
+    return nameText(edge, claim(candidates), styler, alert, "middle", styled)
+}
+
+/*  the SVG text content of an edge name: for a transition label of the
+    form "event [guard] / action", its guard in italics and its action
+    dimmed, so the parts of a longer label are easy to tell apart  */
+const nameContent = (name: string, styled: boolean): string => {
+    const { event, guard, action } = transitionOf(name)
+    if (!styled || (guard === undefined && action === undefined))
+        return escapeXML(name)
+    const parts: string[] = event !== "" ? [ escapeXML(event) ] : []
+    if (guard !== undefined)
+        parts.push(`<tspan font-style="italic">[${escapeXML(guard)}]</tspan>`)
+    if (action !== undefined)
+        parts.push(`<tspan fill-opacity="0.65">/ ${escapeXML(action)}</tspan>`)
+    return parts.join(" ")
 }
 
 /*  generate the SVG fragment for the name label of an edge at its claimed
     position, centered on it, or else aligned to its start or end (as the
     estimated text width may deviate, and an anchored label stays flush)  */
 const nameText = (edge: Edge, box: Box, styler: Styler, alert: boolean,
-    align: "middle" | "start" | "end" = "middle"): string[] =>
+    align: "middle" | "start" | "end" = "middle", styled = false): string[] =>
     [ `<text x="${align === "middle" ? (box[0] + box[2]) / 2 : align === "start" ? box[0] : box[2]}" ` +
         `y="${box[3] - 3}" class="${styler.text(alert ? "color-mark-violation" : "color-edge-name",
             "size-font-edge", { middle: align === "middle", end: align === "end", halo: true })}">` +
-        `${escapeXML(edge.name ?? "")}</text>` ]
+        `${nameContent(edge.name ?? "", styled)}</text>` ]
 
 /*  generate the SVG fragments for a single group box and its tag
     in the top-left corner  */
@@ -759,22 +836,52 @@ const renderGroup = (group: GroupBox, styler: Styler): string[] => [
 /*  generate the SVG fragments for a single container box and its tag
     in the top-left corner, with the optional type line above the name
     (a container with a "url" attribute becomes a hyperlink covering
-    the whole box)  */
+    the whole box, and a marked container gets its border in the
+    violation color), or, for a container drawn in a node style (e.g. a
+    composite state), a solid box in that style with its attribute lines
+    below its name and its head divided from its members by a line
+    across the box (as far as not marked)  */
 const renderContainer = (c: ContainerBox, styler: Styler, config: Config): string[] => {
-    const type  = typeOf(c.node)
-    const url   = urlOf(c.node)
-    const parts = [
+    const type   = typeOf(c.node)
+    const url    = urlOf(c.node)
+    const head   = containerHead(c.node, config, c.style !== undefined)
+    const base   = c.y + containerHead(c.node, config) - HEAD_H + TAG_DY + FS_GROUP
+    const style  = c.style !== undefined ? markedStyleOf(c.node, c.style, config) : undefined
+    const stroke = style?.stroke ?? (config["mark-violation"] && markOf(c.node) !== undefined ?
+        "color-mark-violation" : "color-container-border")
+    const text   = style?.text ?? "color-container-name"
+    const dash   = style !== undefined ? style.dash : "10 6"
+    const parts  = [
         `<rect x="${c.x}" y="${c.y}" width="${c.w}" height="${c.h}" rx="12" ` +
-            `class="${styler.box("color-container-box", "color-container-border", 3)}" ` +
-            "stroke-dasharray=\"10 6\"/>",
+            `class="${styler.box(style?.fill ?? "color-container-box", stroke, style !== undefined ? 4 : 3)}"` +
+            `${dash !== undefined ? ` stroke-dasharray="${escapeXML(dash)}"` : ""}/>`,
+        ...(style !== undefined ? [
+            `<line x1="${c.x}" y1="${c.y + head - HEAD_X + HEAD_D}" ` +
+                `x2="${c.x + c.w}" y2="${c.y + head - HEAD_X + HEAD_D}" ` +
+                `class="${styler.line(stroke, 2)}"/>`
+        ] : []),
         ...(type !== undefined ? [
             `<text x="${c.x + TAG_DX}" y="${c.y + TAG_DY + config["size-font-type"]}" ` +
-                `class="${styler.text("color-container-name", "size-font-type")}">${escapeXML(type)}</text>`
+                `class="${styler.text(text, "size-font-type")}">${escapeXML(type)}</text>`
         ] : []),
-        `<text x="${c.x + TAG_DX}" y="${c.y + containerHead(c.node, config) - HEAD_H + TAG_DY + FS_GROUP}" ` +
-            `class="${styler.text("color-container-name", FS_GROUP, { bold: true })}">` +
+        `<text x="${c.x + TAG_DX}" y="${base}" ` +
+            `class="${styler.text(text, FS_GROUP, { bold: true })}">` +
             `${escapeXML(c.node.name)}</text>`
     ]
+    const attrs = style !== undefined ? attrsOfNode(c.node) : []
+    if (attrs.length > 0) {
+        /*  divide the attribute lines from the name tag by a line across
+            the box, midway between the descenders of the name and the
+            ascenders of the first attribute line  */
+        const first = base + ATTR_P + ATTR_H(config)
+        const dy    = (base + FS_GROUP * 0.22 + first - config["size-font-prop"] * 0.72) / 2
+        parts.push(`<line x1="${c.x}" y1="${dy}" x2="${c.x + c.w}" y2="${dy}" ` +
+            `class="${styler.line(stroke, 2)}"/>`)
+        parts.push(...attrs.map((attr, k) =>
+            `<text x="${c.x + TAG_DX}" y="${first + k * ATTR_H(config)}" ` +
+                `class="${styler.text(text, "size-font-prop")}">` +
+                `${escapeXML(`${attr.key}: ${attr.val}`)}</text>`))
+    }
     if (url === undefined)
         return parts
     return [ `<a href="${escapeXML(url)}" xlink:href="${escapeXML(url)}">`, ...parts, "</a>" ]
@@ -862,9 +969,12 @@ export const renderSVG = (layout: Layout, config: Config, explicit: Partial<Conf
     const classEdge  = classOf(`fill: none; stroke: ${color("color-edge-line")}; stroke-width: 3`)
     const classArrow = classOf(`fill: ${color("color-edge-line")}`)
 
-    /*  an edge marked as a violation is drawn dashed in the violation
-        color, its arrow head and labels alike  */
+    /*  an edge marked as a violation (by its layout, by itself, or as
+        leaving an unreachable node or container) is drawn dashed in the
+        violation color, its arrow head and labels alike  */
+    const marks      = new Map([ ...nodes, ...containers.map((c) => c.node) ].map((node) => [ node.id, markOf(node) ]))
     const violates   = (i: number): boolean => layout.marked?.[i] === true
+        || (config["mark-violation"] && (edges[i].marked === true || marks.get(edges[i].source) === "unreachable"))
     const alerted    = edges.some((_, i) => violates(i))
     const classAlert = alerted ? classOf(`fill: none; stroke: ${color("color-mark-violation")}; stroke-width: 3; ` +
         "stroke-dasharray: 10 6") : ""
@@ -947,19 +1057,33 @@ export const renderSVG = (layout: Layout, config: Config, explicit: Partial<Conf
         "arrivalLabels"), before any name searches a position of its own:
         all names an anchor crossed by no other line, the remaining ones an
         anchor crossed by a single line, and only a name without a free
-        anchor searches along its route  */
+        anchor searches along its route (the name of an edge leaving a
+        choice or junction, i.e. its guard, is anchored at its start instead)  */
     const svgLabels: string[] = []
     const stubAt = stubLabels(layout, config)
     const placed = edges.map(() => false)
+    const byId   = new Map(nodes.map((node) => [ node.id, node ]))
+    const leads  = (i: number): boolean => {
+        const node  = byId.get(edges[i].source)
+        const shape = node !== undefined ? styleOf(node).shape : undefined
+        return shape === "choice" || shape === "junction"
+    }
+    const clear = (i: number, box: Box): boolean =>
+        polys[i].every((p, k) => k < 2
+            || Math.max(p[0], polys[i][k - 1][0]) < box[0] || Math.min(p[0], polys[i][k - 1][0]) > box[2]
+            || Math.max(p[1], polys[i][k - 1][1]) < box[1] || Math.min(p[1], polys[i][k - 1][1]) > box[3])
     for (const cross of [ 0, 1 ]) {
         edges.forEach((edge, i) => {
             if (placed[i] || layout.bundled?.[i] === true || layout.centered === true)
                 return
-            const anchor = arrivalLabels(edge, polys[i], config).find((box) => seize(box, i, cross))
+            const lead   = leads(i)
+            const anchor = (lead ? portLabels(edge, polys[i], false, config).filter((box) => clear(i, box)) :
+                arrivalLabels(edge, polys[i], config)).find((box) => seize(box, i, cross))
             if (anchor === undefined)
                 return
             svgLabels.push(...nameText(edge, anchor, styler, violates(i),
-                anchor[2] <= polys[i][polys[i].length - 1][0] ? "end" : "start"))
+                anchor[2] <= polys[i][lead ? 0 : polys[i].length - 1][0] ? "end" : "start",
+                layout.transitions === true))
             placed[i] = true
         })
     }
@@ -969,7 +1093,7 @@ export const renderSVG = (layout: Layout, config: Config, explicit: Partial<Conf
         const name = (preferred?: Box[], mates?: number[]) =>
             svgLabels.push(...renderEdgeName(edge, polys[i],
                 (c, dodge) => claim(c, i, dodge, undefined, mates),
-                styler, config, violates(i), preferred))
+                styler, config, violates(i), preferred, layout.transitions === true))
         if (!grouped.has(i))
             name(stubAt.get(i))
         if (into.has(i))
@@ -984,8 +1108,9 @@ export const renderSVG = (layout: Layout, config: Config, explicit: Partial<Conf
                 (c, dodge, own) => claim(c, i, dodge, own), styler, violates(i)))
     })
 
-    /*  generate the SVG fragments for the node boxes  */
-    const svgNodes = nodes.flatMap((node) => renderNode(node, layout, styleOf(node), styler, config))
+    /*  generate the SVG fragments for the node boxes (with their marking)  */
+    const svgNodes = nodes.flatMap((node) =>
+        renderNode(node, layout, markedStyleOf(node, styleOf(node), config), styler, config))
 
     /*  generate the SVG fragments for the group boxes (drawn below
         everything else) and the container boxes (drawn below the edges

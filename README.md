@@ -14,7 +14,7 @@ About
 -----
 
 **Gradia** is a small API and CLI for rendering directed graphs,
-described in a concise textual input language, as SVG diagrams. Eight
+described in a concise textual input language, as SVG diagrams. Nine
 diagram types are supported which fit the scenario of visualizing object
 graphs:
 
@@ -32,6 +32,10 @@ graphs:
 - `matrix`: a dependency structure matrix, counting the edges between
   its rows and columns and outlining its cycles.
 - `sequence`: a sequence diagram of participants and their messages.
+- `state`: a state machine of states and transitions, with pseudo-states
+  (initial, final, choice, junction, fork/join, and history), composite
+  states, and marking its unreachable, dead-end, and incomplete states and
+  its conflicting transitions.
 
 Examples
 --------
@@ -102,6 +106,14 @@ Here are examples of the graph diagram renderings:
 
   ![sample-sequence-regular](smp/sample-sequence-regular.svg)
 
+- [sample-state-regular](smp/sample-state-regular.txt) (state machine with unreachable and dead-end states):
+
+  ![sample-state-regular](smp/sample-state-regular.svg)
+
+- [sample-state-advanced](smp/sample-state-advanced.txt) (state machine with history, fork/join, junction, completion, and conflicting transitions):
+
+  ![sample-state-advanced](smp/sample-state-advanced.svg)
+
 Playground
 ----------
 
@@ -120,7 +132,7 @@ Usage
 -----
 
 ```sh
-$ gradia [-t graph|hub|grid|layer|slice|tree|matrix|sequence] [-f <format>] [-c <name>=<value>] -o <file>.svg <graph>.txt
+$ gradia [-t graph|hub|grid|layer|slice|tree|matrix|sequence|state] [-f <format>] [-c <name>=<value>] -o <file>.svg <graph>.txt
 ```
 
 The diagram type is selected with the `-t` command-line option or, when
@@ -137,7 +149,7 @@ MCP Service
 -----------
 
 ```sh
-$ gradia --mcp [-t graph|hub|grid|layer|slice|tree|matrix|sequence] [-f <format>] [-c <name>=<value>]
+$ gradia --mcp [-t graph|hub|grid|layer|slice|tree|matrix|sequence|state] [-f <format>] [-c <name>=<value>]
 ```
 
 With the `-m`/`--mcp` option, **Gradia** instead runs as a [Model Context
@@ -205,7 +217,7 @@ separated by `|`.
 <directive>      ::= "#config" <whitespace> { <whitespace> } <option> <whitespace> { <whitespace> } ( <string> | <word> )
                    | "#type" <whitespace> { <whitespace> } <type>
 <option>         ::= <lowercase-letter> { <lowercase-letter> | <digit> | "-" }
-<type>           ::= "graph" | "hub" | "grid" | "layer" | "slice" | "tree" | "matrix" | "sequence"
+<type>           ::= "graph" | "hub" | "grid" | "layer" | "slice" | "tree" | "matrix" | "sequence" | "state"
 <word>           ::= <char> - <whitespace> { <char> - <whitespace> }
 <newline>        ::= "\n"
 <whitespace>     ::= " " | "\t" | "\r"
@@ -268,7 +280,7 @@ separated by `|`.
   reject a kind other than `sync`, as well as a `duration` or `time`,
   with an error. Any other key is rejected with an error, too.
 
-- Ten attribute keys are reserved and consumed by the renderer instead
+- Eleven attribute keys are reserved and consumed by the renderer instead
   of being displayed as a regular `<key>: <val>` line:
 
     - `url: <url>` renders the node box as a hyperlink. Only relative URLs
@@ -296,8 +308,8 @@ separated by `|`.
       node which is implicitly declared if never referenced otherwise),
 
     - `container: <type>` marks the node as a container whose members
-      are laid out with the diagram type `<type>` (`graph`, `hub`, or
-      `grid`), even if it has no members at all,
+      are laid out with the diagram type `<type>` (`graph`, `hub`,
+      `grid`, or `state`), even if it has no members at all,
 
     - `order: <number>` places the node explicitly (see below),
 
@@ -315,12 +327,20 @@ separated by `|`.
 
     - `multiple: true` draws the node box as several instances: the
       front box with two copies behind it, offset towards the
-      bottom-right.
+      bottom-right,
+
+    - `mark: unreachable|dead-end|incomplete` marks the node (or
+      container) as a violation: its border is drawn in the
+      `color-mark-violation` color, for `unreachable` dashed and with its
+      outgoing edges marked, too. It is usually derived by diagram type
+      `state`, but honored by every diagram type drawing node boxes,
+      unless the option `mark-violation` is `false`.
 
   Both `badge` and `multiple` are ignored on a container node.
-  Additionally, the diagram types `layer` and `slice` consume the
-  attribute `layer: <name>` and `slice: <name>`, respectively (see
-  below), while all other diagram types display them as regular lines.
+  Additionally, the diagram types `layer`, `slice`, and `state` consume
+  the attribute `layer: <name>`, `slice: <name>`, and `state: <kind>`,
+  respectively (see below), while all other diagram types display them
+  as regular lines.
 
 - A `graph` (a `graph` container level, too) with at least one node
   carrying an `order` attribute is laid out in that explicit order
@@ -351,12 +371,13 @@ separated by `|`.
   of the enclosing level as a single box. Edges may connect any two
   nodes, across container boundaries and to container nodes themselves,
   except a container with one of its own members. An edge crossing the
-  boundary of a container laid out as `graph` is routed through the box
-  border to the inner node (entering on the west and leaving on the east
-  side, and where other nodes lie between the inner node and the border,
-  around them through the gutter below, passing the border at the
-  height of that gutter), while an edge crossing the boundary of a
-  container laid out as `hub` or `grid` ends at the box border instead.
+  boundary of a container laid out as `graph` (or `state`) is routed
+  through the box border to the inner node (entering on the west and
+  leaving on the east side, and where other nodes lie between the inner
+  node and the border, around them through the gutter below, passing the
+  border at the height of that gutter), while an edge crossing the
+  boundary of a container laid out as `hub` or `grid` ends at the box
+  border instead.
 
 - All remaining attributes are displayed as `<key>: <val>` lines inside
   the node box.
@@ -376,13 +397,13 @@ separated by `|`.
   `graph` container additionally count inside it, from the boundary to
   the inner node.
 
-- **Containers**: only the diagram types `graph`, `hub`, and `grid` lay
-  out the members of a container. The diagram types `layer`, `slice`,
-  `tree`, `matrix`, and `sequence` reject the input with an error as
-  soon as the graph contains a container.
+- **Containers**: only the diagram types `graph`, `hub`, `grid`, and
+  `state` lay out the members of a container. The diagram types `layer`,
+  `slice`, `tree`, `matrix`, and `sequence` reject the input with an
+  error as soon as the graph contains a container.
 
-- **Violations**: the diagram types `layer`, `slice`, `tree`, and
-  `matrix` mark their violations in the `color-mark-violation` color,
+- **Violations**: the diagram types `layer`, `slice`, `tree`, `matrix`,
+  and `state` mark their violations in the `color-mark-violation` color,
   unless the option `mark-violation` is `false`.
 
 #### Diagram Type `graph`
@@ -644,10 +665,88 @@ The diagram type `sequence` draws a sequence diagram:
 Both texts of `duration` and `time` are drawn exactly as given, e.g.,
 `"{0..200ms}"` or `"t=now"`.
 
+#### Diagram Type `state`
+
+The diagram type `state` draws a state machine.
+
+- **Layout**: the states (the nodes) and transitions (the edges) are
+  laid out like a `graph`, but with up to 8 instead of 4 side-by-side
+  nodes (unless `graph-columns-max` is configured), and every transition
+  is drawn on its own (never bundled).
+
+- **Transitions**: the name of a transition is its label, e.g.
+  `"evt [guard] / action"` (quoted, as it contains whitespace). The
+  guard is drawn in italics and the action dimmed. The guards of the
+  transitions leaving a choice or junction are placed at their start.
+
+- **States**: the attributes of a state (e.g. its behaviors `entry`,
+  `do`, and `exit`) are drawn below a line dividing them from its name.
+
+- **Pseudo-states**: the attribute `state: <kind>` turns a node into a
+  pseudo-state, drawn without its texts in the `color-node-pseudo-*`
+  colors:
+
+    - `initial`: a filled dot,
+    - `final`: a bullseye,
+    - `terminate`: a cross,
+    - `choice`: a diamond,
+    - `junction`: a small dot,
+    - `fork` and `join`: a bar, growing with its edges,
+    - `history` and `deep-history`: a circled `H` and `H*`
+      (inside a composite state only),
+    - `entry-point` and `exit-point`: a hollow and a crossed-out circle
+      (inside a composite state only).
+
+- **Composite states**: containers act as composite states. They are
+  drawn as solid grey boxes, bordered in the `color-composite-border`
+  color, with their name and their attributes above a dividing line.
+
+- **Semantics**: a transition into a composite state enters its initial
+  state, and one into its history state resumes it. A transition out of
+  a composite state leaves any of its members. An unlabeled transition
+  out of it is a completion transition, firing only once an inner final
+  state is reached. A join fires once all of its sources are reached.
+
+- **Validation**: the input is rejected with an error if
+
+    - an initial state has an incoming transition,
+    - a final or terminate state has an outgoing transition,
+    - a choice, junction, fork, join, or entry point has no outgoing
+      transition,
+    - a history state or join has more than one outgoing transition,
+    - a fork has more than one incoming transition,
+    - a history state, entry point, or exit point is not inside a
+      composite state,
+    - a history state without a default transition is inside a
+      composite state without an initial state,
+    - a containment level (or the top level) has more than one initial
+      (or history, or deep-history) state,
+    - a transition enters a composite state without an initial state, or
+    - a pseudo-state has members.
+
+- **Analysis**: the following violations are marked in the
+  `color-mark-violation` color (unless the node carries an explicit
+  `mark` attribute already):
+
+    - `unreachable` (dashed border and outgoing transitions): a state
+      not reachable from the top-level initial state (only checked once
+      the top level has an initial state),
+    - `dead-end` (solid border): a regular state which is trapped, i.e.
+      belongs to a group of states no transition leads out of and which
+      holds no final or terminate state, e.g. a single state without a
+      transition leading out of it (a self-loop not counting), or two
+      states only leading into each other,
+    - `incomplete` (solid border): a choice or junction whose outgoing
+      transitions are all guarded, but none by `[else]`, or a composite
+      state with a final state but no completion transition,
+    - conflicting transitions (dashed): the transitions leaving the same
+      state (except a fork) on the same event with the same (or no)
+      guard.
+
 ### Directives
 
 A `#type` directive sets the diagram type (`graph`, `hub`, `grid`,
-`layer`, `slice`, `tree`, `matrix`, or `sequence`), which otherwise is
+`layer`, `slice`, `tree`, `matrix`, `sequence`, or `state`), which otherwise is
 settable through the `-t`/`--type` command-line option (which takes
 precedence).
 The last occurrence wins and an invalid type is silently ignored.
@@ -693,6 +792,10 @@ size-font-prop             22           grid-gap-vertical          20
 size-font-edge             16           grid-node-width-equal      true
 size-font-arity            16           grid-node-height-equal     true
 color-mark-violation       #b06820      sequence-column-gap        20
+color-composite-border     #c0c0c0
+color-node-pseudo-name     #ffffff
+color-node-pseudo-box      #707070
+color-node-pseudo-border   #444444
                                         sequence-message-gap       40
                                         tree-level-gap             60
                                         tree-sibling-gap           20
@@ -715,10 +818,11 @@ non-negative numbers, except the booleans `grid-node-width-equal`,
 and `tree-horizontal`.
 
 The boolean `mark-violation` option controls whether the diagram types
-`matrix`, `layer`, `slice`, and `tree` mark their violations at all (in
-the `color-mark-violation` color): by default they do, while with
-`false` they render the very same diagram without any marking (the
-cross links of a `tree` stay dashed, though).
+`matrix`, `layer`, `slice`, `tree`, and `state` mark their violations at
+all (in the `color-mark-violation` color), and whether a `mark`
+attribute is honored: by default they do, while with `false` they render
+the very same diagram without any marking (the cross links of a `tree`
+stay dashed, though).
 
 The `size-font-*` options control the font sizes of the node names
 (`size-font-node`), the node types (`size-font-type`), the node

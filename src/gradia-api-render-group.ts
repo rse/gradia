@@ -107,26 +107,27 @@ export const composeGroups = (parts: GroupPart[], layouts: Layout[], config: Con
         new Map(layouts.flatMap((layout) => Array.from(pick(layout).entries())))
     const groupIdxOf = (id: string) => groupIdx.get(id)!
     return {
-        nodes:      layouts.flatMap((layout) => layout.nodes),
-        edges:      layouts.flatMap((layout) => layout.edges),
-        cx:         (id) => layouts[groupIdxOf(id)].cx(id) + dxs[groupIdxOf(id)],
-        cy:         (id) => layouts[groupIdxOf(id)].cy(id) + dys[groupIdxOf(id)],
-        boxW:       merge((layout) => layout.boxW),
-        boxH:       merge((layout) => layout.boxH),
-        contentH:   merge((layout) => layout.contentH),
-        polys:      layouts.flatMap((layout, i) => layout.polys.map((poly): Poly =>
+        nodes:       layouts.flatMap((layout) => layout.nodes),
+        edges:       layouts.flatMap((layout) => layout.edges),
+        cx:          (id) => layouts[groupIdxOf(id)].cx(id) + dxs[groupIdxOf(id)],
+        cy:          (id) => layouts[groupIdxOf(id)].cy(id) + dys[groupIdxOf(id)],
+        boxW:        merge((layout) => layout.boxW),
+        boxH:        merge((layout) => layout.boxH),
+        contentH:    merge((layout) => layout.contentH),
+        polys:       layouts.flatMap((layout, i) => layout.polys.map((poly): Poly =>
             poly.map(([ px, py ]) => [ px + dxs[i], py + dys[i] ]))),
-        styleOf:    (node) => (layouts[groupIdxOf(node.id)].styleOf ?? defaultStyleOf)(node),
+        styleOf:     (node) => (layouts[groupIdxOf(node.id)].styleOf ?? defaultStyleOf)(node),
         groups,
-        containers: layouts.flatMap((layout, i) => (layout.containers ?? []).map((c): ContainerBox =>
+        containers:  layouts.flatMap((layout, i) => (layout.containers ?? []).map((c): ContainerBox =>
             ({ ...c, x: c.x + dxs[i], y: c.y + dys[i] }))),
-        shapes:     layouts.flatMap((layout, i) => (layout.shapes ?? []).map((shape) =>
+        shapes:      layouts.flatMap((layout, i) => (layout.shapes ?? []).map((shape) =>
             shiftShape(shape, dxs[i], dys[i]))),
-        marked:     layouts.flatMap((layout) => layout.edges.map((_, i) => layout.marked?.[i] ?? false)),
-        dashed:     layouts.flatMap((layout) => layout.edges.map((_, i) => layout.dashed?.[i] ?? false)),
-        bundled:    layouts.flatMap((layout) => layout.edges.map((_, i) => layout.bundled?.[i] ?? false)),
-        crowded:    layouts.some((layout) => layout.crowded === true),
-        centered:   layouts.some((layout) => layout.centered === true)
+        marked:      layouts.flatMap((layout) => layout.edges.map((_, i) => layout.marked?.[i] ?? false)),
+        dashed:      layouts.flatMap((layout) => layout.edges.map((_, i) => layout.dashed?.[i] ?? false)),
+        bundled:     layouts.flatMap((layout) => layout.edges.map((_, i) => layout.bundled?.[i] ?? false)),
+        crowded:     layouts.some((layout) => layout.crowded === true),
+        centered:    layouts.some((layout) => layout.centered === true),
+        transitions: layouts.some((layout) => layout.transitions === true)
     }
 }
 

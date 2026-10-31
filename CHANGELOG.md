@@ -5,6 +5,21 @@ ChangeLog
 1.5.0 (2026-10-31)
 ------------------
 
+-   FEATURE [code, othr]: add the diagram type "state", a state machine laid out like a "graph"
+    (folding its columns only beyond 8 by default) with never bundled transitions (the guards of a
+    choice or junction placed at their start, their guards in italics and actions dimmed), the
+    pseudo-states of the new node attribute "state: initial|final|terminate|choice|junction|fork|
+    join|history|deep-history|entry-point|exit-point" (drawn in the new "color-node-pseudo-*"
+    colors), the attributes (e.g. the behaviors "entry", "do", and "exit") below a dividing line,
+    and containers as composite states (drawn as solid boxes, bordered in the new
+    "color-composite-border" color, with their attributes in their head, and with completion
+    transitions and history entries), validating the state machine as a whole (through the new
+    "prepare" hook of the diagram type registry) and marking its unreachable, trapped
+    (dead-end), and incomplete states (through the new reserved node attribute
+    "mark: unreachable|dead-end|incomplete") and its conflicting transitions, plus the
+    "smp/sample-state-regular" and "smp/sample-state-advanced" samples and two state machine
+    examples in the playground.
+
 -   FEATURE [code, othr]: add the diagram type "sequence" (participants on top of dashed
     lifelines, messages top-down in declaration order, self messages looping on their lifeline),
     based on free-standing "shapes" of a "Layout", the new "color-node-lifeline" option, and the

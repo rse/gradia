@@ -9,7 +9,7 @@ import { Node, Edge, Graph }                       from "./gradia-api-model.js"
 import { Config }                                  from "./gradia-api-config.js"
 import { Poly, FS_GROUP, textWidth, Layout, ContainerBox }
     from "./gradia-api-render-base.js"
-import { parentOf, containerTypeOf, containerHead, typeOf, defaultStyleOf }
+import { parentOf, containerTypeOf, containerHead, typeOf, defaultStyleOf, attrsOfNode }
     from "./gradia-api-render-node.js"
 import { simplifyPoly }                            from "./gradia-api-render-edge.js"
 
@@ -46,10 +46,17 @@ export type Renderer = (graph: Graph, config: Config, level?: LevelContext) => P
     it supports gate nodes (and hence lets the edges crossing a
     container boundary continue to the inner nodes, instead of ending at
     the container border), whether it renders the edge kinds and
-    timings, and its own defaults of the rendering options (overriding
-    the general ones, but overridden by the explicit ones)  */
+    timings, its own defaults of the rendering options (overriding
+    the general ones, but overridden by the explicit ones), its optional
+    preparation of the graph model as a whole, before it is partitioned
+    into groups and containment levels (e.g. its validation and analysis,
+    deriving node annotations), and whether it draws its member containers
+    as solid boxes in its node style, with their attributes in their head
+    (e.g. the composite states of a state machine)  */
 export interface DiagramTypeSpec {
     render:    Renderer
+    prepare?:  (graph: Graph, containment: Containment, config: Config) => Graph
+    boxed?:    boolean
     nestable:  boolean
     gated:     boolean
     kinds:     boolean
@@ -211,14 +218,18 @@ export const renderContained = async (
         if (node.id.includes("\u0000"))
             throw new Error(`node id ${JSON.stringify(node.id)} contains a reserved control character`)
 
-    /*  the box size of a container placeholder: its content plus
-        the padding and the head, at least as wide as its tag  */
-    const sizeOf = (member: Node, b: Bounds): { w: number, h: number } => {
-        const tag = Math.max(textWidth(member.name, FS_GROUP),
-            textWidth(typeOf(member) ?? "", config["size-font-type"]))
+    /*  the box size of a container placeholder in a level of the given
+        diagram type: its content plus the padding and the head, at least
+        as wide as its tag (and, for a boxed one, its attribute lines)  */
+    const sizeOf = (member: Node, b: Bounds, type: string): { w: number, h: number } => {
+        const boxed = types[type].boxed === true
+        const tag   = Math.max(textWidth(member.name, FS_GROUP),
+            textWidth(typeOf(member) ?? "", config["size-font-type"]),
+            ...(boxed ? attrsOfNode(member).map((attr) =>
+                textWidth(`${attr.key}: ${attr.val}`, config["size-font-prop"])) : []))
         return {
             w: Math.max(b.maxX - b.minX, tag) + pad * 2,
-            h: b.maxY - b.minY + pad * 2 + containerHead(member, config)
+            h: b.maxY - b.minY + pad * 2 + containerHead(member, config, boxed)
         }
     }
 
@@ -249,13 +260,14 @@ export const renderContained = async (
             const member = graph.nodes.get(id)!
             if (!layout.nodes.some((node) => node.id === id))
                 throw new Error(`container "${id}" cannot be placed twice by diagram type "${type}"`)
-            const { w, h } = sizeOf(member, level.bounds)
+            const { w, h } = sizeOf(member, level.bounds, type)
+            const boxed = types[type].boxed === true
             const cx = layout.cx(id)
             const cy = layout.cy(id)
             const k  = parts.push({
                 layout: level.layout,
                 dx:     cx - w / 2 + pad - level.bounds.minX,
-                dy:     cy - h / 2 + containerHead(member, config) + pad - level.bounds.minY
+                dy:     cy - h / 2 + containerHead(member, config, boxed) + pad - level.bounds.minY
             }) - 1
             for (const node of level.layout.nodes)
                 partOf.set(node.id, k)
@@ -265,7 +277,8 @@ export const renderContained = async (
                 x:    cx - layout.boxW.get(id)! / 2,
                 y:    cy - layout.boxH.get(id)! / 2,
                 w:    layout.boxW.get(id)!,
-                h:    layout.boxH.get(id)!
+                h:    layout.boxH.get(id)!,
+                ...(boxed ? { style: (layout.styleOf ?? defaultStyleOf)(member) } : {})
             })
             innerBoxes.push(...(level.layout.containers ?? []).map((c): ContainerBox =>
                 ({ ...c, x: c.x + parts[k].dx, y: c.y + parts[k].dy })))
@@ -280,6 +293,8 @@ export const renderContained = async (
         const edges:   Edge[]    = []
         const polys:   Poly[]    = []
         const bundled: boolean[] = []
+        const marked:  boolean[] = []
+        const dashed:  boolean[] = []
         const partial            = new Map<number, Poly>()
         parts.forEach((part, k) => {
             if (k === 0)
@@ -288,6 +303,8 @@ export const renderContained = async (
                 edges.push(edge)
                 polys.push(shift(part.layout.polys[ei], k))
                 bundled.push(part.layout.bundled?.[ei] ?? false)
+                marked.push(part.layout.marked?.[ei] ?? false)
+                dashed.push(part.layout.dashed?.[ei] ?? false)
             })
         })
         levelEdges.forEach((edge, li) => {
@@ -305,6 +322,8 @@ export const renderContained = async (
                 edges.push(graph.edges[i])
                 polys.push(poly)
                 bundled.push(layout.bundled?.[li] ?? false)
+                marked.push(layout.marked?.[li] ?? false)
+                dashed.push(layout.dashed?.[li] ?? false)
             }
         })
 
@@ -318,16 +337,19 @@ export const renderContained = async (
                 ...parts.slice(1).flatMap((part) => part.layout.nodes)
             ],
             edges,
-            cx:         (id) => parts[partOf.get(id)!].layout.cx(id) + parts[partOf.get(id)!].dx,
-            cy:         (id) => parts[partOf.get(id)!].layout.cy(id) + parts[partOf.get(id)!].dy,
-            boxW:       merge((layout) => layout.boxW),
-            boxH:       merge((layout) => layout.boxH),
-            contentH:   merge((layout) => layout.contentH),
+            cx:          (id) => parts[partOf.get(id)!].layout.cx(id) + parts[partOf.get(id)!].dx,
+            cy:          (id) => parts[partOf.get(id)!].layout.cy(id) + parts[partOf.get(id)!].dy,
+            boxW:        merge((layout) => layout.boxW),
+            boxH:        merge((layout) => layout.boxH),
+            contentH:    merge((layout) => layout.contentH),
             polys,
-            styleOf:    (node) => (parts[partOf.get(node.id)!].layout.styleOf ?? defaultStyleOf)(node),
-            containers: [ ...boxes, ...innerBoxes ],
+            styleOf:     (node) => (parts[partOf.get(node.id)!].layout.styleOf ?? defaultStyleOf)(node),
+            containers:  [ ...boxes, ...innerBoxes ],
             bundled,
-            crowded:    parts.some((part) => part.layout.crowded === true)
+            marked,
+            dashed,
+            crowded:     parts.some((part) => part.layout.crowded === true),
+            transitions: parts.some((part) => part.layout.transitions === true)
         }
         return { layout: composed, bounds: boundsOf(composed, Array.from(partial.values())), partial }
     }
@@ -358,7 +380,8 @@ export const renderContained = async (
             attaches at: the position of its inner gate  */
         const portOffset = (member: Node, y: number): number => {
             const { bounds } = inner.get(member.id)!
-            return (y - bounds.minY) + containerHead(member, config) + pad - sizeOf(member, bounds).h / 2
+            return (y - bounds.minY) + containerHead(member, config, types[type].boxed === true) + pad -
+                sizeOf(member, bounds, type).h / 2
         }
 
         /*  derive the edges of this level: the edges lifted to it (both
@@ -415,7 +438,7 @@ export const renderContained = async (
         /*  lay out the level with the member containers as placeholders  */
         const fixedSize = new Map<string, { w: number, h: number }>()
         for (const [ id, level ] of inner)
-            fixedSize.set(id, sizeOf(levelNodes.get(id)!, level.bounds))
+            fixedSize.set(id, sizeOf(levelNodes.get(id)!, level.bounds, type))
         for (const gate of gates.keys())
             fixedSize.set(gate, { w: 0, h: 0 })
         const layout = await types[type].render({ nodes: levelNodes, edges: levelEdges }, config, {

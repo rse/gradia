@@ -756,7 +756,8 @@ const assignTrackCoords = (
     grid:    Grid,
     config:  Config,
     merged?: Merge,
-    markOf?: (edge: Edge) => boolean
+    markOf?: (edge: Edge) => boolean,
+    distinct = false
 ): { chanX: (c: number, edge: number) => number, gutY: (g: number, edge: number) => number,
     need: Need, bundled: Set<number>, keys: Map<string, string> } => {
     const { colWidth, chanCap, gutCap, chanW, colCX } = grid
@@ -765,6 +766,11 @@ const assignTrackCoords = (
     const need: Need = { chan: new Map<number, number>(), gut: new Map<number, number>() }
     const bundled    = new Set<number>()
     const keys       = new Map<string, string>()
+
+    /*  the bundle keys of an edge (kept apart per edge for distinct
+        edges, which are hence never bundled)  */
+    const keysOf = (i: number, tk: string, sk: string): string[] =>
+        distinct ? [ `${tk}:${i}`, `${sk}:${i}` ] : [ tk, sk ]
 
     /*  assign the vertical tracks within the inter-column channels (the
         leg of a self-loop spans up to its detour above the box, and a
@@ -783,15 +789,17 @@ const assignTrackCoords = (
             pushTo(chanUsers, chans[0], { edge: i, posIn: sp.y, posOut: tp.y - LOOP_TOP, ...flags[0] })
         else if (chans.length === 1)
             pushTo(chanUsers, chans[0], { edge: i, posIn: sp.y, posOut: tp.y, ...flags[0],
-                bundles: [ targetKey(chans[0], edge, mark), sourceKey(chans[0], edge, mark) ], unit: tEnd ?? sEnd })
+                bundles: keysOf(i, targetKey(chans[0], edge, mark), sourceKey(chans[0], edge, mark)), unit: tEnd ?? sEnd })
         else {
             const gy = gutBase(guts[0])
             if (gate !== "s")
                 pushTo(chanUsers, chans[0], { edge: i, posIn: sp.y, posOut: gy,   ...flags[0],
-                    bundles: [ targetKey(chans[1], edge, mark, guts[0]), sourceKey(chans[0], edge, mark) ], unit: sEnd })
+                    bundles: keysOf(i, targetKey(chans[1], edge, mark, guts[0]), sourceKey(chans[0], edge, mark)),
+                    unit: sEnd })
             if (gate !== "t")
                 pushTo(chanUsers, chans[1], { edge: i, posIn: gy,   posOut: tp.y, ...flags[1],
-                    bundles: [ targetKey(chans[1], edge, mark), sourceKey(chans[0], edge, mark, guts[0]) ], unit: tEnd })
+                    bundles: keysOf(i, targetKey(chans[1], edge, mark), sourceKey(chans[0], edge, mark, guts[0])),
+                    unit: tEnd })
         }
     })
     const chanOff = new Map<string, number>()
@@ -857,7 +865,7 @@ const assignTrackCoords = (
             posIn:   gate === "s" ? sp.x : chanX(chans[0], i),
             posOut:  gate === "t" ? tp.x : chanX(chans[1], i),
             mirror:  sp.y > gutBase(guts[0]),
-            bundles: [ targetKey(chans[1], edge, markOf?.(edge)), sourceKey(chans[0], edge, markOf?.(edge)) ]
+            bundles: keysOf(i, targetKey(chans[1], edge, markOf?.(edge)), sourceKey(chans[0], edge, markOf?.(edge)))
         })
     })
     const gutOff = new Map<string, number>()
@@ -971,17 +979,18 @@ const routeEdges = (
     config:  Config,
     level:   LevelContext,
     merged?: Merge,
-    markOf?: (edge: Edge) => boolean
+    markOf?: (edge: Edge) => boolean,
+    distinct = false
 ): Routing => {
     const portGap  = portGapOf(edges, sides, config, merged)
     const portPre  = assignPorts(edges, sides, cx, cy, boxW, boxH, portGap,
         undefined, level.fixedPort, merged)
-    const trackPre = assignTrackCoords(edges, plans, portPre, grid, config, merged, markOf)
+    const trackPre = assignTrackCoords(edges, plans, portPre, grid, config, merged, markOf, distinct)
     const portPos  = assignPorts(edges, sides, cx, cy, boxW, boxH, portGap,
         (edge) => plans[edge].guts.length > 0 ?
             trackPre.gutY(plans[edge].guts[0], edge) : undefined, level.fixedPort, merged)
     const { chanX, gutY, need, bundled, keys } = assignTrackCoords(edges, plans, portPos, grid, config,
-        merged, markOf)
+        merged, markOf, distinct)
     const polys = routePolys(edges, plans, portPos, boxH, cy, chanX, gutY)
     const fits  = Array.from(need.chan).every(([ c, w ]) => w <= grid.chanW[c])
         && Array.from(need.gut).every(([ g, h ]) => h <= grid.gutH[g])
@@ -1184,9 +1193,11 @@ const growBoxes = (
 /*  lay out a directed graph model (for a containment level: with the
     container placeholders at their fixed sizes, the edge ends attaching
     to them at their fixed ports, and the gate nodes on the boundary,
-    or, for a uniform layout, with its boxes and gutters unified)  */
+    for a uniform layout, with its boxes and gutters unified, and, for
+    distinct edges, e.g. the transitions of a "state" diagram, without
+    bundling the edges of the same name)  */
 export const render = async (graph: Graph, config: Config, level: LevelContext = {},
-    uniform?: Uniform): Promise<Layout> => {
+    uniform?: Uniform, distinct = false): Promise<Layout> => {
     const nodes = Array.from(graph.nodes.values())
     const edges = graph.edges
 
@@ -1391,7 +1402,7 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
         ends merged into one port, once determined)  */
     let   merged: Merge | undefined
     const route = () => routeEdges(edges, plans, sides, boxW, boxH, cx, cy, grid, config, level, merged,
-        uniform?.markOf)
+        uniform?.markOf, distinct)
 
     /*  lay out the grid and route the edges, re-sizing the crowded
         channels and gutters by the needs of their bundled tracks until

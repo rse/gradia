@@ -13,6 +13,13 @@ import { Poly, ARITY_PAD, ARROW_H, arityHeight }
 /*  edge attachment port geometry  */
 export const PORT_PAD = 10  /*  padding of the port band inside the box  */
 
+/*  the parts of a transition label of the form "event [guard] / action"
+    (each part being optional, a label not of this form being its event)  */
+export const transitionOf = (name: string): { event: string, guard?: string, action?: string } => {
+    const m = /^([^[/]*)(?:\[([^\]]*)\])?\s*(?:\/(.*))?$/s.exec(name)
+    return m !== null ? { event: m[1].trim(), guard: m[2]?.trim(), action: m[3]?.trim() } : { event: name.trim() }
+}
+
 /*  the minimum offset between the parallel tracks of a crowded
     channel/gutter, so its edge lines always stay visibly apart  */
 const TRACK_GAP_MIN = 8

@@ -7,7 +7,7 @@
 /*  internal dependencies  */
 import { Attr, Node }                              from "./gradia-api-model.js"
 import { Config }                                  from "./gradia-api-config.js"
-import { NodeStyle, textWidth, textWrap }
+import { NodeStyle, NodeShape, textWidth, textWrap }
     from "./gradia-api-render-base.js"
 
 /*  the special "primary" annotation (rendered as a distinct node coloring)  */
@@ -39,13 +39,20 @@ export const parentOf = (node: Node): string | undefined =>
 export const containerTypeOf = (node: Node): string | undefined =>
     node.attrs.findLast((attr) => attr.key === "container")?.val
 
-/*  container box head geometry (the head holds the name tag and the
-    optional type line above it)  */
+/*  container box head geometry (the head holds the name tag, the
+    optional type line above it, and, for a container drawn in a node
+    style, e.g. a composite state, its attribute lines below it, padded
+    for the line dividing them from the name tag, plus some air below the
+    line dividing the head from the members)  */
 export const HEAD_H = 34  /*  height of the container box head        */
+export const HEAD_X = 12  /*  extra air below the head of a boxed one  */
 export const HEAD_T = (config: Config): number =>
     config["size-font-type"] + 4  /*  extra head height of a type line  */
-export const containerHead = (node: Node, config: Config): number =>
-    HEAD_H + (typeOf(node) !== undefined ? HEAD_T(config) : 0)
+export const containerHead = (node: Node, config: Config, boxed = false): number => {
+    const n = boxed ? attrsOfNode(node).length : 0
+    return HEAD_H + (typeOf(node) !== undefined ? HEAD_T(config) : 0) +
+        (n > 0 ? ATTR_P + n * ATTR_H(config) : 0) + (boxed ? HEAD_X : 0)
+}
 
 /*  the special "order" annotation (the explicit top-down placement
     order of the node, a finite number, an invalid value being ignored)  */
@@ -66,7 +73,44 @@ export const clusterOf = (node: Node): string[] | undefined => {
 /*  the special attributes consumed by the renderers instead of being
     rendered as node box text lines  */
 const ATTRS_SPECIAL = new Set([ "url", "type", "primary", "group", "parent", "container", "order",
-    "badge", "multiple", "cluster" ])
+    "badge", "multiple", "cluster", "mark" ])
+
+/*  the special "mark" annotation (the violation marking of a node, as
+    set by the analysis of a "state" diagram, an unknown value being
+    ignored), drawn with a dashed border for an "unreachable" node, whose
+    outgoing edges are marked, too, and a solid one for a "dead-end" or
+    an "incomplete" node  */
+const nodeMarks = [ "unreachable", "dead-end", "incomplete" ] as const
+export type NodeMark = typeof nodeMarks[number]
+export const markOf = (node: Node): NodeMark | undefined => {
+    const val = node.attrs.findLast((attr) => attr.key === "mark")?.val
+    return nodeMarks.find((mark) => mark === val)
+}
+
+/*  the node coloring of a marked node: the border in the violation color
+    (unless the marking of the violations is disabled)  */
+export const markedStyleOf = (node: Node, style: NodeStyle, config: Config): NodeStyle => {
+    const mark = config["mark-violation"] ? markOf(node) : undefined
+    if (mark === undefined)
+        return style
+    return { ...style, stroke: "color-mark-violation", ...(mark === "unreachable" ? { dash: "10 6" } : {}) }
+}
+
+/*  the geometry of a pseudo-state shape centered in its box of the half
+    size "a" (the smaller half extent of the box): the radius of the dot of
+    an initial state or a junction, the outer radius of the bullseye of a
+    final state and the circle of a history state, an entry point, or an
+    exit point, the half diagonal of the diamond of a choice and the cross
+    of a terminate state, and the half width of the bar of a fork or join
+    (filling its box), plus the reach of its outline across from its
+    center at the offset "d" from it along a side  */
+export const shapeRadius = (shape: NodeShape, a: number): number =>
+    shape === "initial" || shape === "junction" ? a * 0.75 : shape === "terminate" ? a * 0.7 : a
+export const shapeReach = (shape: NodeShape, a: number, d: number): number => {
+    const r = shapeRadius(shape, a)
+    return shape === "fork" || shape === "join" ? r :
+        shape === "choice" || shape === "terminate" ? r - Math.abs(d) : Math.sqrt(Math.max(0, r * r - d * d))
+}
 
 /*  the special "badge" annotation (the icon in a badge at the left end
     inside the node box, an unknown value being ignored)  */

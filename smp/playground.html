@@ -701,6 +701,83 @@ service --("order created")--> audit { kind: async }
 service --("201 Created")--> gateway { kind: return }
 gateway --("201 Created")--> client { kind: return }
         </script>
+        <script type="text/x-gradia" id="sample-state-regular">
+#type state
+
+#   the pseudo-states
+Start   [ state: initial ]
+Check   [ state: choice ]
+Stop    [ state: final ]
+
+#   the regular and composite states
+Idle    [ entry: "reset()" ]
+Begin   [ state: initial, parent: Active ]
+Running [ parent: Active, do: "work()" ]
+Paused  [ parent: Active ]
+Failed  [ entry: "alarm()" ]
+Legacy  [ entry: "migrate()" ]
+
+#   the transitions
+Start   --> Idle
+Idle    --("start / spawn()")--> Active
+Begin   --> Running
+Running --("pause")--> Paused
+Paused  --("resume")--> Running
+Active  --("stop")--> Check
+Check   --("[done]")--> Stop
+Check   --("[else]")--> Idle
+Check   --("[error] / log()")--> Failed
+Legacy  --("upgrade")--> Idle
+        </script>
+        <script type="text/x-gradia" id="sample-state-advanced">
+#type state
+
+#   the top-level pseudo-states
+Start     [ state: initial ]
+Split     [ state: fork ]
+Merge     [ state: join ]
+Route     [ state: junction ]
+End       [ state: final ]
+Abort     [ state: terminate ]
+
+#   the composite state with its pseudo-states
+Editing   [ entry: "lock()", exit: "unlock()" ]
+Begin     [ state: initial, parent: Editing ]
+Resume    [ state: history, parent: Editing ]
+Leave     [ state: exit-point, parent: Editing ]
+Draft     [ parent: Editing ]
+Proof     [ parent: Editing, exit: "save()" ]
+Done      [ state: final, parent: Editing ]
+
+#   the regular states
+Suspended
+Payment   [ do: "charge()" ]
+Shipping  [ do: "pack()" ]
+Review
+
+#   the transitions (the completion transition "Editing --> Split" fires
+#   once "Done" is reached, and the two "ok" transitions conflict)
+Start     --> Editing
+Begin     --> Draft
+Draft     --("submit")--> Proof
+Draft     --("discard")--> Leave
+Leave     --> End
+Proof     --("approve")--> Done
+Proof     --("reject")--> Draft
+Editing   --("suspend")--> Suspended
+Suspended --("resume")--> Resume
+Suspended --("cancel / cleanup()")--> Abort
+Editing   --> Split
+Split     --> Payment
+Split     --> Shipping
+Payment   --("paid")--> Merge
+Shipping  --("packed")--> Merge
+Merge     --> Route
+Route     --("[express] / notify()")--> End
+Route     --("[else]")--> Review
+Review    --("ok")--> End
+Review    --("ok")--> Editing
+        </script>
 
         <script>
             /*  access the Gradia API class from the "Gradia" namespace
@@ -732,7 +809,9 @@ gateway --("201 Created")--> client { kind: return }
                 "tree-double":      sampleOf("sample-tree-double"),
                 "matrix-regular":   sampleOf("sample-matrix-regular"),
                 "matrix-full":      sampleOf("sample-matrix-full"),
-                "sequence-regular": sampleOf("sample-sequence-regular")
+                "sequence-regular": sampleOf("sample-sequence-regular"),
+                "state-regular":    sampleOf("sample-state-regular"),
+                "state-advanced":   sampleOf("sample-state-advanced")
             }
 
             const app = Vue.createApp({

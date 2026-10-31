@@ -3,7 +3,7 @@
 **gradia** is the opinionated tooling of *Dr. Ralf S. Engelschall*
 for *Object Graph Diagram Rendering*: a small CLI for rendering
 directed graphs, described in a concise textual input language, as SVG
-diagrams. Eight diagram types are supported: `graph` (a grid-snapped
+diagrams. Nine diagram types are supported: `graph` (a grid-snapped
 layered layout of the whole graph, based on the Dagre algorithm of
 `@antv/layout`), `hub` (a hub graph, placing one primary hub node
 between its input and output nodes), `grid` (a compact grid of
@@ -13,8 +13,11 @@ stacked layer bands, marking the edges against the layering), `slice`
 closing a direct cycle between two slices), `tree` (a tidy tree or
 forest with bus connectors, stacked leaves, and dashed cross links),
 `matrix` (a dependency
-structure matrix, outlining its cycles), and `sequence` (a sequence
-diagram of participants, their lifelines, and their messages).
+structure matrix, outlining its cycles), `sequence` (a sequence
+diagram of participants, their lifelines, and their messages), and
+`state` (a state machine with pseudo-states and composite states,
+marking its unreachable, dead-end, and incomplete states and its
+conflicting transitions).
 
 ## Repository Layout
 
@@ -41,7 +44,7 @@ diagram of participants, their lifelines, and their messages).
         primitives a diagram type draws beside its node boxes and edges
     -   `src/gradia-api-render-node.ts`: node box text line breaking,
         measurement, and styling helpers, plus the accessors of the
-        reserved node attributes (e.g. `order`, `cluster`, `badge`)
+        reserved node attributes (e.g. `order`, `cluster`, `badge`, `mark`)
     -   `src/gradia-api-render-edge.ts`: edge routing (port/track
         assignment, polyline simplification, hop computation, SVG path
         generation)
@@ -69,6 +72,10 @@ diagram of participants, their lifelines, and their messages).
         headers and cells of a dependency structure matrix, as shapes)
     -   `src/gradia-api-type-sequence.ts`: the `sequence` diagram type
         (participants, messages, and lifelines)
+    -   `src/gradia-api-type-state.ts`: the `state` diagram type (a
+        `graph` with distinct transitions and pseudo-state shapes, plus
+        the validation and the reachability and dead-end analysis of the
+        whole state machine, marking its states via the `mark` attribute)
 -   `etc/`: the tool configurations (`eslint.mjs`, `tsconfig.json`,
     `stx.conf`, `vite.ts`)
 -   `smp/`: the sample graph descriptions (`*.txt`), their rendered
@@ -107,7 +114,7 @@ No test target is defined.
 ## CLI Command
 
 ```
-gradia [-t graph|hub|grid|layer|slice|tree|matrix|sequence] [-f <format>] [-c <name>=<value>] -o <file>.svg <graph>.txt
+gradia [-t graph|hub|grid|layer|slice|tree|matrix|sequence|state] [-f <format>] [-c <name>=<value>] -o <file>.svg <graph>.txt
 ```
 
 Both the `-o`/`--output` option and the input file argument are

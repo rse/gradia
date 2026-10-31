@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="20 20 1984 274" width="1984" height="274">
+<defs>
+<style>
+.gradia-3167da4d { fill: none; stroke: var(--gradia-color-edge-line, #999999); stroke-width: 3 }
+.gradia-6c7500cd { fill: var(--gradia-color-edge-line, #999999) }
+.gradia-8f3e8366 { fill: none; stroke: var(--gradia-color-mark-violation, #b06820); stroke-width: 3; stroke-dasharray: 10 6 }
+.gradia-72d5e907 { fill: var(--gradia-color-mark-violation, #b06820) }
+.gradia-88d12a47 { font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; font-size: var(--gradia-size-font-edge, 16px); text-anchor: end; fill: var(--gradia-color-edge-name, #333333); stroke: var(--gradia-color-edge-halo, #ffffff); stroke-width: 4.5; paint-order: stroke; stroke-linejoin: round }
+.gradia-874272fb { font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; font-size: var(--gradia-size-font-edge, 16px); fill: var(--gradia-color-edge-name, #333333); stroke: var(--gradia-color-edge-halo, #ffffff); stroke-width: 4.5; paint-order: stroke; stroke-linejoin: round }
+.gradia-a03978d1 { font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; font-size: var(--gradia-size-font-edge, 16px); text-anchor: end; fill: var(--gradia-color-mark-violation, #b06820); stroke: var(--gradia-color-edge-halo, #ffffff); stroke-width: 4.5; paint-order: stroke; stroke-linejoin: round }
+.gradia-17299245 { font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; font-size: var(--gradia-size-font-edge, 16px); text-anchor: middle; fill: var(--gradia-color-edge-name, #333333); stroke: var(--gradia-color-edge-halo, #ffffff); stroke-width: 4.5; paint-order: stroke; stroke-linejoin: round }
+.gradia-ef8c8bc7 { fill: var(--gradia-color-node-pseudo-box, #707070); stroke: var(--gradia-color-node-pseudo-border, #444444); stroke-width: 2 }
+.gradia-9cc2acc3 { fill: var(--gradia-color-container-box, #f6f6f6); stroke: var(--gradia-color-node-pseudo-border, #444444); stroke-width: 2 }
+.gradia-c318c042 { fill: var(--gradia-color-node-regular-box, #e0f0ff); stroke: var(--gradia-color-node-regular-border, #c0d0e0); stroke-width: 4 }
+.gradia-f36ab1ca { font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; font-size: var(--gradia-size-font-node, 30px); font-weight: 600; text-anchor: middle; fill: var(--gradia-color-node-regular-name, #336699) }
+.gradia-edd44499 { fill: none; stroke: var(--gradia-color-node-regular-border, #c0d0e0); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round }
+.gradia-db0a45a0 { font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; font-size: var(--gradia-size-font-prop, 22px); text-anchor: middle; fill: var(--gradia-color-node-regular-name, #336699) }
+.gradia-45b06a2b { fill: var(--gradia-color-node-regular-box, #e0f0ff); stroke: var(--gradia-color-mark-violation, #b06820); stroke-width: 4 }
+.gradia-5d65de7b { fill: none; stroke: var(--gradia-color-mark-violation, #b06820); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round }
+.gradia-92eb6a0b { fill: var(--gradia-color-container-box, #f6f6f6); stroke: var(--gradia-color-composite-border, #c0c0c0); stroke-width: 4 }
+.gradia-087e70cb { fill: none; stroke: var(--gradia-color-composite-border, #c0c0c0); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round }
+.gradia-a062cd18 { font-family: var(--gradia-font-family, 'Helvetica'), ui-sans-serif, -apple-system, Helvetica, Arial, sans-serif; font-size: 24px; font-weight: 600; fill: var(--gradia-color-container-name, #666666) }
+</style>
+<marker id="gradia-d3f0083792ba-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="21" markerHeight="21" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+<path d="M 0 1 L 9 5 L 0 9 z" class="gradia-6c7500cd"/>
+</marker>
+<marker id="gradia-d3f0083792ba-alert" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="21" markerHeight="21" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+<path d="M 0 1 L 9 5 L 0 9 z" class="gradia-72d5e907"/>
+</marker>
+</defs>
+<rect x="760" y="40" width="692" height="205" rx="12" class="gradia-92eb6a0b"/>
+<line x1="760" y1="92" x2="1452" y2="92" class="gradia-087e70cb"/>
+<text x="778" y="76" class="gradia-a062cd18">Active</text>
+<path d="M 811 165.5 L 842 165.5" class="gradia-3167da4d" marker-end="url(#gradia-d3f0083792ba-arrow)"/>
+<path d="M 1062 149.5 L 1202 149.5" class="gradia-3167da4d" marker-end="url(#gradia-d3f0083792ba-arrow)"/>
+<path d="M 1202 181.5 L 1062 181.5" class="gradia-3167da4d" marker-end="url(#gradia-d3f0083792ba-arrow)"/>
+<path d="M 159 126.5 L 400 126.5" class="gradia-3167da4d" marker-end="url(#gradia-d3f0083792ba-arrow)"/>
+<path d="M 620 126.5 L 657 126.5 Q 665 126.5 665 134.5 L 665 134.5 Q 665 142.5 673 142.5 L 760 142.5" class="gradia-3167da4d" marker-end="url(#gradia-d3f0083792ba-arrow)"/>
+<path d="M 1452 142.5 L 1597.5 142.5" class="gradia-3167da4d" marker-end="url(#gradia-d3f0083792ba-arrow)"/>
+<path d="M 1618.5 142.5 L 1862 142.5" class="gradia-3167da4d" marker-end="url(#gradia-d3f0083792ba-arrow)"/>
+<path d="M 1597.5 153.5 L 1529 153.5 Q 1509 153.5 1509 173.5 L 1509 237 Q 1509 257 1489 257 L 697 257 Q 677 257 677 237 L 677 178.5 Q 677 158.5 657 158.5 L 620 158.5" class="gradia-3167da4d" marker-end="url(#gradia-d3f0083792ba-arrow)"/>
+<path d="M 1618.5 153.5 L 1649 153.5 Q 1669 153.5 1669 173.5 L 1669 204 Q 1669 224 1689 224 L 1764 224" class="gradia-3167da4d" marker-end="url(#gradia-d3f0083792ba-arrow)"/>
+<path d="M 260 224 L 285 224 Q 305 224 305 204 L 305 178.5 Q 305 158.5 325 158.5 L 400 158.5" class="gradia-8f3e8366" marker-end="url(#gradia-d3f0083792ba-alert)"/>
+<circle cx="150" cy="126.5" r="9" class="gradia-ef8c8bc7"/>
+<polygon points="1608,132 1624,148 1608,164 1592,148" class="gradia-ef8c8bc7"/>
+<circle cx="1874" cy="142.5" r="11" class="gradia-9cc2acc3"/>
+<circle cx="1874" cy="142.5" r="6" class="gradia-ef8c8bc7"/>
+<rect x="400" y="93" width="220" height="99" rx="6" class="gradia-c318c042"/>
+<text x="510" y="130.70000000000002" class="gradia-f36ab1ca">Idle</text>
+<line x1="400" y1="148.38" x2="620" y2="148.38" class="gradia-edd44499"/>
+<text x="510" y="175.3" class="gradia-db0a45a0">entry: reset()</text>
+<rect x="1764" y="174.5" width="220" height="99" rx="6" class="gradia-45b06a2b"/>
+<text x="1874" y="212.20000000000002" class="gradia-f36ab1ca">Failed</text>
+<line x1="1764" y1="229.88" x2="1984" y2="229.88" class="gradia-5d65de7b"/>
+<text x="1874" y="256.8" class="gradia-db0a45a0">entry: alarm()</text>
+<rect x="40" y="174.5" width="220" height="99" rx="6" class="gradia-45b06a2b" stroke-dasharray="10 6"/>
+<text x="150" y="212.20000000000002" class="gradia-f36ab1ca">Legacy</text>
+<line x1="40" y1="229.88" x2="260" y2="229.88" class="gradia-5d65de7b"/>
+<text x="150" y="256.8" class="gradia-db0a45a0">entry: migrate()</text>
+<circle cx="802" cy="165.5" r="9" class="gradia-ef8c8bc7"/>
+<rect x="842" y="116" width="220" height="99" rx="6" class="gradia-c318c042"/>
+<text x="952" y="153.70000000000002" class="gradia-f36ab1ca">Running</text>
+<line x1="842" y1="171.38" x2="1062" y2="171.38" class="gradia-edd44499"/>
+<text x="952" y="198.3" class="gradia-db0a45a0">do: work()</text>
+<rect x="1202" y="128.5" width="220" height="74" rx="6" class="gradia-c318c042"/>
+<text x="1312" y="176.3" class="gradia-f36ab1ca">Paused</text>
+<text x="1178" y="142.5" class="gradia-88d12a47">pause</text>
+<text x="1086" y="174.5" class="gradia-874272fb">resume</text>
+<text x="1573.5" y="135.5" class="gradia-88d12a47">stop</text>
+<text x="1634.5" y="136.5" class="gradia-874272fb"><tspan font-style="italic">[done]</tspan></text>
+<text x="1581.5" y="173.5" class="gradia-88d12a47"><tspan font-style="italic">[else]</tspan></text>
+<text x="376" y="151.5" class="gradia-a03978d1">upgrade</text>
+<text x="682.4" y="120.5" class="gradia-17299245">start <tspan fill-opacity="0.65">/ spawn()</tspan></text>
+<text x="1701.6" y="244" class="gradia-17299245"><tspan font-style="italic">[error]</tspan> <tspan fill-opacity="0.65">/ log()</tspan></text>
+</svg>

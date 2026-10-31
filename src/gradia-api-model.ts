@@ -25,7 +25,8 @@ export const edgeKinds: EdgeKind[] = [ "sync", "async", "return", "create", "des
 
 /*  a directed graph edge with optional name, arity, kind, and timing
     (a duration constraint up to its return and a time constraint or
-    observation at its start, in a "sequence" diagram)  */
+    observation at its start, in a "sequence" diagram), and its optional
+    marking as a violation (e.g. by the analysis of a "state" diagram)  */
 export interface Edge {
     source:    string
     target:    string
@@ -34,6 +35,7 @@ export interface Edge {
     kind?:     EdgeKind
     duration?: string
     time?:     string
+    marked?:   boolean
 }
 
 /*  the graph model of nodes (keyed by their id) and edges  */

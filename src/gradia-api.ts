@@ -21,6 +21,8 @@ import { render as renderSlice }                   from "./gradia-api-type-slice
 import { render as renderTree }                    from "./gradia-api-type-tree.js"
 import { render as renderMatrix }                  from "./gradia-api-type-matrix.js"
 import { render as renderSequence }                from "./gradia-api-type-sequence.js"
+import { render as renderState, prepare as prepareState }
+    from "./gradia-api-type-state.js"
 
 /*  re-export the graph model and configuration companion types  */
 export type { Attr, Node, Edge, EdgeKind, Graph }  from "./gradia-api-model.js"
@@ -31,7 +33,10 @@ export type { Config }                             from "./gradia-api-config.js"
     container boundary continue to the inner nodes, and whether they
     render the edge kinds other than the synchronous default and the
     edge timings, plus their own defaults of the rendering options (a
-    tree, e.g., wraps its node texts by default to stay narrow)  */
+    tree, e.g., wraps its node texts by default to stay narrow, and a
+    state machine folds its columns later, as it reads as a flow) and
+    their own preparation of the whole graph model (a state machine,
+    e.g., is validated and analyzed as a whole)  */
 const renderers = {
     graph:    { render: renderGraph,    nestable: true,  gated: true,  kinds: false },
     hub:      { render: renderHub,      nestable: true,  gated: false, kinds: false },
@@ -41,7 +46,9 @@ const renderers = {
     tree:     { render: renderTree,     nestable: false, gated: false, kinds: false,
         defaults: { "size-node-width-min": 160, "size-node-width-max": 240 } },
     matrix:   { render: renderMatrix,   nestable: false, gated: false, kinds: false },
-    sequence: { render: renderSequence, nestable: false, gated: false, kinds: true  }
+    sequence: { render: renderSequence, nestable: false, gated: false, kinds: true  },
+    state:    { render: renderState,    nestable: true,  gated: true,  kinds: false,
+        prepare: prepareState, boxed: true, defaults: { "graph-columns-max": 8 } }
 } satisfies Record<string, DiagramTypeSpec>
 export type DiagramType = keyof typeof renderers
 export const diagramTypes = Object.keys(renderers) as DiagramType[]
@@ -64,7 +71,8 @@ const parseTypeDirective = (input: string): DiagramType | undefined => {
 
 /*  the options entering the identifier seed only once deviating from
     their default, keeping the identifiers of all older diagrams stable  */
-const seedLate = new Set<string>([ "color-mark-violation", "mark-violation", "layer-numbered", "slice-numbered",
+const seedLate = new Set<string>([ "color-mark-violation", "color-composite-border",
+    "color-node-pseudo-name", "color-node-pseudo-box", "color-node-pseudo-border", "mark-violation", "layer-numbered", "slice-numbered",
     "sequence-column-gap", "sequence-message-gap", "tree-level-gap", "tree-sibling-gap", "tree-row-max",
     "tree-stack-min", "tree-stack-double", "tree-node-width-equal", "tree-horizontal" ])
 
@@ -141,16 +149,24 @@ export class Gradia {
         }
 
         /*  determine (and validate) the containment tree of the graph  */
-        const containment = containmentOf(graph, diagramTypes.filter((t) => renderers[t].nestable))
+        const nestable    = diagramTypes.filter((t) => renderers[t].nestable)
+        let   containment = containmentOf(graph, nestable)
+
+        /*  let the diagram type prepare the graph model as a whole (with
+            the containment tree determined anew for a changed model)  */
+        const prepare = (renderers[type] as DiagramTypeSpec).prepare
+        const model   = prepare !== undefined ? prepare(graph, containment, config) : graph
+        if (model !== graph)
+            containment = containmentOf(model, nestable)
 
         /*  lay out the graph model (with its containers as nested
             levels): either as a whole, or partitioned into its named
             groups which are laid out individually and then stacked
             vertically as decorated group boxes  */
         const render = (part: Graph) => renderContained(part, containment, type, renderers, config)
-        const parts  = partitionGroups(graph, containment)
+        const parts  = partitionGroups(model, containment)
         const layout = parts === null ?
-            await render(graph) :
+            await render(model) :
             composeGroups(parts, await Promise.all(parts.map((part) => render(part.graph))), config)
 
         /*  derive the identifier seed of the SVG document from everything
