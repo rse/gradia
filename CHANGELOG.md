@@ -2,18 +2,13 @@
 ChangeLog
 =========
 
-1.5.0 (2026-10-31)
+2.0.0 (2026-11-01)
 ------------------
 
 -   FEATURE [code, othr]: add the diagram type "gantt", a Gantt chart of tasks (node attributes
-    "duration", with milestones as diamonds, and "start") over a time axis of abstract units (new
-    "gantt-unit-width" and "gantt-unit-name" options), with their dependencies as arrows on their
-    own tracks (new edge attribute "{ type: fs|ss|ff|sf }", and the edge attribute "duration" as a
-    labeled lag or lead), scheduled by the critical path method (rejecting cyclic dependencies,
-    attaching the schedule of every task as its tooltip), drawing the slack as whiskers and marking
-    the critical path (new "color-mark-critical" color and "gantt-critical" option), with the
-    "cluster" attribute partitioning its rows like for "matrix", plus the "smp/sample-gantt-regular"
-    and "smp/sample-gantt-full" samples and two playground examples.
+    "duration" and "start", milestones as diamonds) over a time axis of abstract units, with typed
+    dependencies ("{ type: fs|ss|ff|sf }", lags via "duration") as arrows, scheduled by the critical
+    path method, drawing the slack as whiskers and marking the critical path, plus samples.
 
 -   FEATURE [code, othr]: add the diagram type "petri", a Petri net of places (circles with tokens,
     "tokens"/"capacity" attributes, "color-node-place-*" colors) and transitions, with inferred node
@@ -21,21 +16,10 @@ ChangeLog
     two-way arcs, analyzed through its coverability graph (marking dead, non-live, unreachable,
     unbounded, and dead-end nodes, with the results as tooltips), plus samples and examples.
 
--   FEATURE [code, othr]: add the diagram type "state", a state machine laid out like a "graph"
-    (folding its columns only beyond 8 by default) with never bundled transitions (the guards of a
-    choice or junction placed at their start, their guards in italics and actions dimmed), the
-    pseudo-states of the new node attribute "state: initial|final|terminate|choice|junction|fork|
-    join|history|deep-history|entry-point|exit-point" (drawn in the new "color-node-pseudo-*"
-    colors), the attributes (e.g. the behaviors "entry", "do", and "exit") below a dividing line,
-    and containers as composite states (drawn as solid boxes, bordered in the new
-    "color-composite-border" color, with their attributes in their head, with completion
-    transitions and history entries, and optionally split into orthogonal regions through the new
-    node attribute "region: <name>", stacked as bands separated by dashed lines), validating the
-    state machine as a whole (through the new "prepare" hook of the diagram type registry) and
-    marking its unreachable, trapped (dead-end), and incomplete states (through the new reserved
-    node attribute "mark: unreachable|dead-end|incomplete") and its conflicting transitions, plus
-    the "smp/sample-state-regular", "smp/sample-state-advanced", and "smp/sample-state-regions"
-    samples and three state machine examples in the playground.
+-   FEATURE [code, othr]: add the diagram type "state", a state machine laid out like a "graph",
+    with pseudo-states (node attribute "state"), composite states (containers), and orthogonal
+    regions (node attribute "region"), validating the state machine and marking its unreachable,
+    dead-end, and incomplete states (node attribute "mark") and conflicting transitions, plus samples.
 
 -   FEATURE [code, othr]: add the diagram type "sequence" (participants on top of dashed
     lifelines, messages top-down in declaration order, self messages looping on their lifeline),
@@ -55,33 +39,19 @@ ChangeLog
     "multiple" (renders the node as a stack of nodes), with the new "smp/badge-sample" sample.
 
 -   FEATURE [code, othr]: add the diagram type "matrix", a dependency structure matrix (DSM) whose
-    rows and columns are both the nodes and whose cells count the edges between them (summing
-    numeric arities): the nodes are ordered topologically (or by their "order" attributes), every
-    cycle is kept in consecutive rows and outlined as a dashed block on the diagonal, with the
-    counts of its edges closing it in the new "color-mark-violation" color, the clusters of the
-    new node attribute "cluster" (nested through "/"-separated cluster paths) become partitions of
-    the matrix, and node badges are drawn inside the headers, plus the free-standing "badge" shape
-    and the bold, linked, centered, and upright texts and rectangles of the "shapes", and the new
-    "smp/matrix-*" samples.
+    cells count the edges between the nodes, ordered topologically (or by "order"), with every
+    cycle outlined as a dashed block on the diagonal (its closing edges in the new
+    "color-mark-violation" color) and the new node attribute "cluster" partitioning the matrix.
 
--   FEATURE [code, othr]: add the diagram type "layer", a layered architecture whose layers (the
-    node attribute "layer") stack top-down as bands, laid out as a uniform "graph" (all boxes of
-    one width, the boxes of a layer of one height and aligned, all gutters of one height), where
-    every edge pointing upwards against the layering is drawn dashed in the "color-mark-violation"
-    color (never bundled with the other edges), the "cluster" attribute (nested through
-    "/"-separated cluster paths) groups the layers into columns left of the bands, and the new
-    option "layer-numbered" numbers the layers bottom-up (by default), plus the new
-    "smp/layer-*" samples.
+-   FEATURE [code, othr]: add the diagram type "layer", a layered architecture whose layers (node
+    attribute "layer") stack top-down as bands of a uniform "graph", drawing every upward edge
+    against the layering dashed in the "color-mark-violation" color, grouping the layers through
+    "cluster", and numbering them through the new option "layer-numbered", plus samples.
 
--   FEATURE [code, othr]: add the diagram type "slice", the companion of the diagram type "layer":
-    a sliced architecture whose slices (the node attribute "slice") line up left-to-right as bands,
-    laid out as a uniform and transposed "graph" (the order values as columns, the nodes of a slice
-    stacked top-down, the boxes of a row of one height and aligned), with the channels widened until
-    the intra-slice edges stay within their bands, where every edge pointing from a right slice back
-    to a left one is drawn dashed in the "color-mark-violation" color if it closes a direct cycle
-    between the two slices (no transitive cycles), the "cluster" attribute groups the slices into
-    rows above the bands, and the new option "slice-numbered" numbers the slices, plus the new
-    "smp/slice-*" samples.
+-   FEATURE [code, othr]: add the diagram type "slice", the companion of "layer": slices (node
+    attribute "slice") line up left-to-right as bands of a uniform, transposed "graph", drawing
+    every edge closing a direct cycle between two slices dashed in the "color-mark-violation"
+    color, grouping the slices through "cluster", and numbering them through "slice-numbered".
 
 -   IMPROVEMENT [code]: change the default of the option "color-mark-violation" from a red
     ("#cc3333") to a brown ("#b06820").
@@ -92,59 +62,37 @@ ChangeLog
     "color-mark-violation" color), while keeping their layout unchanged.
 
 -   IMPROVEMENT [code]: draw the node "badge" inside the node box, vertically centered at its left
-    end, with the box widened and its text shifted to keep the text clear of it, instead of on the
-    top border of the box, so no layout has to reserve room for the badges above the boxes anymore,
-    and likewise in the headers of a "matrix" diagram in front of their labels (left of a row
-    label, below a column label) instead of behind them, with all labels aligned, while every
-    badge gets a thinner border and is sized relative to the font of its label.
+    end (and in the "matrix" headers in front of their labels), instead of on the top border, so no
+    layout has to reserve room above the boxes anymore, with thinner badge borders and badges sized
+    relative to the font of their label.
 
--   FEATURE [code, othr]: add the diagram type "tree", a tree (or forest) whose edges point from the
-    parents to their children: the levels stack top-down (or left-to-right with the new option
-    "tree-horizontal"), every parent centered over its tightly packed child subtrees and
-    connected to them through a bus, all boxes of a level top-aligned (and, with the new option
-    "tree-node-width-equal", of one width), the leaf children of a parent stacked along a trunk
-    (out of the parent box, or out of its bus beside its other children, and with the new option
-    "tree-stack-double" on both sides of the trunk) as soon as the parent has "tree-stack-min" of
-    them or their level holds more than "tree-row-max" nodes, and every edge not fitting the tree
-    drawn as a dashed cross link (marked as a violation), routed through the gutters and an own
-    lane beside the nearer side of the tree around all nodes, plus the new options
-    "tree-level-gap" and "tree-sibling-gap", per-diagram-type option defaults (the "tree" using
-    node box widths between 160 and 240), the layout flags "dashed" for edges, and the new
-    "smp/sample-tree-*" samples.
+-   FEATURE [code, othr]: add the diagram type "tree", a tidy tree (or forest) with every parent
+    centered over its packed child subtrees and connected through a bus, leaf children stacked
+    along a trunk, and non-tree edges drawn as dashed cross links, optionally laid out horizontally,
+    plus the new "tree-*" options and the "smp/sample-tree-*" samples.
 
--   IMPROVEMENT [code]: render "sequence" diagrams more compact: keep every participant box in its
-    own width (instead of the width of the widest one), space every pair of neighboring lifelines
-    on its own, as far as their boxes and the names of the messages between them demand (instead
-    of all lifelines by the demand of the widest box and the longest name), and add the options
-    "sequence-column-gap" and "sequence-message-gap" for the minimum gap between the participant
-    boxes and the vertical gap between the messages, with defaults of "20" and "40" (instead of
-    the former fixed "60" and "56"), plus slightly thicker lifelines.
+-   IMPROVEMENT [code]: render "sequence" diagrams more compact by keeping every participant box in
+    its own width and spacing every pair of neighboring lifelines individually, plus the new options
+    "sequence-column-gap" and "sequence-message-gap" (defaults "20" and "40") and slightly thicker
+    lifelines.
 
 -   BUGFIX [code]: in a "matrix" diagram, outline the part of a cycle within a cluster only if it
     holds at least one edge among its own members, as an empty dashed block suggested a local cycle
     which only closes through other clusters.
 
--   IMPROVEMENT [othr]: extend the playground to all samples (and hence all diagram types), and
-    rename the samples after their diagram type ("broadcast-graph" to "sample-graph-regular",
-    "broadcast-crowded" to "sample-graph-crowded", "huica-sample" to "sample-graph-simple",
-    "container-sample" to "sample-graph-container", "badge-sample" to "sample-graph-badges",
-    "broadcast-hub" to "sample-hub-regular", "broadcast-grid" to "sample-grid-regular",
-    "matrix-acyclic" to "sample-matrix-regular", "matrix-clusters" to "sample-matrix-full", and
-    "sequence-sample" to "sample-sequence-regular"), merge the samples "layer-sample",
-    "layer-clusters", and "layer-violations" into the new sample "sample-layer-regular", merge the
-    samples "slice-violations" and "slice-clusters" into the new sample "sample-slice-regular", and
-    remove the samples "matrix-sample", "matrix-cycles", "matrix-topological", and "slice-sample".
+-   IMPROVEMENT [othr]: extend the playground to all samples (and hence all diagram types), rename
+    the samples after their diagram type ("sample-<type>-<variant>"), merge the former "layer-*"
+    and "slice-*" samples into "sample-layer-regular" and "sample-slice-regular", and remove the
+    redundant "matrix-*" and "slice-sample" samples.
 
 -   IMPROVEMENT [othr]: add the sample "sample-hub-crowded", a "hub" diagram (derived from the
     "Service" component of the Broadcast regression diagrams) whose input and output columns both
     wrap into two staggered sub-columns through the option "hub-node-count-max".
 
--   IMPROVEMENT [code]: bundle the edges of crowded channels and gutters (whose parallel tracks do
-    not fit at the full "size-edge-track-gap") instead of squeezing their tracks into one grey bar:
-    the edges of the same name leading to the same target node side with the same arity, or else
-    coming from the same source node side, share one common track, joined and left at junctions
-    marked by a dot, the remaining tracks stay at least 8 apart, a crowded "graph" channel or gutter
-    is sized by the need of its bundled tracks, and the name labels of a bundle line up in one column.
+-   IMPROVEMENT [code]: bundle the edges of crowded channels and gutters onto common tracks (same
+    name, target side, and arity, or else same source side), joined and left at junctions marked by
+    a dot, instead of squeezing their tracks into one grey bar, sizing the channels and gutters by
+    their bundled tracks and lining up the name labels of a bundle in one column.
 
 -   IMPROVEMENT [code]: merge the edge ends of a bundle beside its node into one port, so the bundle
     enters its target (or leaves its source) through a single stub, with a single arrow head, arity
@@ -161,18 +109,13 @@ ChangeLog
 
 -   IMPROVEMENT [code, othr]: place the edge names right in front of their arrow heads, beside
     their arities, instead of searching a position along their routes, so every name is clearly
-    attributable to its edge: the "graph" and "hub" channels reserve the room of these arrival
-    stubs and shift their tracks accordingly, a name whose spot is taken steps back along its
-    stub, falls back below the line or onto the segment before the last corner, and only then
-    searches along its route, while the "sequence" diagram keeps its names centered on the messages.
+    attributable to its edge, with fallbacks back along the stub, below the line, and along the
+    route, while "sequence" diagrams keep their names centered on the messages.
 
--   IMPROVEMENT [code, othr]: pack the columns of a layered "graph" diagram vertically: instead of
-    centering every node in a row as high as its highest box, every column stacks its nodes in row
-    order, only the nodes of a direct same-row edge share a center line, a used gutter becomes a
-    band across just the columns its tracks cross, and boxes whose edges all lead downwards sink
-    towards their neighbors, while the edge-less nodes, no longer passed through the Dagre layout,
-    trail below all connected nodes in declaration order (which shrinks dense diagrams by up to a
-    third of their height).
+-   IMPROVEMENT [code, othr]: pack the columns of a layered "graph" diagram vertically: every
+    column stacks its nodes in row order instead of centering them in uniform rows, gutters span
+    only the columns their tracks cross, and edge-less nodes trail below all connected nodes in
+    declaration order, which shrinks dense diagrams by up to a third of their height.
 
 1.4.4 (2026-10-27)
 ------------------
