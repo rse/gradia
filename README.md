@@ -13,34 +13,31 @@ Gradia
 About
 -----
 
-**Gradia** is a small API and CLI for rendering directed graphs,
-described in a concise textual input language, as SVG diagrams. Eleven
-diagram types are supported which fit the scenario of visualizing object
-graphs:
+**Gradia** is a small API, MCP and CLI for rendering directed object graphs, described in a concise
+textual input language, as SVG diagrams. Eleven diagram types are supported which fit the scenario
+of visualizing object graphs:
 
-- `graph`: a loosely grid-snapped layered layout of the whole graph,
-  based on the Dagre algorithm of [@antv/layout](https://github.com/antvis/layout).
-- `hub`: a hub graph, placing one primary hub node between its input and
-  output nodes.
-- `grid`: a compact grid of tiles for an edge-less graph.
-- `layer`: a layered architecture, stacking its layers as bands and
-  marking the edges pointing upwards against the layering.
-- `slice`: a sliced architecture, lining up its slices as bands and
-  marking the edges pointing backwards to close a cycle between slices.
-- `tree`: a tree (or forest) of parent-child edges, connecting every
-  parent with its children through a bus and marking the cross links.
-- `matrix`: a dependency structure matrix, counting the edges between
-  its rows and columns and outlining its cycles.
-- `sequence`: a sequence diagram of participants and their messages.
-- `state`: a state machine of states and transitions, with pseudo-states
-  (initial, final, choice, junction, fork/join, and history), composite
-  states, and marking its unreachable, dead-end, and incomplete states and
-  its conflicting transitions.
-- `petri`: a Petri net of places, holding tokens, and transitions,
-  marking its dead and non-live transitions and its unreachable,
-  unbounded, and deadlocked places.
-- `gantt`: a Gantt chart of tasks and their dependencies, scheduling the
-  tasks and marking its critical path.
+- `graph`: a loosely grid-snapped layered layout of the whole graph.
+
+- `hub`: a graph variant, placing one primary hub node between its input and output nodes.
+
+- `tree`: a tree of nodes, connecting every parent with its children.
+
+- `sequence`: a sequence diagram of actors and their messages.
+
+- `state`: a state machine of states and transitions.
+
+- `petri`: a *Petri* net of places, holding tokens, and transitions between the places.
+
+- `layer`: a graph, stacking its node layers as horizontal bands.
+
+- `slice`: a graph, lining up its node slices as vertical bands.
+
+- `matrix`: a dependency structure matrix, counting the edges between its rows and columns.
+
+- `gantt`: a *Gantt* chart of scheduled tasks and their dependencies.
+
+- `grid`: an edge-less graph, consisting of a compact grid of nodes.
 
 Examples
 --------
