@@ -10,6 +10,8 @@ ChangeLog
     and never bundle the edges attaching at such fixed ports, so each keeps a track of its own and
     an edge crossing several containment levels is followable, plus the sample "graph-gates".
 
+-   UPDATE [infr]: upgrade the NPM dependencies.
+
 2.0.0 (2026-11-01)
 ------------------
 
