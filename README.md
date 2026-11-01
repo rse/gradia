@@ -568,8 +568,8 @@ The diagram type `tree` draws a tree, or a forest of trees:
 - **Cross links**: every other edge (a second edge into a node, an
   edge closing a cycle, or a self-loop) is a cross link, drawn dashed,
   and in the `color-mark-violation` color unless `mark-violation` is
-  `false`. It runs through the gutters in front of the levels, on own
-  tracks, and between different levels along an own lane beside the
+  `false`. It runs through the gutters in front of the levels, on its own
+  tracks, and between different levels along a lane of its own beside the
   nearer side of the tree, so it never crosses a node box (a stacked
   node attaches through a corridor beside its stack, and a level whose
   gutter carries such tracks starts below the stacks above it).
@@ -966,7 +966,7 @@ A `#type` directive sets the diagram type (`graph`, `hub`, `tree`,
 settable through the `-t`/`--type` command-line option (which takes
 precedence).
 The last occurrence wins and an invalid type is silently ignored.
-Without both, the type defaults to `graph`.
+Without either, the type defaults to `graph`.
 
 A `#config` directive sets one of the rendering options, which otherwise
 are settable through the corresponding `--config <option>=<value>`
@@ -1154,7 +1154,7 @@ hard-coded into the SVG instead. The resulting precedence is: first
 and finally the built-in default.
 
 The `size-font-*` options are embedded into the generated SVG, too, but
-as they also sized the layout, the SVG always references the CSS custom
+as they also size the layout, the SVG always references the CSS custom
 property `--gradia-<option>` and falls back to the *effective* value
 (configured or default). An override at display time hence retains the
 layout of the configured size and should stay close to it.
