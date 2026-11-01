@@ -2,6 +2,14 @@
 ChangeLog
 =========
 
+2.0.1 (2026-11-01)
+------------------
+
+-   IMPROVEMENT [code, othr]: let the gates of a container boundary share the row of their inner
+    node and sit at the very ports their edges take there, so the stubs between them run straight,
+    and never bundle the edges attaching at such fixed ports, so each keeps a track of its own and
+    an edge crossing several containment levels is followable, plus the sample "graph-gates".
+
 2.0.0 (2026-11-01)
 ------------------
 

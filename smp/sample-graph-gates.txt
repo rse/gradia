@@ -1,0 +1,46 @@
+#type graph
+
+Ceremonies: "CEREMONY" [ container: graph ]
+Steering: "Steering Committee" [ parent: Ceremonies, badge: communication ]
+Report:   "Status Report"      [ parent: Ceremonies, badge: document ]
+Review:   "Sprint Review"      [ parent: Ceremonies, badge: team ]
+Standup:  "Daily Stand-up"     [ parent: Ceremonies, badge: communication ]
+Gate:     "Phase Gate"         [ parent: Ceremonies, badge: clock ]
+
+Members: "MEMBER" [ container: graph ]
+Maria: "Maria Keller" [ parent: Members, badge: person ]
+Tom:   "Tom Richter"  [ parent: Members, badge: person ]
+Anna:  "Anna Weber"   [ parent: Members, badge: person ]
+Lukas: "Lukas Brandt" [ parent: Members, badge: person ]
+Sara:  "Sara Nguyen"  [ parent: Members, badge: person ]
+Jonas: "Jonas Meier"  [ parent: Members, badge: person ]
+Lea:   "Lea Fischer"  [ parent: Members, badge: person ]
+
+Tasks: "TASK" [ container: graph ]
+Approved: "Specification Approved" [ parent: Tasks ]
+Complete: "Feature Complete"       [ parent: Tasks ]
+GoLive:   "Go-Live"                [ parent: Tasks ]
+
+Steering --> Maria
+Steering --> Tom
+Steering --> Anna
+Steering --> Lukas
+Report --> Anna
+Report --> Tom
+Report --> Maria
+Review --> Tom
+Review --> Anna
+Review --> Sara
+Review --> Jonas
+Review --> Lea
+Standup --> Anna
+Standup --> Lukas
+Standup --> Sara
+Standup --> Jonas
+Standup --> Lea
+Gate --> Maria
+Gate --> Tom
+Gate --> Anna
+Gate --> Approved
+Gate --> Complete
+Gate --> GoLive

@@ -253,13 +253,45 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
     let   grid = layoutGrid()
     const dy   = new Map<string, number>()
     const cx   = (id: string) => grid.colCX[col.get(id)!]
-    const cy   = (id: string) => (grid.nodeCY?.get(id) ?? grid.rowCY[row.get(id)!]) + (dy.get(id) ?? 0)
+
+    /*  a gate sharing the row of its inner node sits at the very port
+        its edge takes at that node, so the stub between them runs
+        straight and the port of the container box the gate stands for
+        inherits the spread of the inner ports (the offset is taken from
+        a preliminary routing with the gates at the row center, whose
+        port order then holds, as the ports are ordered by the gates)  */
+    const gateOf  = new Map<string, { node: string, role: "s" | "t", edge: number }>()
+    const gateOff = new Map<string, number>()
+    edges.forEach((edge, i) => {
+        if (gates.has(edge.source))
+            gateOf.set(edge.source, { node: edge.target, role: "t", edge: i })
+        else if (gates.has(edge.target))
+            gateOf.set(edge.target, { node: edge.source, role: "s", edge: i })
+    })
+    const aligned = (gate: string): boolean =>
+        row.get(gate) === row.get(gateOf.get(gate)!.node)
+    const cy = (id: string): number => {
+        const gate = gateOf.get(id)
+        if (gate !== undefined && aligned(id))
+            return cy(gate.node) + (gateOff.get(id) ?? 0)
+        return (grid.nodeCY?.get(id) ?? grid.rowCY[row.get(id)!]) + (dy.get(id) ?? 0)
+    }
 
     /*  route the edges for the current node positions (with the edge
         ends merged into one port, once determined)  */
     let   merged: Merge | undefined
-    const route = () => routeEdges(edges, plans, sides, boxW, boxH, cx, cy, grid, config, level, merged,
-        uniform?.markOf, distinct)
+    const route = (): Routing => {
+        const routed = () => routeEdges(edges, plans, sides, boxW, boxH, cx, cy, grid, config, level, merged,
+            uniform?.markOf, distinct)
+        if (gateOf.size === 0)
+            return routed()
+        gateOff.clear()
+        const pre = routed()
+        for (const [ gate, { node, role, edge } ] of gateOf)
+            if (aligned(gate))
+                gateOff.set(gate, pre.portPos.get(`${edge}:${role}`)!.y - cy(node))
+        return routed()
+    }
 
     /*  lay out the grid and route the edges, re-sizing the crowded
         channels and gutters by the needs of their bundled tracks until
@@ -292,7 +324,7 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
             initial = route()
         }
         return uniform !== undefined ? initial :
-            nudgeNodes(nodes, edges, plans, col, row, boxH, grid, nrows, dy, route, initial)
+            nudgeNodes(real, edges, plans, col, row, boxH, grid, nrows, dy, route, initial)
     }
     let routing = layout()
 

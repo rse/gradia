@@ -50,6 +50,10 @@ Here are examples of the graph diagram renderings:
 
   ![sample-graph-container](smp/sample-graph-container.svg)
 
+- [sample-graph-gates](smp/sample-graph-gates.txt) (many edges crossing the container boundaries):
+
+  ![sample-graph-gates](smp/sample-graph-gates.svg)
+
 - [sample-graph-badges](smp/sample-graph-badges.txt) (node badges, multiple nodes, and word-wrapping):
 
   ![sample-graph-badges](smp/sample-graph-badges.svg)

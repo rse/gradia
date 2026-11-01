@@ -202,8 +202,10 @@ export const compactRows = (
     additional first column and the "out" gates into an additional last
     column (both reserved for the gates, so the stubs from the container
     border to the gates never cross a node box), each gate into the row
-    of the node its edge connects to, else into the nearest free row of
-    the gate column, else into a row newly inserted below the wanted one  */
+    of the node its edge connects to (the gates of one node sharing its
+    row, as they spread along its ports there, see "render"), else into
+    the nearest row of the gate column free of the gates of other nodes,
+    else into a row newly inserted below the wanted one  */
 export const placeGates = (
     gates: Map<string, GateSide>,
     edges: Edge[],
@@ -237,7 +239,7 @@ export const placeGates = (
         for (const id of ids) {
             const want  = wantOf(id)
             const taken = (r: number): boolean =>
-                placed.some((other) => row.get(other) === r)
+                placed.some((other) => row.get(other) === r && otherOf.get(other) !== otherOf.get(id))
             let r: number | undefined
             for (let d = 0; r === undefined && d < nrows; d++) {
                 if (want + d < nrows && !taken(want + d))

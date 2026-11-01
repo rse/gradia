@@ -49,7 +49,8 @@ const assignTrackCoords = (
     config:  Config,
     merged?: Merge,
     markOf?: (edge: Edge) => boolean,
-    distinct = false
+    distinct = false,
+    fixed?:  (edge: number) => boolean
 ): { chanX: (c: number, edge: number) => number, gutY: (g: number, edge: number) => number,
     need: Need, bundled: Set<number>, keys: Map<string, string> } => {
     const { colWidth, chanCap, gutCap, chanW, colCX } = grid
@@ -60,9 +61,12 @@ const assignTrackCoords = (
     const keys       = new Map<string, string>()
 
     /*  the bundle keys of an edge (kept apart per edge for distinct
-        edges, which are hence never bundled)  */
+        edges and for the edges attaching at a fixed port, which are
+        hence never bundled: the former by request, the latter as they
+        continue into a container as separate edges, so a shared track
+        would hide which port connects to which)  */
     const keysOf = (i: number, tk: string, sk: string): string[] =>
-        distinct ? [ `${tk}:${i}`, `${sk}:${i}` ] : [ tk, sk ]
+        distinct || fixed?.(i) === true ? [ `${tk}:${i}`, `${sk}:${i}` ] : [ tk, sk ]
 
     /*  assign the vertical tracks within the inter-column channels (the
         leg of a self-loop spans up to its detour above the box, and a
@@ -277,14 +281,16 @@ export const routeEdges = (
     distinct = false
 ): Routing => {
     const portGap  = portGapOf(edges, sides, config, merged)
+    const fixed    = (edge: number): boolean =>
+        level.fixedPort?.(edge, "s") !== undefined || level.fixedPort?.(edge, "t") !== undefined
     const portPre  = assignPorts(edges, sides, cx, cy, boxW, boxH, portGap,
         undefined, level.fixedPort, merged)
-    const trackPre = assignTrackCoords(edges, plans, portPre, grid, config, merged, markOf, distinct)
+    const trackPre = assignTrackCoords(edges, plans, portPre, grid, config, merged, markOf, distinct, fixed)
     const portPos  = assignPorts(edges, sides, cx, cy, boxW, boxH, portGap,
         (edge) => plans[edge].guts.length > 0 ?
             trackPre.gutY(plans[edge].guts[0], edge) : undefined, level.fixedPort, merged)
     const { chanX, gutY, need, bundled, keys } = assignTrackCoords(edges, plans, portPos, grid, config,
-        merged, markOf, distinct)
+        merged, markOf, distinct, fixed)
     const polys = routePolys(edges, plans, portPos, boxH, cy, chanX, gutY)
     const fits  = Array.from(need.chan).every(([ c, w ]) => w <= grid.chanW[c])
         && Array.from(need.gut).every(([ g, h ]) => h <= grid.gutH[g])
