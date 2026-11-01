@@ -5,9 +5,9 @@
 */
 
 /*  internal dependencies  */
-import { ConfigEmbedded, ConfigFontSize } from "./gradia-api-config.js"
-import type { NodeStyle, Box }           from "./gradia-api-render-base.js"
-import type { NodeBadge }                from "./gradia-api-render-node.js"
+import type { ConfigEmbedded, ConfigFontSize } from "./gradia-api-config.js"
+import type { NodeStyle, Box }                 from "./gradia-api-render-base.js"
+import type { NodeBadge }                      from "./gradia-api-render-node.js"
 
 /*  a free-standing drawing primitive of a diagram type beside its node
     boxes and edges (e.g. the lifelines of a "sequence" diagram), styled
@@ -58,6 +58,8 @@ export interface ShapeBadge {
     style:    NodeStyle
     box:      Box
 }
+
+/*  any of the free-standing shapes  */
 export type Shape = ShapePath | ShapeText | ShapeBadge
 
 /*  create a path shape, its covered area given relative to its origin,

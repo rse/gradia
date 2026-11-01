@@ -349,7 +349,7 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
 
         /*  keep the stub of every edge arriving right of the channel long
             enough for its name and arity labels (see "stubRoom") by
-            shifting the tracks left and growing the channel beyond that,
+            shifting the tracks sideways and growing the channel beyond that,
             while the departing stubs keep the room of a corner (or of the
             name label of a bundle merged into one port); bundled edges not
             merged are exempt, as their names sit on their feeding stubs  */
@@ -366,7 +366,7 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
             chanW[c] = depart + hi - lo + arrive
             grown    = true
         }
-        shift[c] = Math.min(0, chanW[c] / 2 - arrive - hi)
+        shift[c] = Math.min(Math.max(0, depart - chanW[c] / 2 - lo), chanW[c] / 2 - arrive - hi)
     })
 
     /*  grow a crowded channel to the need of its bundled tracks (but never

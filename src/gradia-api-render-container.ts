@@ -111,7 +111,7 @@ export const containmentOf = (graph: Graph, types: string[]): Containment => {
         const seen = new Set<string>([ id ])
         for (let p = parentOfId.get(id); p !== undefined; p = parentOfId.get(p)) {
             if (seen.has(p))
-                throw new Error(`node "${id}" cannot be nested into itself (containment cycle)`)
+                throw new Error(`node "${p}" cannot be nested into itself (containment cycle)`)
             seen.add(p)
         }
     }
@@ -133,7 +133,7 @@ export const containmentOf = (graph: Graph, types: string[]): Containment => {
 /*  the outermost container of a node (the node itself if not nested)  */
 export const rootOf = (containment: Containment, id: string): string => {
     let root = id
-    for (let p = containment.parentOf.get(root); p !== undefined; p = containment.parentOf.get(root))
+    for (let p = containment.parentOf.get(id); p !== undefined; p = containment.parentOf.get(p))
         root = p
     return root
 }
@@ -302,10 +302,9 @@ export const renderContained = async (
             (an edge crossing the boundary of this level stays partial)  */
         const edges:   Edge[]    = []
         const polys:   Poly[]    = []
-        const bundled: boolean[] = []
-        const marked:  boolean[] = []
-        const dashed:  boolean[] = []
-        const twoway:  boolean[] = []
+        const flagKeys           = [ "bundled", "marked", "dashed", "twoway" ] as const
+        const flags:   Record<typeof flagKeys[number], boolean[]> =
+            { bundled: [], marked: [], dashed: [], twoway: [] }
         const partial            = new Map<number, Poly>()
         parts.forEach((part, k) => {
             if (k === 0)
@@ -313,10 +312,8 @@ export const renderContained = async (
             part.layout.edges.forEach((edge, ei) => {
                 edges.push(edge)
                 polys.push(shift(part.layout.polys[ei], k))
-                bundled.push(part.layout.bundled?.[ei] ?? false)
-                marked.push(part.layout.marked?.[ei] ?? false)
-                dashed.push(part.layout.dashed?.[ei] ?? false)
-                twoway.push(part.layout.twoway?.[ei] ?? false)
+                for (const key of flagKeys)
+                    flags[key].push(part.layout[key]?.[ei] ?? false)
             })
         })
         levelEdges.forEach((edge, li) => {
@@ -333,10 +330,8 @@ export const renderContained = async (
             else {
                 edges.push(graph.edges[i])
                 polys.push(poly)
-                bundled.push(layout.bundled?.[li] ?? false)
-                marked.push(layout.marked?.[li] ?? false)
-                dashed.push(layout.dashed?.[li] ?? false)
-                twoway.push(layout.twoway?.[li] ?? false)
+                for (const key of flagKeys)
+                    flags[key].push(layout[key]?.[li] ?? false)
             }
         })
 
@@ -358,10 +353,7 @@ export const renderContained = async (
             polys,
             styleOf:     (node) => (parts[partOf.get(node.id)!].layout.styleOf ?? defaultStyleOf)(node),
             containers:  [ ...boxes, ...innerBoxes ],
-            bundled,
-            marked,
-            dashed,
-            twoway,
+            ...flags,
             crowded:     parts.some((part) => part.layout.crowded === true),
             transitions: parts.some((part) => part.layout.transitions === true)
         }
@@ -423,8 +415,9 @@ export const renderContained = async (
             if (ts === undefined || tt === undefined) {
                 if (!types[type].gated)
                     return
-                const gate = gateId(i, ts === undefined ? "in" : "out")
-                gates.set(gate, ts === undefined ? "in" : "out")
+                const side = ts === undefined ? "in" : "out"
+                const gate = gateId(i, side)
+                gates.set(gate, side)
                 levelNodes.set(gate, { id: gate, name: "", attrs: [] })
                 source = ts ?? gate
                 target = tt ?? gate

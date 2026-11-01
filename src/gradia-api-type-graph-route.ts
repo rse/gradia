@@ -7,12 +7,11 @@
 /*  internal dependencies  */
 import { Node, Edge }                        from "./gradia-api-model.js"
 import { Config }                            from "./gradia-api-config.js"
-import { Poly, arrowRoom, stubRoom }         from "./gradia-api-render-base.js"
+import { Poly, arrowRoom, stubRoom, pushTo } from "./gradia-api-render-base.js"
 import { LevelContext }                      from "./gradia-api-render-container.js"
 import { Side, assignPorts, portGapOf }      from "./gradia-api-render-port.js"
 import { TrackUser, assignTracks }           from "./gradia-api-render-track.js"
 import { simplifyPoly, computeHops }         from "./gradia-api-render-path.js"
-import { pushTo }                            from "./gradia-api-type-graph-place.js"
 import { RoutePlan, Merge, arrivalOf, CHAN_W1, CHAN_PAD, GUT_H0, GUT_H1, GUT_PAD, LOOP_TOP }
     from "./gradia-api-type-graph-plan.js"
 import { Grid, Need }                        from "./gradia-api-type-graph-grid.js"
@@ -82,7 +81,8 @@ const assignTrackCoords = (
             pushTo(chanUsers, chans[0], { edge: i, posIn: sp.y, posOut: tp.y - LOOP_TOP, ...flags[0] })
         else if (chans.length === 1)
             pushTo(chanUsers, chans[0], { edge: i, posIn: sp.y, posOut: tp.y, ...flags[0],
-                bundles: keysOf(i, targetKey(chans[0], edge, mark), sourceKey(chans[0], edge, mark)), unit: tEnd ?? sEnd })
+                bundles: keysOf(i, targetKey(chans[0], edge, mark), sourceKey(chans[0], edge, mark)),
+                unit: tEnd ?? sEnd })
         else {
             const gy = gutBase(guts[0])
             if (gate !== "s")
@@ -389,7 +389,7 @@ export const nudgeNodes = (
                     shifts.add(sp.y - tp.y)
             })
             const base = dy.get(node.id) ?? 0
-            let best: { shift: number, routing: Routing } | undefined
+            let best: { offset: number, routing: Routing } | undefined
             for (const shift of shifts) {
                 if (shift === 0 || base + shift < lo || base + shift > hi)
                     continue
@@ -397,9 +397,9 @@ export const nudgeNodes = (
                 const routing = route()
                 if (approachesSanely(node.id, routing) && routing.fits
                     && better(routing, best?.routing ?? current))
-                    best = { shift: base + shift, routing }
+                    best = { offset: base + shift, routing }
             }
-            dy.set(node.id, best?.shift ?? base)
+            dy.set(node.id, best?.offset ?? base)
             if (best !== undefined) {
                 current = best.routing
                 changed = true

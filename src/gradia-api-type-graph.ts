@@ -8,7 +8,7 @@
 import { DagreLayout } from "@antv/layout"
 
 /*  internal dependencies  */
-import { Graph, Node }                       from "./gradia-api-model.js"
+import { Graph, Node, Edge }                 from "./gradia-api-model.js"
 import { Config }                            from "./gradia-api-config.js"
 import { extentOf, Layout }                  from "./gradia-api-render-base.js"
 import { measureNodes, orderOf }             from "./gradia-api-render-node.js"
@@ -66,6 +66,52 @@ const placeOrdered = (real: Node[], maxCols: number, transposed: boolean,
     return { ncols, nrows }
 }
 
+/*  determine the raw node positions with the AntV Dagre layout, for the
+    connected nodes only (Dagre would merely stack the edge-less ones
+    into its first rank), with the edges to lay out as pointing backwards
+    handed over reversed, plus the set of the connected nodes  */
+const layoutRaw = async (real: Node[], realEdges: Edge[], boxW: Map<string, number>,
+    boxH: Map<string, number>, config: Config, level: LevelContext) => {
+    const rawX   = new Map<string, number>()
+    const rawY   = new Map<string, number>()
+    const linked = new Set<string>()
+    for (const edge of realEdges) {
+        linked.add(edge.source)
+        linked.add(edge.target)
+    }
+    const connected = real.filter((node) =>  linked.has(node.id))
+    const isolated  = real.filter((node) => !linked.has(node.id))
+    if (connected.length > 0) {
+        const dagre = new DagreLayout({
+            rankdir:  "LR",
+            nodesep:  config["graph-node-separation"],
+            ranksep:  config["graph-rank-separation"],
+            nodeSize: (node) => (node as { size: [ number, number ] }).size
+        })
+        await dagre.execute({
+            nodes: connected.map((node) => ({ id: node.id, size: [ boxW.get(node.id)!, boxH.get(node.id)! ] })),
+            edges: realEdges.map((edge, i) => level.backward?.has(edge) === true ?
+                { id: `e${i}`, source: edge.target, target: edge.source } :
+                { id: `e${i}`, source: edge.source, target: edge.target })
+        })
+        dagre.forEachNode((node) => {
+            rawX.set(String(node.id), node.x)
+            rawY.set(String(node.id), node.y)
+        })
+    }
+
+    /*  stack the edge-less nodes, in declaration order, into the
+        first rank below all connected nodes, each into a row of its
+        own (more than the row clustering threshold apart)  */
+    const firstX = connected.reduce((x, node) => Math.min(x, rawX.get(node.id)!), Infinity)
+    const lastY  = connected.reduce((y, node) => Math.max(y, rawY.get(node.id)!), -Infinity)
+    isolated.forEach((node, i) => {
+        rawX.set(node.id, Number.isFinite(firstX) ? firstX : 0)
+        rawY.set(node.id, (Number.isFinite(lastY) ? lastY : 0) + (i + 1) * (CLUSTY + 1))
+    })
+    return { rawX, rawY, linked }
+}
+
 /*  lay out a directed graph model (for a containment level: with the
     container placeholders at their fixed sizes, the edge ends attaching
     to them at their fixed ports, and the gate nodes on the boundary,
@@ -110,47 +156,8 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
         ({ ncols, nrows } = placeOrdered(real, maxCols, uniform?.transposed === true, col, row))
     }
     else {
-        /*  determine raw node positions with the AntV Dagre layout, for the
-            connected nodes only (Dagre would merely stack the edge-less
-            ones into its first rank), with the edges to lay out as pointing
-            backwards handed over reversed  */
-        const rawX   = new Map<string, number>()
-        const rawY   = new Map<string, number>()
-        const linked = new Set<string>()
-        for (const edge of realEdges) {
-            linked.add(edge.source)
-            linked.add(edge.target)
-        }
-        const connected = real.filter((node) =>  linked.has(node.id))
-        const isolated  = real.filter((node) => !linked.has(node.id))
-        if (connected.length > 0) {
-            const layout = new DagreLayout({
-                rankdir:  "LR",
-                nodesep:  config["graph-node-separation"],
-                ranksep:  config["graph-rank-separation"],
-                nodeSize: (node) => (node as { size: [ number, number ] }).size
-            })
-            await layout.execute({
-                nodes: connected.map((node) => ({ id: node.id, size: [ boxW.get(node.id)!, boxH.get(node.id)! ] })),
-                edges: realEdges.map((edge, i) => level.backward?.has(edge) === true ?
-                    { id: `e${i}`, source: edge.target, target: edge.source } :
-                    { id: `e${i}`, source: edge.source, target: edge.target })
-            })
-            layout.forEachNode((node) => {
-                rawX.set(String(node.id), node.x)
-                rawY.set(String(node.id), node.y)
-            })
-        }
-
-        /*  stack the edge-less nodes, in declaration order, into the
-            first rank below all connected nodes, each into a row of its
-            own (more than the row clustering threshold apart)  */
-        const firstX = connected.reduce((x, node) => Math.min(x, rawX.get(node.id)!), Infinity)
-        const lastY  = connected.reduce((y, node) => Math.max(y, rawY.get(node.id)!), -Infinity)
-        isolated.forEach((node, i) => {
-            rawX.set(node.id, Number.isFinite(firstX) ? firstX : 0)
-            rawY.set(node.id, (Number.isFinite(lastY) ? lastY : 0) + (i + 1) * (CLUSTY + 1))
-        })
+        /*  determine the raw node positions with the AntV Dagre layout  */
+        const { rawX, rawY, linked } = await layoutRaw(real, realEdges, boxW, boxH, config, level)
 
         /*  snap the raw positions onto the discrete column/row grid  */
         const snapped = snapToGrid(real, rawX, rawY)

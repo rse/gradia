@@ -21,13 +21,13 @@ export interface Node {
     (a synchronous call, an asynchronous message, a return, or the
     creation or destruction of its receiver), or of an arc in a "petri"
     diagram (an inhibitor arc)  */
-export type EdgeKind = "sync" | "async" | "return" | "create" | "destroy" | "inhibitor"
-export const edgeKinds: EdgeKind[] = [ "sync", "async", "return", "create", "destroy", "inhibitor" ]
+export const edgeKinds = [ "sync", "async", "return", "create", "destroy", "inhibitor" ] as const
+export type EdgeKind = typeof edgeKinds[number]
 
 /*  the types of an edge, i.e., of a dependency in a "gantt" diagram
     (finish-to-start, start-to-start, finish-to-finish, or start-to-finish)  */
-export type EdgeType = "fs" | "ss" | "ff" | "sf"
-export const edgeTypes: EdgeType[] = [ "fs", "ss", "ff", "sf" ]
+export const edgeTypes = [ "fs", "ss", "ff", "sf" ] as const
+export type EdgeType = typeof edgeTypes[number]
 
 /*  a directed graph edge with optional name, arity, kind, type, and
     timing (a duration constraint up to its return and a time constraint

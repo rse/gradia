@@ -9,7 +9,8 @@ import { Graph, Edge, EdgeKind }    from "./gradia-api-model.js"
 import { Config }                   from "./gradia-api-config.js"
 import { Layout, Poly, ARITY_OFF, ARITY_GAP, textWidth, arrowRoom }
     from "./gradia-api-render-base.js"
-import { Shape, pathShape, textShape } from "./gradia-api-render-shape.js"
+import { Shape, pathShape, textShape }
+    from "./gradia-api-render-shape.js"
 import { LevelContext, rejectContainers }
     from "./gradia-api-render-container.js"
 import { measureNodes, orderOf }    from "./gradia-api-render-node.js"
@@ -89,6 +90,59 @@ const pairCalls = (graph: Graph) => {
     return { paired, answerOf }
 }
 
+/*  the shapes of the timing annotations of the messages: the brackets
+    of their duration constraints and the texts of their time
+    constraints or observations, beside the lifelines of their senders  */
+const timingShapes = (edges: Edge[], timing: { y: number, y2: number, dir: number }[],
+    answerOf: Map<number, number>, xOf: Map<string, number>, fs: number): Shape[] => {
+    const shapes: Shape[] = []
+
+    /*  draw the duration constraints as brackets beside the lifeline of
+        the caller, on the side facing away from the callee, spanning from
+        the call to the arrival of its return, with their texts beside
+        them, where the shorter brackets are placed first, closest to the
+        lifeline, and a bracket overlapping already placed ones on the
+        same side steps outwards beyond them, i.e., beyond their lines
+        and, where vertically overlapping them, their texts (whose
+        outermost X position each placed bracket remembers)  */
+    const brackets = new Array<{ id: string, side: number, y0: number, y1: number, x: number, outer: number }>()
+    const beyond   = (id: string, side: number, y0: number, y1: number, gap: number): number => {
+        const covering = brackets.filter((b) => b.id === id && b.side === side && b.y0 <= y1 && y0 <= b.y1)
+        const extent   = (b: typeof brackets[number]): number => {
+            const mid = (b.y0 + b.y1) / 2
+            return mid - fs <= y1 && y0 <= mid + fs ? b.outer : b.x
+        }
+        return covering.length === 0 ? xOf.get(id)! + side * TIME_OFF :
+            covering.map(extent).reduce((m, e) => side < 0 ? Math.min(m, e) : Math.max(m, e)) + side * gap
+    }
+    edges
+        .map((edge, i) => ({ edge, side: -timing[i].dir, y0: timing[i].y, y1: timing[answerOf.get(i) ?? i].y2 }))
+        .filter(({ edge }) => edge.duration !== undefined)
+        .sort((a, b) => (a.y1 - a.y0) - (b.y1 - b.y0))
+        .forEach(({ edge, side, y0, y1 }) => {
+            const x = beyond(edge.source, side, y0, y1, TIME_STEP)
+            const w = textWidth(edge.duration!, fs)
+            brackets.push({ id: edge.source, side, y0, y1, x, outer: x + side * (TEXT_GAP + w) })
+            shapes.push(pathShape(x - side * TICK, y0, `h ${side * TICK} v ${y1 - y0} h ${-side * TICK}`,
+                [ Math.min(0, side * TICK) - 1, -1, Math.max(0, side * TICK) + 1, y1 - y0 + 1 ], "color-edge-line", 2))
+            shapes.push(textShape(x + side * TEXT_GAP, (y0 + y1) / 2, edge.duration!, side < 0 ? "end" : "start",
+                w, "color-edge-name", "size-font-edge", fs))
+        })
+
+    /*  draw the time constraints or observations beside the lifeline of
+        the sender, on the side facing away from the receiver, and beyond
+        the brackets (and their texts) covering the start of their message  */
+    edges.forEach((edge, i) => {
+        if (edge.time === undefined)
+            return
+        const side = -timing[i].dir
+        const x    = beyond(edge.source, side, timing[i].y, timing[i].y, TEXT_GAP)
+        shapes.push(textShape(x, timing[i].y, edge.time, side < 0 ? "end" : "start",
+            textWidth(edge.time, fs), "color-edge-name", "size-font-edge", fs))
+    })
+    return shapes
+}
+
 /*  lay out a graph model as a sequence diagram: the nodes (in
     declaration order, or in the order of their "order" attributes) are
     the participants, drawn as regular node boxes side by side on top of
@@ -123,7 +177,7 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
         const name  = textWidth(edge.name ?? "", config["size-font-edge"])
         const arity = edge.name !== undefined && edge.arity !== undefined ?
             2 * (ARITY_OFF + textWidth(edge.arity, config["size-font-arity"]) + ARITY_GAP) : 0
-        const box   = edge.kind === "create" ? halfOf(edge.target) : 0
+        const box   = kindOf(edge) === "create" ? halfOf(edge.target) : 0
         const [ a, b ] = [ column.get(edge.source)!, column.get(edge.target)! ]
         const from  = Math.min(a, b, gaps.length - 1)
         return { from, to: Math.max(a, b, from + 1), need: name + arity + box + colGap * 1.5 }
@@ -137,8 +191,9 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
     const headH  = nodes.reduce((h, node) => Math.max(h, boxH.get(node.id)!), 0)
     for (const node of nodes)
         boxH.set(node.id, headH)
-    const xs  = gaps.reduce((list, g) => [ ...list, list[list.length - 1] + g ],
-        [ margin + (nodes.length > 0 ? halfOf(nodes[0].id) : 0) ])
+    const xs  = [ margin + (nodes.length > 0 ? halfOf(nodes[0].id) : 0) ]
+    for (const g of gaps)
+        xs.push(xs[xs.length - 1] + g)
     const xOf = new Map(nodes.map((node, i) => [ node.id, xs[i] ]))
     const cy  = margin + headH / 2
 
@@ -305,50 +360,8 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
         shapes.push(pathShape(px - CROSS, py - CROSS, `l ${2 * CROSS} ${2 * CROSS} m 0 ${-2 * CROSS} l ${-2 * CROSS} ${2 * CROSS}`,
             [ -2, -2, 2 * CROSS + 2, 2 * CROSS + 2 ], "color-edge-line", 3))
 
-    /*  draw the duration constraints as brackets beside the lifeline of
-        the caller, on the side facing away from the callee, spanning from
-        the call to the arrival of its return, with their texts beside
-        them, where the shorter brackets are placed first, closest to the
-        lifeline, and a bracket overlapping already placed ones on the
-        same side steps outwards beyond them, i.e., beyond their lines
-        and, where vertically overlapping them, their texts (whose
-        outermost X position each placed bracket remembers)  */
-    const fs       = config["size-font-edge"]
-    const brackets = new Array<{ id: string, side: number, y0: number, y1: number, x: number, outer: number }>()
-    const beyond   = (id: string, side: number, y0: number, y1: number, gap: number): number => {
-        const covering = brackets.filter((b) => b.id === id && b.side === side && b.y0 <= y1 && y0 <= b.y1)
-        const extent   = (b: typeof brackets[number]): number => {
-            const mid = (b.y0 + b.y1) / 2
-            return mid - fs <= y1 && y0 <= mid + fs ? b.outer : b.x
-        }
-        return covering.length === 0 ? xOf.get(id)! + side * TIME_OFF :
-            covering.map(extent).reduce((m, e) => side < 0 ? Math.min(m, e) : Math.max(m, e)) + side * gap
-    }
-    graph.edges
-        .map((edge, i) => ({ edge, side: -timing[i].dir, y0: timing[i].y, y1: timing[answerOf.get(i) ?? i].y2 }))
-        .filter(({ edge }) => edge.duration !== undefined)
-        .sort((a, b) => (a.y1 - a.y0) - (b.y1 - b.y0))
-        .forEach(({ edge, side, y0, y1 }) => {
-            const x = beyond(edge.source, side, y0, y1, TIME_STEP)
-            const w = textWidth(edge.duration!, fs)
-            brackets.push({ id: edge.source, side, y0, y1, x, outer: x + side * (TEXT_GAP + w) })
-            shapes.push(pathShape(x - side * TICK, y0, `h ${side * TICK} v ${y1 - y0} h ${-side * TICK}`,
-                [ Math.min(0, side * TICK) - 1, -1, Math.max(0, side * TICK) + 1, y1 - y0 + 1 ], "color-edge-line", 2))
-            shapes.push(textShape(x + side * TEXT_GAP, (y0 + y1) / 2, edge.duration!, side < 0 ? "end" : "start",
-                w, "color-edge-name", "size-font-edge", fs))
-        })
-
-    /*  draw the time constraints or observations beside the lifeline of
-        the sender, on the side facing away from the receiver, and beyond
-        the brackets (and their texts) covering the start of their message  */
-    graph.edges.forEach((edge, i) => {
-        if (edge.time === undefined)
-            return
-        const side = -timing[i].dir
-        const x    = beyond(edge.source, side, timing[i].y, timing[i].y, TEXT_GAP)
-        shapes.push(textShape(x, timing[i].y, edge.time, side < 0 ? "end" : "start",
-            textWidth(edge.time, fs), "color-edge-name", "size-font-edge", fs))
-    })
+    /*  draw the timing annotations of the messages  */
+    shapes.push(...timingShapes(graph.edges, timing, answerOf, xOf, config["size-font-edge"]))
 
     /*  hand over the participants, the messages (except the self
         destructions, drawn as their crosses only, and with their names

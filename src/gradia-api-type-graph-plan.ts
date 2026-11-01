@@ -127,7 +127,8 @@ export const planRoutes = (
         const arrival = arrivalOf(edges[i], plan)
         if (name !== undefined && arrival !== undefined) {
             const room = chanArr.get(arrival.chan) ?? [ 0, 0 ]
-            room[arrival.right ? 1 : 0] = Math.max(room[arrival.right ? 1 : 0], stubRoom(edges[i], config))
+            const side = arrival.right ? 1 : 0
+            room[side] = Math.max(room[side], stubRoom(edges[i], config))
             chanArr.set(arrival.chan, room)
         }
         else if (name !== undefined && plan.guts.length > 0)

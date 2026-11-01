@@ -58,8 +58,8 @@ const cyclesOf = (ids: string[], edges: { source: string, target: string }[]): M
 const topoOrder = (ids: string[], edges: { source: string, target: string }[],
     unitOf: (id: string) => number): string[] => {
     const members = Map.groupBy(ids, unitOf)
-    const succ  = new Map<number, Set<number>>()
-    const indeg = new Map(Array.from(members.keys(), (unit) => [ unit, 0 ]))
+    const succ    = new Map<number, Set<number>>()
+    const indeg   = new Map(Array.from(members.keys(), (unit) => [ unit, 0 ]))
     for (const edge of edges) {
         const [ a, b ] = [ unitOf(edge.source), unitOf(edge.target) ]
         if (a === b || succ.get(a)?.has(b) === true)
@@ -82,25 +82,15 @@ const topoOrder = (ids: string[], edges: { source: string, target: string }[],
     return order
 }
 
-/*  lay out a graph model as a dependency structure matrix (DSM): the
-    nodes are both its rows and its columns (partitioned by their clusters,
-    and the members of a cycle moved together, so every cluster and every
-    cycle forms a block on the diagonal), and the cell of row X and
-    column Y counts the edges from X to Y  */
-export const render = async (graph: Graph, config: Config, level: LevelContext = {}): Promise<Layout> => {
-    /*  ensure the graph carries no containers, as the rows are flat  */
-    const declared = Array.from(graph.nodes.values())
-    rejectContainers("matrix", declared, level)
-
-    /*  determine the rows and columns: both are the nodes, partitioned
-        into their clusters (in order of first appearance, the nodes
-        without one in the implied cluster "default", and a "/"-separated
-        cluster path nesting sub-clusters, kept together within their
-        cluster), and within every cluster either in the explicit order of
-        their "order" attributes (the nodes without one trailing), or else
-        in topological order, so all entries of a cluster lie above the
-        diagonal, except the ones of its cycles, whose members are
-        consecutive in both cases  */
+/*  order the nodes as the rows and columns of a matrix: partitioned into
+    their clusters (in order of first appearance, the nodes without one
+    in the implied cluster "default", and a "/"-separated cluster path
+    nesting sub-clusters, kept together within their cluster), and within
+    every cluster either in the explicit order of their "order" attributes
+    (the nodes without one trailing), or else in topological order, so all
+    entries of a cluster lie above the diagonal, except the ones of its
+    cycles, whose members are consecutive in both cases  */
+const orderNodes = (graph: Graph, declared: Node[]) => {
     const ordered   = declared.some((node) => orderOf(node) !== undefined)
     const sorted    = ordered ?
         declared.slice().sort((a, b) => (orderOf(a) ?? Infinity) - (orderOf(b) ?? Infinity) || 0) : declared
@@ -114,7 +104,7 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
         const path = clusterOf(node) ?? []
         return path.length > 0 ? path : [ "default" ]
     }
-    const nameOf  = (node: Node) => pathOf(node).join("/")
+    const nameOf    = (node: Node) => pathOf(node).join("/")
     const nodes: Node[] = []
     const parts: ClusterPart[] = []
     for (const name of clusterOrder(sorted.map((node) => [ nameOf(node), pathOf(node) ]))) {
@@ -128,6 +118,22 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
         parts.push({ path: pathOf(members[0]), from: nodes.length, to: nodes.length + list.length })
         nodes.push(...list)
     }
+    return { nodes, parts, cycles, nameOf }
+}
+
+/*  lay out a graph model as a dependency structure matrix (DSM): the
+    nodes are both its rows and its columns (partitioned by their clusters,
+    and the members of a cycle moved together, so every cluster and every
+    cycle forms a block on the diagonal), and the cell of row X and
+    column Y counts the edges from X to Y  */
+export const render = async (graph: Graph, config: Config, level: LevelContext = {}): Promise<Layout> => {
+    /*  ensure the graph carries no containers, as the rows are flat  */
+    const declared = Array.from(graph.nodes.values())
+    rejectContainers("matrix", declared, level)
+
+    /*  determine the rows and columns: both are the nodes, ordered by
+        their clusters, their cycles, and their dependencies  */
+    const { nodes, parts, cycles, nameOf } = orderNodes(graph, declared)
 
     /*  the cluster runs, and the rows and the columns (both the ordered nodes)  */
     const { depth, runs: clusters } = clusterRuns(parts)

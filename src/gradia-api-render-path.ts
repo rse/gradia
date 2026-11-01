@@ -75,7 +75,7 @@ export const computeHops = (polys: Poly[]): Map<number, number[]>[] => {
                     found.push(v)
             }
             if (found.length > 0)
-                result.set(k, found.sort((a, b) => a.idx - b.idx).map((v) => v.x))
+                result.set(k, found.sort((u, v) => u.idx - v.idx).map((v) => v.x))
         }
         return result
     })
@@ -351,7 +351,10 @@ export const pointAt = (poly: Poly, fraction: number): { x: number, y: number, h
 
 /*  the non-rectangular outline of a node: its radius, and the reach of
     the outline from the node center at the given offset across it  */
-export interface Outline { r: number, reach: (d: number) => number }
+export interface Outline {
+    r:     number
+    reach: (d: number) => number
+}
 
 /*  copy the polylines of a layout, with the edge ends attaching to a node
     of a non-rectangular outline drawn up to that outline, along their

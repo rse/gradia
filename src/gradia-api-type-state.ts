@@ -135,14 +135,14 @@ export const prepare = (input: Graph, given: Containment, config: Config): Graph
         `region "${graph.nodes.get(id)!.name}" of composite state "${containment.parentOf.get(id)}"` :
         `composite state "${id}"`
 
-    /*  whether a composite state has a final state (in each of its regions)
-        and whether such final states are among the given reached states  */
-    const hasFinal = (id: string): boolean => regionsOf(id).length > 0 ?
-        regionsOf(id).every((region) => membersOf("final", region).length > 0) :
-        membersOf("final", id).length > 0
-    const completed = (id: string, reached: Set<string>): boolean => regionsOf(id).length > 0 ?
-        regionsOf(id).every((region) => membersOf("final", region).some((f) => reached.has(f.id))) :
-        membersOf("final", id).some((f) => reached.has(f.id))
+    /*  the scopes of a composite state (its regions, or else itself alone),
+        whether it has a final state (in each scope), and whether such
+        final states are among the given reached states  */
+    const scopesOf  = (id: string): string[] => regionsOf(id).length > 0 ? regionsOf(id) : [ id ]
+    const hasFinal  = (id: string): boolean =>
+        scopesOf(id).every((scope) => membersOf("final", scope).length > 0)
+    const completed = (id: string, reached: Set<string>): boolean =>
+        scopesOf(id).every((scope) => membersOf("final", scope).some((f) => reached.has(f.id)))
 
     /*  a state together with its ancestors, innermost first  */
     const ancestorsOf = (id: string): string[] => {
@@ -196,9 +196,7 @@ export const prepare = (input: Graph, given: Containment, config: Config): Graph
         /*  a transition into a composite state enters its initial state
             (in each of its regions)  */
         if (containment.childrenOf.has(edge.target)) {
-            const lacking = regionsOf(edge.target).length > 0 ?
-                regionsOf(edge.target).filter((region) => membersOf("initial", region).length === 0) :
-                membersOf("initial", edge.target).length === 0 ? [ edge.target ] : []
+            const lacking = scopesOf(edge.target).filter((scope) => membersOf("initial", scope).length === 0)
             if (lacking.length > 0)
                 throw new Error(`transition "${edge.source}" --> "${edge.target}" enters ` +
                     `${nameOf(lacking[0])} without an initial state`)
@@ -266,10 +264,13 @@ export const prepare = (input: Graph, given: Containment, config: Config): Graph
         out of it, i.e. of its own ones, (for a composite state) of the ones
         of its members leaving it, and of the ones of its ancestors (a
         completion transition only of a composite state with a final state)  */
-    const successors = (id: string): string[] => graph.edges.filter((edge) => fires(edge) && (
-        ancestorsOf(id).slice(1).includes(edge.source)
-        || (ancestorsOf(edge.source).includes(id) && (edge.source === id || !ancestorsOf(edge.target).includes(id)))
-    )).map((edge) => edge.target)
+    const firing     = graph.edges.filter((edge) => fires(edge))
+    const successors = (id: string): string[] => {
+        const outer = ancestorsOf(id).slice(1)
+        return firing.filter((edge) => outer.includes(edge.source)
+            || (ancestorsOf(edge.source).includes(id) && (edge.source === id || !ancestorsOf(edge.target).includes(id))))
+            .map((edge) => edge.target)
+    }
 
     /*  a regular state is a dead end if it is trapped: if it belongs to a
         group of states (a strongly connected component, determined with
@@ -325,12 +326,10 @@ export const prepare = (input: Graph, given: Containment, config: Config): Graph
     for (const node of nodes) {
         if (kind.get(node.id) === "fork")
             continue
-        const byLabel = new Map<string, Edge[]>()
-        for (const edge of outOf(node.id)) {
+        const byLabel = Map.groupBy(outOf(node.id), (edge) => {
             const { event, guard } = labelOf(edge)
-            const key = JSON.stringify([ event, guard ?? null ])
-            byLabel.set(key, [ ...byLabel.get(key) ?? [], edge ])
-        }
+            return JSON.stringify([ event, guard ?? null ])
+        })
         for (const edges of byLabel.values())
             if (edges.length > 1)
                 edges.forEach((edge) => conflicts.add(edge))

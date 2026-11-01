@@ -7,7 +7,8 @@
 /*  internal dependencies  */
 import { Node, Edge, Graph }        from "./gradia-api-model.js"
 import { Config, ConfigEmbedded }   from "./gradia-api-config.js"
-import { Layout, textWidth }        from "./gradia-api-render-base.js"
+import { Layout, textWidth, pushTo }
+    from "./gradia-api-render-base.js"
 import { Shape, pathShape, textShape, rectShape, badgeShape }
     from "./gradia-api-render-shape.js"
 import { LevelContext, rejectContainers }
@@ -16,7 +17,6 @@ import { ClusterPart, clusterOrder, clusterRuns, fitLabel }
     from "./gradia-api-render-cluster.js"
 import { defaultStyleOf, urlOf, orderOf, typeOf, badgeOf, clusterOf, badgeRadius }
     from "./gradia-api-render-node.js"
-import { pushTo }                   from "./gradia-api-type-graph-place.js"
 
 /*  the geometry of the rows, the bars, the arrows, the headers, and the cluster bands  */
 const ROW       = 44    /*  height of a row                             */
@@ -173,26 +173,12 @@ const placeVerticals = (verticals: Vertical[]): void => {
     }
 }
 
-/*  lay out a graph model as a Gantt chart: the nodes are the tasks, one
-    row each with its bar over a time axis, and the edges are the
-    dependencies, drawn as arrows between the bars, with the critical path
-    (the tasks without any slack and the tight dependencies among them) marked  */
-export const render = async (graph: Graph, config: Config, level: LevelContext = {}): Promise<Layout> => {
-    /*  ensure the graph carries no containers, as the rows are flat  */
-    const declared = Array.from(graph.nodes.values())
-    rejectContainers("gantt", declared, level)
-
-    /*  schedule the tasks and determine the critical ones (marked only if
-        the marking of the critical path is enabled)  */
-    const { times, tight } = schedule(declared, graph.edges)
-    const slackless = (id: string) => times.get(id)!.ls - times.get(id)!.es < EPS
-    const critical  = (id: string) => config["gantt-critical"] && slackless(id)
-
-    /*  determine the rows: the tasks, partitioned into their clusters
-        (exactly like the rows of a "matrix" diagram), and within every
-        cluster either in the explicit order of their "order" attributes
-        (the tasks without one trailing), or else by their earliest start
-        (ties in declaration order)  */
+/*  determine the rows: the tasks, partitioned into their clusters
+    (exactly like the rows of a "matrix" diagram), and within every
+    cluster either in the explicit order of their "order" attributes
+    (the tasks without one trailing), or else by their earliest start
+    (ties in declaration order), plus the clusters as parts of the rows  */
+const rowsOf = (declared: Node[], times: Map<string, Times>): { rows: Node[], parts: ClusterPart[] } => {
     const ordered   = declared.some((node) => orderOf(node) !== undefined)
     const sorted    = declared.slice().sort((a, b) => ordered ?
         (orderOf(a) ?? Infinity) - (orderOf(b) ?? Infinity) || 0 :
@@ -212,6 +198,40 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
         parts.push({ path: pathOf(members[0]), from: rows.length, to: rows.length + members.length })
         rows.push(...members)
     }
+    return { rows, parts }
+}
+
+/*  the time axis: the smallest step of 1, 2, 5, 10, 20, 50, ... time
+    units leaving room for the widest tick label (at the given unit
+    width and font size) and keeping the ticks bounded in number, and
+    its span up to the project end, rounded up to whole steps  */
+const axisOf = (end: number, unit: number, fs: number): { step: number, span: number } => {
+    const stepOf = (k: number) => [ 1, 2, 5 ][k % 3] * 10 ** Math.floor(k / 3)
+    const spanOf = (step: number) => Math.max(Math.ceil(end / step - EPS) * step, step)
+    let k = 0
+    while (stepOf(k) * unit < textWidth(String(spanOf(stepOf(k))), fs) + TICK_PAD
+        || spanOf(stepOf(k)) / stepOf(k) > TICK_MAX)
+        k++
+    return { step: stepOf(k), span: spanOf(stepOf(k)) }
+}
+
+/*  lay out a graph model as a Gantt chart: the nodes are the tasks, one
+    row each with its bar over a time axis, and the edges are the
+    dependencies, drawn as arrows between the bars, with the critical path
+    (the tasks without any slack and the tight dependencies among them) marked  */
+export const render = async (graph: Graph, config: Config, level: LevelContext = {}): Promise<Layout> => {
+    /*  ensure the graph carries no containers, as the rows are flat  */
+    const declared = Array.from(graph.nodes.values())
+    rejectContainers("gantt", declared, level)
+
+    /*  schedule the tasks and determine the critical ones (marked only if
+        the marking of the critical path is enabled)  */
+    const { times, tight } = schedule(declared, graph.edges)
+    const slackless = (id: string) => times.get(id)!.ls - times.get(id)!.es < EPS
+    const critical  = (id: string) => config["gantt-critical"] && slackless(id)
+
+    /*  determine the rows of the tasks, partitioned into their clusters  */
+    const { rows, parts } = rowsOf(declared, times)
     const rowOf = new Map(rows.map((node, i) => [ node.id, i ]))
     const { depth, runs: clusters } = clusterRuns(parts)
 
@@ -264,19 +284,8 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
     const x0     = hx + rowW + HEAD_GAP + gutter
     const y0     = hy + axisH + HEAD_GAP
 
-    /*  the time axis: the smallest step of 1, 2, 5, 10, 20, 50, ... time
-        units leaving room for the widest tick label and keeping the ticks
-        bounded in number, and its span up to the project end, rounded up
-        to whole steps  */
-    const end    = Math.max(0, ...Array.from(times.values(), (t) => t.ef))
-    const stepOf = (k: number) => [ 1, 2, 5 ][k % 3] * 10 ** Math.floor(k / 3)
-    const spanOf = (step: number) => Math.max(Math.ceil(end / step - EPS) * step, step)
-    let k = 0
-    while (stepOf(k) * unit < textWidth(String(spanOf(stepOf(k))), fsNum) + TICK_PAD
-        || spanOf(stepOf(k)) / stepOf(k) > TICK_MAX)
-        k++
-    const step   = stepOf(k)
-    const span   = spanOf(step)
+    /*  the time axis up to the project end  */
+    const { step, span } = axisOf(Math.max(0, ...Array.from(times.values(), (t) => t.ef)), unit, fsNum)
 
     /*  the coordinates (rounded to two decimals, keeping the floating point
         noise of fractional durations out of the SVG)  */

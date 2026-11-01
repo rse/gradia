@@ -77,6 +77,10 @@ const renderPseudo = (shape: NodeShape, x: number, y: number, w: number, h: numb
         return [ `<circle cx="${x}" cy="${y}" r="${r}" class="${cls}"${dash}/>` ]
 }
 
+/*  wrap the SVG fragments into a hyperlink, if a URL is given  */
+const linkTo = (url: string | undefined, parts: string[]): string[] =>
+    url === undefined ? parts : [ `<a href="${escapeXML(url)}" xlink:href="${escapeXML(url)}">`, ...parts, "</a>" ]
+
 /*  generate the SVG fragments of a place of a "petri" diagram centered on
     the given point: a circle filling its box of the given size (doubled
     for a sink place, i.e. a place where the tokens come to rest), with
@@ -98,10 +102,7 @@ const renderPlace = (node: Node, x: number, y: number, w: number, h: number, sty
                 `class="${styler.text(style.text, line.size, { bold: line.bold, middle: true })}">` +
                 `${escapeXML(line.text)}</text>`)
     }
-    const url = urlOf(node)
-    if (url === undefined)
-        return parts
-    return [ `<a href="${escapeXML(url)}" xlink:href="${escapeXML(url)}">`, ...parts, "</a>" ]
+    return linkTo(urlOf(node), parts)
 }
 
 /*  generate the SVG fragments for a single node box (a node with a
@@ -127,7 +128,6 @@ export const renderNode = (node: Node, layout: Layout, style: NodeStyle, styler:
     const half  = linesWidth(lines, config) / 2
     const tx    = Math.max(cx(node.id) - multi / 2, x + badgeRoom(node, config) + PAD_W + half)
     const ty0   = -multi / 2
-    const url   = urlOf(node)
     const parts = renderOutline(badgeOf(node), badgeRadius(config["size-font-node"]), multi, x, y, w, h,
         style, styler)
 
@@ -169,9 +169,7 @@ export const renderNode = (node: Node, layout: Layout, style: NodeStyle, styler:
             `y="${attrY + k * ATTR_H(config)}" ` +
             `class="${styler.text(style.text, "size-font-prop", { middle: true })}">${escapeXML(line)}</text>`)
     })
-    if (url === undefined)
-        return parts
-    return [ `<a href="${escapeXML(url)}" xlink:href="${escapeXML(url)}">`, ...parts, "</a>" ]
+    return linkTo(urlOf(node), parts)
 }
 
 /*  generate the SVG fragments for a single group box and its tag
@@ -207,7 +205,6 @@ export const renderContainer = (c: ContainerBox, styler: Styler, config: Config,
         return parts
     }
     const type   = typeOf(c.node)
-    const url    = urlOf(c.node)
     const head   = containerHead(c.node, config, c.style !== undefined)
     const base   = c.y + containerHead(c.node, config) - HEAD_H + TAG_DY + FS_GROUP
     const style  = c.style !== undefined ? markedStyleOf(c.node, c.style, config) : undefined
@@ -246,9 +243,7 @@ export const renderContainer = (c: ContainerBox, styler: Styler, config: Config,
                 `class="${styler.text(text, "size-font-prop")}">` +
                 `${escapeXML(`${attr.key}: ${attr.val}`)}</text>`))
     }
-    if (url === undefined)
-        return parts
-    return [ `<a href="${escapeXML(url)}" xlink:href="${escapeXML(url)}">`, ...parts, "</a>" ]
+    return linkTo(urlOf(c.node), parts)
 }
 
 /*  generate the SVG fragment for a single free-standing shape  */
@@ -266,7 +261,6 @@ export const renderShape = (shape: Shape, styler: Styler): string => {
     const text = `<text x="${shape.x}" y="${shape.y}"${turn}${shape.anchor !== "start" ? ` text-anchor="${shape.anchor}"` : ""} ` +
         `class="${styler.text(shape.fill, shape.size, { bold: shape.bold, halo: shape.halo !== false })}">` +
         `${escapeXML(shape.text)}</text>`
-    return shape.url === undefined ? text :
-        `<a href="${escapeXML(shape.url)}" xlink:href="${escapeXML(shape.url)}">${text}</a>`
+    return linkTo(shape.url, [ text ]).join("")
 }
 

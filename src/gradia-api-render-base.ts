@@ -88,6 +88,15 @@ export const escapeXML = (text: string): string =>
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
 
+/*  append a value to the array stored under a key of a multi-map  */
+export const pushTo = <K, V>(map: Map<K, V[]>, key: K, value: V): void => {
+    const list = map.get(key)
+    if (list === undefined)
+        map.set(key, [ value ])
+    else
+        list.push(value)
+}
+
 /*  an orthogonal edge polyline  */
 export type Poly = [ number, number ][]
 

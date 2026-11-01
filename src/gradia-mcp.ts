@@ -458,14 +458,15 @@ boxes of a "grid" diagram to the width of the widest one and to the height of
 the tallest one (a nested container box taking part in the width unification
 only), "tree-stack-double", "tree-node-width-equal", "tree-horizontal", and
 "gantt-critical", and the string "gantt-unit-name".
-The "sequence-column-gap" and
-"sequence-message-gap" options set the minimum gap between neighboring
-participants and the vertical gap between messages of a "sequence" diagram, so
-lower values render it more compact. The "tree-level-gap" and
-"tree-sibling-gap" options set the gap between the levels and the minimum gap
-between the subtrees of a "tree" diagram, and a positive "tree-stack-min" or
-"tree-row-max" stacks the leaf children of a parent along a trunk as soon as
-the parent has that many of them or their level holds more nodes.
+
+The "sequence-column-gap" and "sequence-message-gap" options set the minimum
+gap between neighboring participants and the vertical gap between messages of
+a "sequence" diagram, so lower values render it more compact. The
+"tree-level-gap" and "tree-sibling-gap" options set the gap between the levels
+and the minimum gap between the subtrees of a "tree" diagram, and a positive
+"tree-stack-min" or "tree-row-max" stacks the leaf children of a parent along
+a trunk as soon as the parent has that many of them or their level holds more
+nodes.
 
 The boolean "mark-violation" option controls whether the diagram types
 "matrix", "layer", "slice", "tree", "state", and "petri" mark their violations

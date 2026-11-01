@@ -5,7 +5,7 @@
 */
 
 /*  internal dependencies  */
-import { Edge, Graph }              from "./gradia-api-model.js"
+import { Node, Edge, Graph }        from "./gradia-api-model.js"
 import { Config }                   from "./gradia-api-config.js"
 import { Layout, Poly }             from "./gradia-api-render-base.js"
 import { Shape, pathShape }         from "./gradia-api-render-shape.js"
@@ -66,25 +66,11 @@ const pack = (list: Subtree[], gap: number): Subtree[] => {
     return placed
 }
 
-/*  lay out a graph model as a tree: the edges point from the parents to
-    their children, the nodes without a parent are the roots of a forest,
-    and every edge not fitting the tree (a second edge into a node, an
-    edge closing a cycle, or a self-loop) is a cross link, drawn dashed
-    (and marked as a violation). The levels stack top-down (or, with the
-    option "tree-horizontal", left-to-right), every parent connects to
-    its children through a bus, and the leaf children of a parent are
-    stacked along a trunk, once there are "tree-stack-min" of them or
-    their level holds more than "tree-row-max" nodes  */
-export const render = async (graph: Graph, config: Config, level: LevelContext = {}): Promise<Layout> => {
-    /*  determine the nodes in their order and ensure the graph carries
-        no containers, as the tree is the only nesting  */
-    const nodes = Array.from(graph.nodes.values())
-        .sort((a, b) => (orderOf(a) ?? Infinity) - (orderOf(b) ?? Infinity) || 0)
-    rejectContainers("tree", nodes, level)
-    const rank = new Map(nodes.map((node, i) => [ node.id, i ]))
-
-    /*  determine the tree edges in declaration order (the first edge into
-        a node, unless it closes a cycle) and the remaining cross links  */
+/*  determine the tree edges of a graph model in declaration order (the
+    first edge into a node, unless it closes a cycle), the remaining
+    cross links, and the children, roots, and depth of the nodes  */
+const treeOf = (graph: Graph, nodes: Node[]) => {
+    const rank       = new Map(nodes.map((node, i) => [ node.id, i ]))
     const parentOf   = new Map<string, string>()
     const isAncestor = (a: string, b: string): boolean => {
         for (let id: string | undefined = b; id !== undefined; id = parentOf.get(id))
@@ -111,6 +97,28 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
             visit(child, d + 1)
     }
     roots.forEach((id) => visit(id, 0))
+    return { parentOf, cross, children, roots, depth }
+}
+
+/*  lay out a graph model as a tree: the edges point from the parents to
+    their children, the nodes without a parent are the roots of a forest,
+    and every edge not fitting the tree (a second edge into a node, an
+    edge closing a cycle, or a self-loop) is a cross link, drawn dashed
+    (and marked as a violation). The levels stack top-down (or, with the
+    option "tree-horizontal", left-to-right), every parent connects to
+    its children through a bus, and the leaf children of a parent are
+    stacked along a trunk, once there are "tree-stack-min" of them or
+    their level holds more than "tree-row-max" nodes  */
+export const render = async (graph: Graph, config: Config, level: LevelContext = {}): Promise<Layout> => {
+    /*  determine the nodes in their order and ensure the graph carries
+        no containers, as the tree is the only nesting  */
+    const nodes = Array.from(graph.nodes.values())
+        .sort((a, b) => (orderOf(a) ?? Infinity) - (orderOf(b) ?? Infinity) || 0)
+    rejectContainers("tree", nodes, level)
+
+    /*  determine the tree edges, the cross links, and the children,
+        roots, and depth of the nodes  */
+    const { parentOf, cross, children, roots, depth } = treeOf(graph, nodes)
     const isLeaf = (id: string) => children.get(id)!.length === 0
 
     /*  measure the node boxes (optionally unified onto the width of the
@@ -152,10 +160,10 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
             stackOf.set(node.id, leaves)
     }
     const pure    = (id: string) => (stackOf.get(id)?.length ?? 0) === children.get(id)!.length
-    const inStack = (id: string) => parentOf.has(id) && (stackOf.get(parentOf.get(id)!)?.includes(id) ?? false)
     const sideOf  = new Map<string, number>()
     for (const list of stackOf.values())
         list.forEach((id, i) => sideOf.set(id, double && i % 2 === 0 ? -1 : 1))
+    const inStack = (id: string) => sideOf.has(id)
 
     /*  the number of cross links attaching to the stacked nodes on either
         side of the trunk of a stack, which reserves a corridor beside it,
@@ -412,3 +420,4 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
     return { nodes, edges: graph.edges, cx, cy, boxW, boxH, contentH, polys, shapes,
         dashed: cross, marked: cross.map((c) => c && config["mark-violation"]) }
 }
+

@@ -102,6 +102,112 @@ const TRACK_SEARCH_MAX = 100
 const TRACK_BLOCK_MAX  = 8
 const TRACK_PASSES_MAX = 100
 
+/*  the cost-minimal order of n units with the flat cost matrix cost,
+    determined exactly by a dynamic programming over the unit subsets
+    (the linear ordering problem)  */
+const exactOrder = (cost: number[], n: number): number[] => {
+    const best = new Float64Array(1 << n).fill(Infinity)
+    const last = new Int8Array(1 << n)
+    best[0] = 0
+    for (let s = 1; s < (1 << n); s++) {
+        for (let u = 0; u < n; u++) {
+            if ((s & (1 << u)) === 0)
+                continue
+            const rest = s & ~(1 << u)
+            let total = best[rest]
+            for (let v = 0; v < n; v++)
+                if ((rest & (1 << v)) !== 0)
+                    total += cost[v * n + u]
+            if (total < best[s]) {
+                best[s] = total
+                last[s] = u
+            }
+        }
+    }
+    const order: number[] = []
+    for (let s = (1 << n) - 1; s !== 0; s &= ~(1 << last[s]))
+        order.unshift(last[s])
+    return order
+}
+
+/*  a cost-reduced order of n units with the flat cost matrix cost,
+    determined by a local search moving blocks of adjacent units  */
+const searchOrder = (cost: number[], n: number): number[] => {
+    /*  move a block of adjacent users over the run of users behind
+        or ahead of it, as soon as this reduces the cost (which only
+        the pairs between the block and the run passed contribute
+        to, so the cost change is accumulated while extending the
+        run), until no such move remains (a single-user move is
+        the block move of length one, while the longer blocks let
+        a group of users pass an obstacle which none of its members
+        could pass on their own); for large user sets the search is
+        bounded instead: per block, the best move over the runs
+        behind and ahead of it is applied, and the search continues
+        with the next block instead of restarting  */
+    const order = Array.from({ length: n }, (_, i) => i)
+
+    /*  precompute the cost change of swapping two users once:
+        diff[a * n + b] is the cost of placing user a before user b
+        minus the cost of the reverse placement  */
+    const diff: number[] = []
+    for (let a = 0; a < n; a++)
+        for (let b = 0; b < n; b++)
+            diff.push(cost[a * n + b] - cost[b * n + a])
+    const bounded = n > TRACK_SEARCH_MAX
+    const maxLen  = bounded ? Math.min(n - 1, TRACK_BLOCK_MAX) : n - 1
+    const passes  = bounded ? TRACK_PASSES_MAX : Infinity
+    for (let improved = true, pass = 0; improved && pass < passes; pass++) {
+        improved = false
+        for (let len = 1; len <= maxLen; len++) {
+            for (let i = 0; i + len <= n; i++) {
+                let best    = 0
+                let target  = -1
+                let forward = true
+                let delta   = 0
+                for (let k = i + len; k < n; k++) {
+                    const row = order[k] * n
+                    for (let b = i; b < i + len; b++)
+                        delta += diff[row + order[b]]
+                    if (delta < best) {
+                        best    = delta
+                        target  = k
+                        forward = true
+                        if (!bounded)
+                            break
+                    }
+                }
+                delta = 0
+                for (let k = i - 1; k >= 0; k--) {
+                    if (target >= 0 && !bounded)
+                        break
+                    const other = order[k]
+                    for (let b = i; b < i + len; b++)
+                        delta += diff[order[b] * n + other]
+                    if (delta < best) {
+                        best    = delta
+                        target  = k
+                        forward = false
+                        if (!bounded)
+                            break
+                    }
+                }
+                if (target >= 0) {
+                    if (forward)
+                        order.splice(target - len + 1, 0, ...order.splice(i, len))
+                    else
+                        order.splice(target, 0, ...order.splice(i, len))
+                    improved = true
+                    if (!bounded)
+                        break
+                }
+            }
+            if (improved && !bounded)
+                break
+        }
+    }
+    return order
+}
+
 /*  reorder the seeded track units to the order causing the fewest
     overlaps and then the fewest crossings, with ties broken toward the
     seed order: for small unit sets exactly, by a dynamic programming
@@ -127,104 +233,7 @@ const minimizeCrossings = (seed: TrackUnit[]): TrackUnit[] => {
         for (let j = 0; j < n; j++)
             cost.push((trackOverlaps(seed[i], seed[j]) * weight +
                 trackCrossings(seed[i], seed[j])) * n * n + (i > j ? 1 : 0))
-    let order: number[]
-    if (n <= TRACK_EXACT_MAX) {
-        const best = new Float64Array(1 << n).fill(Infinity)
-        const last = new Int8Array(1 << n)
-        best[0] = 0
-        for (let s = 1; s < (1 << n); s++) {
-            for (let u = 0; u < n; u++) {
-                if ((s & (1 << u)) === 0)
-                    continue
-                const rest = s & ~(1 << u)
-                let total = best[rest]
-                for (let v = 0; v < n; v++)
-                    if ((rest & (1 << v)) !== 0)
-                        total += cost[v * n + u]
-                if (total < best[s]) {
-                    best[s] = total
-                    last[s] = u
-                }
-            }
-        }
-        order = []
-        for (let s = (1 << n) - 1; s !== 0; s &= ~(1 << last[s]))
-            order.unshift(last[s])
-    }
-    else {
-        /*  move a block of adjacent users over the run of users behind
-            or ahead of it, as soon as this reduces the cost (which only
-            the pairs between the block and the run passed contribute
-            to, so the cost change is accumulated while extending the
-            run), until no such move remains (a single-user move is
-            the block move of length one, while the longer blocks let
-            a group of users pass an obstacle which none of its members
-            could pass on their own); for large user sets the search is
-            bounded instead: per block, the best move over the runs
-            behind and ahead of it is applied, and the search continues
-            with the next block instead of restarting  */
-        order = seed.map((_, i) => i)
-
-        /*  precompute the cost change of swapping two users once:
-            diff[a * n + b] is the cost of placing user a before user b
-            minus the cost of the reverse placement  */
-        const diff: number[] = []
-        for (let a = 0; a < n; a++)
-            for (let b = 0; b < n; b++)
-                diff.push(cost[a * n + b] - cost[b * n + a])
-        const bounded = n > TRACK_SEARCH_MAX
-        const maxLen  = bounded ? Math.min(n - 1, TRACK_BLOCK_MAX) : n - 1
-        const passes  = bounded ? TRACK_PASSES_MAX : Infinity
-        for (let improved = true, pass = 0; improved && pass < passes; pass++) {
-            improved = false
-            for (let len = 1; len <= maxLen; len++) {
-                for (let i = 0; i + len <= n; i++) {
-                    let best    = 0
-                    let target  = -1
-                    let forward = true
-                    let delta   = 0
-                    for (let k = i + len; k < n; k++) {
-                        const row = order[k] * n
-                        for (let b = i; b < i + len; b++)
-                            delta += diff[row + order[b]]
-                        if (delta < best) {
-                            best    = delta
-                            target  = k
-                            forward = true
-                            if (!bounded)
-                                break
-                        }
-                    }
-                    delta = 0
-                    for (let k = i - 1; k >= 0; k--) {
-                        if (target >= 0 && !bounded)
-                            break
-                        const other = order[k]
-                        for (let b = i; b < i + len; b++)
-                            delta += diff[order[b] * n + other]
-                        if (delta < best) {
-                            best    = delta
-                            target  = k
-                            forward = false
-                            if (!bounded)
-                                break
-                        }
-                    }
-                    if (target >= 0) {
-                        if (forward)
-                            order.splice(target - len + 1, 0, ...order.splice(i, len))
-                        else
-                            order.splice(target, 0, ...order.splice(i, len))
-                        improved = true
-                        if (!bounded)
-                            break
-                    }
-                }
-                if (improved && !bounded)
-                    break
-            }
-        }
-    }
+    const order = n <= TRACK_EXACT_MAX ? exactOrder(cost, n) : searchOrder(cost, n)
     return order.map((i) => seed[i])
 }
 

@@ -7,7 +7,7 @@
 /*  internal dependencies  */
 import { Node, Edge }                        from "./gradia-api-model.js"
 import { Config }                            from "./gradia-api-config.js"
-import { pushTo }                            from "./gradia-api-type-graph-place.js"
+import { pushTo }                            from "./gradia-api-render-base.js"
 import { RoutePlan, CHAN_W0, CHAN_W1, GUT_H0, GUT_H1, GUT_PAD, GUT_LBL, LOOP_TOP }
     from "./gradia-api-type-graph-plan.js"
 
@@ -136,6 +136,68 @@ export const computeGrid = (
     return { colWidth, rowHeight, chanCap, gutCap, chanW, gutH, colCX, rowCY, gutCY }
 }
 
+/*  group the nodes of every row linked by direct same-row edges, as
+    they share one center line  */
+const groupRows = (nodes: Node[], edges: Edge[], plans: RoutePlan[], row: Map<string, number>,
+    nrows: number) => {
+    const groupOf = new Map<string, string>()
+    const find    = (id: string): string => {
+        let root = id
+        while (groupOf.has(root))
+            root = groupOf.get(root)!
+        return root
+    }
+    edges.forEach((edge, i) => {
+        if (edge.source === edge.target || plans[i].chans.length !== 1 || plans[i].flags[0].hairpin
+            || row.get(edge.source) !== row.get(edge.target))
+            return
+        const [ a, b ] = [ find(edge.source), find(edge.target) ]
+        if (a !== b)
+            groupOf.set(b, a)
+    })
+    const byRow = Array.from({ length: nrows }, () => new Map<string, Node[]>())
+    for (const node of nodes)
+        pushTo(byRow[row.get(node.id)!], find(node.id), node)
+    return byRow
+}
+
+/*  determine the lane span of every used gutter and the end nodes of its edges  */
+const gutterSpans = (edges: Edge[], plans: RoutePlan[], laneOf: (id: string) => number) => {
+    const span = new Map<number, [ number, number ]>()
+    const ends = new Map<number, string[]>()
+    edges.forEach((edge, i) => {
+        const { chans, guts, gate } = plans[i]
+        if (guts.length === 0)
+            return
+        const g = guts[0]
+        const a = gate === "s" ? laneOf(edge.source) : 2 * chans[0] + 1
+        const b = gate === "t" ? laneOf(edge.target) : 2 * chans[1] + 1
+        const [ lo, hi ] = span.get(g) ?? [ Infinity, -Infinity ]
+        span.set(g, [ Math.min(lo, a, b), Math.max(hi, a, b) ])
+        if (gate !== "s")
+            pushTo(ends, g, edge.source)
+        if (gate !== "t")
+            pushTo(ends, g, edge.target)
+    })
+    return { span, ends }
+}
+
+/*  determine the box or band right above and below every box in its lane  */
+const laneNeighbors = (seq: Map<number, (string | number)[]>) => {
+    const prevOf = new Map<string, string | number>()
+    const nextOf = new Map<string, string | number>()
+    for (const items of seq.values())
+        items.forEach((item, i) => {
+            if (typeof item !== "string")
+                return
+            if (i > 0)
+                prevOf.set(item, items[i - 1])
+            if (i + 1 < items.length)
+                nextOf.set(item, items[i + 1])
+        })
+    return { prevOf, nextOf }
+}
+
 /*  pack the columns of the grid vertically: instead of centering every
     node in a row as high as its highest box, every column stacks its
     nodes in their row order, spaced like an edge-less gutter. Only the
@@ -164,24 +226,7 @@ export const packColumns = (
     const laneOf = (id: string) => 2 * col.get(id)!
 
     /*  group the nodes linked by direct same-row edges, as they share one center line  */
-    const groupOf = new Map<string, string>()
-    const find    = (id: string): string => {
-        let root = id
-        while (groupOf.has(root))
-            root = groupOf.get(root)!
-        return root
-    }
-    edges.forEach((edge, i) => {
-        if (edge.source === edge.target || plans[i].chans.length !== 1 || plans[i].flags[0].hairpin
-            || row.get(edge.source) !== row.get(edge.target))
-            return
-        const [ a, b ] = [ find(edge.source), find(edge.target) ]
-        if (a !== b)
-            groupOf.set(b, a)
-    })
-    const byRow = Array.from({ length: nrows }, () => new Map<string, Node[]>())
-    for (const node of nodes)
-        pushTo(byRow[row.get(node.id)!], find(node.id), node)
+    const byRow = groupRows(nodes, edges, plans, row, nrows)
 
     /*  the room above every box: of its self-loop detours  */
     const loopCnt = new Map<string, number>()
@@ -196,22 +241,7 @@ export const packColumns = (
     /*  the lane span of every used gutter (from the channel of one end to
         the channel of the other end, or up to the gate a gutter-ending
         edge ends at) and the end nodes of its edges  */
-    const span = new Map<number, [ number, number ]>()
-    const ends = new Map<number, string[]>()
-    edges.forEach((edge, i) => {
-        const { chans, guts, gate } = plans[i]
-        if (guts.length === 0)
-            return
-        const g = guts[0]
-        const a = gate === "s" ? laneOf(edge.source) : 2 * chans[0] + 1
-        const b = gate === "t" ? laneOf(edge.target) : 2 * chans[1] + 1
-        const [ lo, hi ] = span.get(g) ?? [ Infinity, -Infinity ]
-        span.set(g, [ Math.min(lo, a, b), Math.max(hi, a, b) ])
-        if (gate !== "s")
-            pushTo(ends, g, edge.source)
-        if (gate !== "t")
-            pushTo(ends, g, edge.target)
-    })
+    const { span, ends } = gutterSpans(edges, plans, laneOf)
 
     /*  stack every node right below its lane so far (spaced like an
         edge-less gutter below a box, not below a band), and record the
@@ -261,17 +291,7 @@ export const packColumns = (
     const lowest = Math.max(margin, ...Array.from(bottom.values()))
 
     /*  the box or band right above and below every box in its lane  */
-    const prevOf = new Map<string, string | number>()
-    const nextOf = new Map<string, string | number>()
-    for (const items of seq.values())
-        items.forEach((item, i) => {
-            if (typeof item !== "string")
-                return
-            if (i > 0)
-                prevOf.set(item, items[i - 1])
-            if (i + 1 < items.length)
-                nextOf.set(item, items[i + 1])
-        })
+    const { prevOf, nextOf } = laneNeighbors(seq)
 
     /*  let every box not sharing a center line, whose edges all lead
         downwards, sink towards its nearest neighbor, as far as its lane

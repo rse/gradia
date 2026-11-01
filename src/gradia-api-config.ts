@@ -98,10 +98,10 @@ export const configDefaults = {
 }
 export type Config = typeof configDefaults
 
-/*  the configuration options which are directly embedded into the
-    generated SVG (and hence can alternatively be provided at display
-    time through "--gradia-<option>" CSS custom properties)  */
-export type ConfigEmbedded = { [K in keyof Config]: Config[K] extends string ? K : never }[keyof Config]
+/*  the color options which are directly embedded into the generated
+    SVG (and hence can alternatively be provided at display time
+    through "--gradia-<option>" CSS custom properties)  */
+export type ConfigEmbedded = Extract<keyof Config, `color-${string}`>
 
 /*  the font size options, which are embedded into the generated SVG,
     too, but which drive the layout as well and hence are embedded as
@@ -117,14 +117,17 @@ export const cssSizeOf = (config: Config, key: ConfigFontSize): string =>
 
 /*  resolve a directly embedded configuration option into a CSS value:
     an explicitly configured value is hard-coded (stripped of the
-    characters which would end the CSS declaration, to prevent a CSS
-    injection from untrusted values), while otherwise the value is
-    fetched at display time from the CSS custom property
+    characters which would end, escape, or comment out the CSS
+    declaration, and ignored if it references an external resource, to
+    prevent a CSS injection from untrusted values), while otherwise the
+    value is fetched at display time from the CSS custom property
     "--gradia-<option>", falling back to the built-in default  */
-export const cssValueOf = (explicit: Partial<Config>, key: ConfigEmbedded): string =>
-    Object.hasOwn(explicit, key) ?
-        explicit[key]!.replace(/[;{}]/g, "") :
+export const cssValueOf = (explicit: Partial<Config>, key: ConfigEmbedded): string => {
+    const value = explicit[key]?.replace(/[;{}\\*]/g, "")
+    return value !== undefined && !/url\(/i.test(value) ?
+        value :
         `var(--gradia-${key}, ${configDefaults[key]})`
+}
 
 /*  validate and coerce rendering configuration options into their
     types (coercing strings, as given on the command line): an unknown

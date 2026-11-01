@@ -191,6 +191,40 @@ const partsOf = (graph: Graph): string[][] => {
     return parts
 }
 
+/*  an explored marking of a Petri net: its tokens, the marking it was
+    first reached from and the transition firing into it, its successor
+    markings and the transitions firing into them, and the predecessor
+    markings its places grow without bound from  */
+interface Visit { m: number[], up?: Visit, via?: number, next: number[], fires: number[],
+    pumps?: Map<number, Visit> }
+
+/*  determine the transitions firing at all which are not live, i.e.,
+    which fire nowhere within some terminal group of markings (a strongly
+    connected component of the reachability graph of a completely explored
+    bounded part, no transition leading out of), which holds a firing (as
+    a deadlock is caught by the dead-end places already)  */
+const nonLiveOf = (queue: Visit[], fired: Set<number>): Set<number> => {
+    const comp    = componentsOf(queue.map((visit) => visit.next))
+    const leaving = new Set<number>()
+    const recurs  = new Map<number, Set<number>>()
+    queue.forEach((visit, v) => {
+        visit.next.forEach((w, k) => {
+            if (comp[w] !== comp[v])
+                leaving.add(comp[v])
+            else
+                recurs.set(comp[v], (recurs.get(comp[v]) ?? new Set()).add(visit.fires[k]))
+        })
+    })
+    const nonLive = new Set<number>()
+    for (const [ c, within ] of recurs)
+        if (!leaving.has(c))
+            fired.forEach((i) => {
+                if (!within.has(i))
+                    nonLive.add(i)
+            })
+    return nonLive
+}
+
 /*  validate a graph model as a Petri net, with the kinds of all of its
     nodes made explicit, analyze every connected part of it, with the
     results attached to its nodes as their tooltips, and mark its dead and
@@ -289,8 +323,6 @@ export const prepare = (input: Graph, _containment: Containment, config: Config)
             and the first (hence a shortest-reached) marking in which a place
             holds a token in a deadlock or grows without bound (with the
             predecessor marking it covers, as the firings in between pump it)  */
-        interface Visit { m: number[], up?: Visit, via?: number, next: number[], fires: number[],
-            pumps?: Map<number, Visit> }
         const queue: Visit[] = [ { m: initial, next: [], fires: [] } ]
         const known = new Map([ [ initial.join(","), 0 ] ])
         const fired = new Set<number>()
@@ -306,11 +338,11 @@ export const prepare = (input: Graph, _containment: Containment, config: Config)
                 if (n === Infinity && !grown.has(p))
                     grown.set(p, queue[q])
             })
-            let live = false
+            let progress = false
             for (let i = 0; i < trans.length && complete; i++) {
                 if (!enabled(m, i))
                     continue
-                live = true
+                progress = true
                 fired.add(i)
                 const next = m.slice()
                 for (const [ p, d ] of effects[i])
@@ -364,7 +396,7 @@ export const prepare = (input: Graph, _containment: Containment, config: Config)
                 queue[q].next.push(known.get(key)!)
                 queue[q].fires.push(i)
             }
-            if (!live)
+            if (!progress)
                 m.forEach((n, p) => {
                     if (n > 0 && feeding.has(p) && !stuck.has(p))
                         stuck.set(p, queue[q])
@@ -395,34 +427,10 @@ export const prepare = (input: Graph, _containment: Containment, config: Config)
                 (from.up !== undefined ? `, after: ${firingsOf(from)}` : "")
         }
 
-        /*  a transition firing at all is not live if it cannot fire again
-            once the net has entered a recurring behavior without it, i.e.,
-            if it fires nowhere within some terminal group of markings (a
-            strongly connected component of the reachability graph, only
-            available for a completely explored bounded part, no transition
-            leading out of), which holds a firing (as a deadlock is caught
-            by the dead-end places already)  */
-        const bounded  = complete && most.every((n) => n !== Infinity)
-        const nonLive  = new Set<number>()
-        if (bounded) {
-            const comp     = componentsOf(queue.map((visit) => visit.next))
-            const leaving  = new Set<number>()
-            const recurs   = new Map<number, Set<number>>()
-            queue.forEach((visit, v) => {
-                visit.next.forEach((w, k) => {
-                    if (comp[w] !== comp[v])
-                        leaving.add(comp[v])
-                    else
-                        recurs.set(comp[v], (recurs.get(comp[v]) ?? new Set()).add(visit.fires[k]))
-                })
-            })
-            for (const [ c, within ] of recurs)
-                if (!leaving.has(c))
-                    fired.forEach((i) => {
-                        if (!within.has(i))
-                            nonLive.add(i)
-                    })
-        }
+        /*  the transitions not being live (only determinable for a
+            completely explored bounded part)  */
+        const bounded = complete && most.every((n) => n !== Infinity)
+        const nonLive = bounded ? nonLiveOf(queue, fired) : new Set<number>()
 
         /*  attach the analysis results as tooltips (with the firing sequences
             reaching a deadlock or letting a place grow without bound, and a
@@ -566,3 +574,4 @@ export const render = async (input: Graph, config: Config, level: LevelContext =
         { ...defaultStyleOf(node), title: infos.get(node.id) }
     return { ...layout, polys, styleOf, twoway: layout.edges.map((edge) => twoway.has(edge)) }
 }
+

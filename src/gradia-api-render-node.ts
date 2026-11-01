@@ -291,8 +291,8 @@ export const measureNodes = (
         const h     = MIN_H(config) + (lines.name.length - 1) * NAME_H(config) +
             lines.type.length * TYPE_H(config) +
             (lines.attrs.length > 0 ? ATTR_P + (lines.attrs.length - 1) * ATTR_H(config) + ATTR_B : 0)
-        const bw = Math.max(config["size-node-width-min"], Math.ceil(w) + PAD_W * 2 + badgeRoom(node, config))
-        const bh = Math.max(h, Math.ceil(h * scaleOf(node)))
+        const bw    = Math.max(config["size-node-width-min"], Math.ceil(w) + PAD_W * 2 + badgeRoom(node, config))
+        const bh    = Math.max(h, Math.ceil(h * scaleOf(node)))
 
         /*  a multiple node claims the room of the copies behind its front box  */
         const multi = isMultiple(node) ? MULTI_OFF : 0

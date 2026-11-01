@@ -138,12 +138,12 @@ export const render = async (graph: Graph, config: Config, level: LevelContext =
     const headH    = Math.max(FS_GROUP, numbered ? NUMBER_R * 2 : 0)
     const top      = bounds.minY - pad - headH - pad
     const bottom   = bounds.maxY + pad
+    const mid      = top + pad + headH / 2
     const shapes: Shape[] = []
     const x1Of = (i: number) => boxL[i]  - BAND_MARGIN
     const x2Of = (i: number) => right[i] + BAND_MARGIN
     slices.forEach((name, i) => {
         const [ x1, x2 ] = [ x1Of(i), x2Of(i) ]
-        const mid = top + pad + headH / 2
         shapes.push(rectShape(x1, top, x2 - x1, bottom - top, "color-container-border", 2,
             undefined, "color-container-box", 12))
         const { label, fs, w } = fitLabel(name, x2 - x1 - 2 * CLUSTER_PAD - numberW, FS_GROUP, 0.6, true)

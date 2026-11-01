@@ -14,8 +14,7 @@ import { Poly, Layout, Box, Styler, escapeXML }             from "./gradia-api-r
 import { defaultStyleOf, markOf, markedStyleOf, isDormant, parentOf }
     from "./gradia-api-render-node.js"
 import { computeHops, piecesOf, pathOf, junctionsOf }       from "./gradia-api-render-path.js"
-import { labelPlacer, arityBoxes, renderEdgeArity, stubLabels, arrivalLabels, portLabels, renderEdgeName,
-    nameText }
+import { labelPlacer, arityBoxes, renderEdgeArity, stubLabels, arrivalLabels, portLabels, renderEdgeName, nameText }
     from "./gradia-api-render-label.js"
 import { renderNode, renderGroup, renderContainer, renderShape }
     from "./gradia-api-render-element.js"
@@ -94,6 +93,87 @@ const discMarker = (id: string, cls: string): string[] => [
     `<circle cx="5" cy="5" r="4.2" class="${cls}"/>`,
     "</marker>"
 ]
+
+/*  generate the SVG fragments for the edge labels, placed collision-free
+    through the given label placer  */
+const renderLabels = (layout: Layout, config: Config, styler: Styler,
+    { claim, seize, reserve }: Omit<ReturnType<typeof labelPlacer>, "occupied">,
+    violates: (i: number) => boolean,
+    { into, outOf, grouped, repeat }: { into: Map<number, number[]>, outOf: Map<number, number[]>,
+        grouped: Set<number>, repeat: Set<number> }): string[] => {
+    const { nodes, edges, polys } = layout
+    const styleOf = layout.styleOf ?? defaultStyleOf
+
+    /*  reserve the position every arity label prefers -- the one beside
+        its own arrow head -- before any name label is placed, as an
+        arity is bound to that arrow while a name may slide along the
+        whole route: a name hence yields the reserved area wherever it
+        has an alternative, and only a name left without one takes it
+        and pushes its arity onto the next setback  */
+    const arities = edges.map((edge, i) =>
+        edge.arity !== undefined && !repeat.has(i) ? arityBoxes(edge.arity, polys[i], config) : undefined)
+    for (const candidates of arities)
+        if (candidates !== undefined)
+            reserve(candidates[0])
+
+    /*  generate the SVG fragments for the edge labels (the names
+        first, as their reservations keep the arity positions free),
+        where every unbundled name first takes its anchor (see
+        "arrivalLabels"), before any name searches a position of its own:
+        all names an anchor crossed by no other line, the remaining ones an
+        anchor crossed by a single line, and only a name without a free
+        anchor searches along its route (the name of an edge leaving a
+        choice or junction, i.e. its guard, is anchored at its start instead)  */
+    const svgLabels: string[] = []
+    const stubAt = stubLabels(layout, config)
+    const placed = edges.map(() => false)
+    const byId   = new Map(nodes.map((node) => [ node.id, node ]))
+    const leads  = (i: number): boolean => {
+        const node  = byId.get(edges[i].source)
+        const shape = node !== undefined ? styleOf(node).shape : undefined
+        return shape === "choice" || shape === "junction"
+    }
+    const clear = (i: number, box: Box): boolean =>
+        polys[i].every((p, k) => k < 2
+            || Math.max(p[0], polys[i][k - 1][0]) < box[0] || Math.min(p[0], polys[i][k - 1][0]) > box[2]
+            || Math.max(p[1], polys[i][k - 1][1]) < box[1] || Math.min(p[1], polys[i][k - 1][1]) > box[3])
+    for (const cross of [ 0, 1 ]) {
+        edges.forEach((edge, i) => {
+            if (placed[i] || layout.bundled?.[i] === true || layout.centered === true)
+                return
+            const lead   = leads(i)
+            const anchor = (lead ? portLabels(edge, polys[i], false, config).filter((box) => clear(i, box)) :
+                arrivalLabels(edge, polys[i], config)).find((box) => seize(box, i, cross))
+            if (anchor === undefined)
+                return
+            svgLabels.push(...nameText(edge, anchor, styler, violates(i),
+                anchor[2] <= polys[i][lead ? 0 : polys[i].length - 1][0] ? "end" : "start",
+                layout.transitions === true))
+            placed[i] = true
+        })
+    }
+    edges.forEach((edge, i) => {
+        if (placed[i])
+            return
+        const name = (preferred?: Box[], mates?: number[]) =>
+            svgLabels.push(...renderEdgeName(edge, polys[i],
+                (c, dodge) => claim(c, i, dodge, undefined, mates),
+                styler, config, violates(i), preferred, layout.transitions === true))
+        if (!grouped.has(i))
+            name(stubAt.get(i))
+        if (into.has(i))
+            name(portLabels(edge, polys[i], true, config), into.get(i))
+        if (outOf.has(i))
+            name(portLabels(edge, polys[i], false, config), outOf.get(i))
+    })
+    edges.forEach((edge, i) => {
+        const candidates = arities[i]
+        if (candidates !== undefined)
+            svgLabels.push(...renderEdgeArity(edge, candidates,
+                (c, dodge, own) => claim(c, i, dodge, own), styler, violates(i)))
+    })
+    return svgLabels
+}
 
 /*  render a laid out graph into an SVG document (the seed determines the
     identifier prefix of the document, see "idPrefix" above)  */
@@ -182,12 +262,8 @@ export const renderSVG = (layout: Layout, config: Config, explicit: Partial<Conf
     const junctionAt = new Set(junctions.map(([ x, y ]) => `${x}:${y}`))
     const junction   = junctionAt.size > 0 ? (x: number, y: number) => junctionAt.has(`${x}:${y}`) : undefined
     const groupsAt = (end: (poly: Poly) => [ number, number ]): Map<number, number[]> => {
-        const byPort = new Map<string, number[]>()
-        polys.forEach((poly, i) => {
-            const key = end(poly).join(":")
-            if (layout.bundled?.[i] === true)
-                byPort.set(key, [ ...byPort.get(key) ?? [], i ])
-        })
+        const bundled = Array.from(polys.keys()).filter((i) => layout.bundled?.[i] === true)
+        const byPort  = Map.groupBy(bundled, (i) => end(polys[i]).join(":"))
         return new Map(Array.from(byPort.values()).filter((l) => l.length > 1).map((l) => [ l[0], l ]))
     }
     const into    = groupsAt((poly) => poly[poly.length - 1])
@@ -220,7 +296,9 @@ export const renderSVG = (layout: Layout, config: Config, explicit: Partial<Conf
         `stroke: ${color("color-edge-line")}; stroke-width: 1.6`) : ""
     const classDiscAlert = discs && alerted ? classOf(`fill: ${color("color-edge-halo")}; ` +
         `stroke: ${color("color-mark-violation")}; stroke-width: 1.6`) : ""
-    const head      = (i: number) => violates(i) ? (disc(i) ? idDiscAlert : idAlert) :
+
+    /*  generate the SVG fragments for the edge paths, ending in their markers  */
+    const head     = (i: number) => violates(i) ? (disc(i) ? idDiscAlert : idAlert) :
         disc(i) ? idDisc : hollow(i) ? idOpen : idArrow
     const svgEdges = piecesOf(polys, layout.bundled).flatMap((pieces, i) => pieces.map((piece) =>
         `<path d="${pathOf(polys[i], hops[i], config["size-edge-corner-radius"], config["size-edge-hop-radius"],
@@ -240,74 +318,9 @@ export const renderSVG = (layout: Layout, config: Config, explicit: Partial<Conf
         return `<circle cx="${x}" cy="${y}" r="${JUNCTION_R}" class="${marked ? classAlertArrow : classArrow}"/>`
     })
 
-    /*  reserve the position every arity label prefers -- the one beside
-        its own arrow head -- before any name label is placed, as an
-        arity is bound to that arrow while a name may slide along the
-        whole route: a name hence yields the reserved area wherever it
-        has an alternative, and only a name left without one takes it
-        and pushes its arity onto the next setback  */
-    const arities = edges.map((edge, i) =>
-        edge.arity !== undefined && !repeat.has(i) ? arityBoxes(edge.arity, polys[i], config) : undefined)
-    for (const candidates of arities)
-        if (candidates !== undefined)
-            reserve(candidates[0])
-
-    /*  generate the SVG fragments for the edge labels (the names
-        first, as their reservations keep the arity positions free),
-        where every unbundled name first takes its anchor (see
-        "arrivalLabels"), before any name searches a position of its own:
-        all names an anchor crossed by no other line, the remaining ones an
-        anchor crossed by a single line, and only a name without a free
-        anchor searches along its route (the name of an edge leaving a
-        choice or junction, i.e. its guard, is anchored at its start instead)  */
-    const svgLabels: string[] = []
-    const stubAt = stubLabels(layout, config)
-    const placed = edges.map(() => false)
-    const byId   = new Map(nodes.map((node) => [ node.id, node ]))
-    const leads  = (i: number): boolean => {
-        const node  = byId.get(edges[i].source)
-        const shape = node !== undefined ? styleOf(node).shape : undefined
-        return shape === "choice" || shape === "junction"
-    }
-    const clear = (i: number, box: Box): boolean =>
-        polys[i].every((p, k) => k < 2
-            || Math.max(p[0], polys[i][k - 1][0]) < box[0] || Math.min(p[0], polys[i][k - 1][0]) > box[2]
-            || Math.max(p[1], polys[i][k - 1][1]) < box[1] || Math.min(p[1], polys[i][k - 1][1]) > box[3])
-    for (const cross of [ 0, 1 ]) {
-        edges.forEach((edge, i) => {
-            if (placed[i] || layout.bundled?.[i] === true || layout.centered === true)
-                return
-            const lead   = leads(i)
-            const anchor = (lead ? portLabels(edge, polys[i], false, config).filter((box) => clear(i, box)) :
-                arrivalLabels(edge, polys[i], config)).find((box) => seize(box, i, cross))
-            if (anchor === undefined)
-                return
-            svgLabels.push(...nameText(edge, anchor, styler, violates(i),
-                anchor[2] <= polys[i][lead ? 0 : polys[i].length - 1][0] ? "end" : "start",
-                layout.transitions === true))
-            placed[i] = true
-        })
-    }
-    edges.forEach((edge, i) => {
-        if (placed[i])
-            return
-        const name = (preferred?: Box[], mates?: number[]) =>
-            svgLabels.push(...renderEdgeName(edge, polys[i],
-                (c, dodge) => claim(c, i, dodge, undefined, mates),
-                styler, config, violates(i), preferred, layout.transitions === true))
-        if (!grouped.has(i))
-            name(stubAt.get(i))
-        if (into.has(i))
-            name(portLabels(edge, polys[i], true, config), into.get(i))
-        if (outOf.has(i))
-            name(portLabels(edge, polys[i], false, config), outOf.get(i))
-    })
-    edges.forEach((edge, i) => {
-        const candidates = arities[i]
-        if (candidates !== undefined)
-            svgLabels.push(...renderEdgeArity(edge, candidates,
-                (c, dodge, own) => claim(c, i, dodge, own), styler, violates(i)))
-    })
+    /*  generate the SVG fragments for the edge labels  */
+    const svgLabels = renderLabels(layout, config, styler, { claim, seize, reserve }, violates,
+        { into, outOf, grouped, repeat })
 
     /*  generate the SVG fragments for the node boxes (with their marking,
         and grouped with their optional tooltip)  */

@@ -6,6 +6,7 @@
 
 /*  internal dependencies  */
 import { Node, Edge }                        from "./gradia-api-model.js"
+import { pushTo }                            from "./gradia-api-render-base.js"
 import { GateSide }                          from "./gradia-api-render-container.js"
 
 /*  grid clustering constants  */
@@ -76,15 +77,6 @@ export const snapToGrid = (
     return { col, row, ncols: colReps.length, nrows: rowReps.length }
 }
 
-/*  append a value to the array stored under a key of a multi-map  */
-export const pushTo = <K, V>(map: Map<K, V[]>, key: K, value: V): void => {
-    const list = map.get(key)
-    if (list === undefined)
-        map.set(key, [ value ])
-    else
-        list.push(value)
-}
-
 /*  refine the row assignment: the raw Dagre ordering tends to fling
     low-degree nodes far away from their neighbors, so pull every
     node vertically toward the median row of its direct neighbors,
@@ -117,6 +109,7 @@ export const refineRows = (
             continue
         const rows    = nb.map((id) => row.get(id)!).sort((a, b) => a - b)
         const desired = rows[Math.floor((rows.length - 1) / 2)]
+        const c       = col.get(node.id)!
         const cur     = row.get(node.id)!
         const dist    = Math.abs(desired - cur)
         if (dist === 0)
@@ -125,7 +118,7 @@ export const refineRows = (
         let target: number
         if (dist === 1) {
             const aligns = nb.some((id) => row.get(id) === desired
-                && Math.abs(col.get(id)! - col.get(node.id)!) === 1)
+                && Math.abs(col.get(id)! - c) === 1)
             if (!aligns)
                 continue
             target = desired
@@ -133,9 +126,9 @@ export const refineRows = (
         else
             target = cur + dir * Math.ceil(dist / 2)
         for (let r = target; r !== cur; r -= dir) {
-            if (!cells.has(`${col.get(node.id)}:${r}`)) {
-                cells.delete(`${col.get(node.id)}:${cur}`)
-                cells.add(`${col.get(node.id)}:${r}`)
+            if (!cells.has(`${c}:${r}`)) {
+                cells.delete(`${c}:${cur}`)
+                cells.add(`${c}:${r}`)
                 row.set(node.id, r)
                 break
             }

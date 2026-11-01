@@ -31,16 +31,10 @@ import { render as renderGantt }                   from "./gradia-api-type-gantt
 export type { Attr, Node, Edge, EdgeKind, EdgeType, Graph } from "./gradia-api-model.js"
 export type { Config }                                      from "./gradia-api-config.js"
 
-/*  the supported diagram types, their renderers, whether they lay out
-    the members of a container, whether they let the edges crossing a
-    container boundary continue to the inner nodes, the edge kinds they
-    render besides the synchronous default, whether they render the edge
-    timings (or the edge durations only), and whether they render the edge
-    types, plus their own defaults of the rendering options (a
-    tree, e.g., wraps its node texts by default to stay narrow, and a
-    state machine or Petri net folds its columns later, as it reads as a
-    flow) and their own preparation of the whole graph model (a state
-    machine or Petri net, e.g., is validated and analyzed as a whole)  */
+/*  the supported diagram types and their specifications (see
+    "DiagramTypeSpec"), e.g. their own defaults of the rendering options
+    (a tree wraps its node texts by default to stay narrow, and a state
+    machine or Petri net folds its columns later, as it reads as a flow)  */
 const renderers = {
     graph:    { render: renderGraph,    nestable: true,  gated: true  },
     hub:      { render: renderHub,      nestable: true,  gated: false },
@@ -82,7 +76,8 @@ const parseTypeDirective = (input: string): DiagramType | undefined => {
     their default, keeping the identifiers of all older diagrams stable  */
 const seedLate = new Set<string>([ "color-mark-violation", "color-mark-critical", "color-composite-border",
     "color-node-pseudo-name", "color-node-pseudo-box", "color-node-pseudo-border",
-    "color-node-place-name", "color-node-place-box", "color-node-place-border", "mark-violation", "layer-numbered", "slice-numbered",
+    "color-node-place-name", "color-node-place-box", "color-node-place-border",
+    "mark-violation", "layer-numbered", "slice-numbered",
     "sequence-column-gap", "sequence-message-gap", "tree-level-gap", "tree-sibling-gap", "tree-row-max",
     "tree-stack-min", "tree-stack-double", "tree-node-width-equal", "tree-horizontal", "gantt-unit-width",
     "gantt-unit-name", "gantt-critical" ])
@@ -111,10 +106,10 @@ export class Gradia {
     }
 
     /*  generate an SVG document or data URL from a graph model
-        (the rendering configuration is layered: defaults, then the
-        explicit config options; the directly embedded options become
-        hard-coded values when explicitly configured and CSS custom
-        property lookups "--gradia-<option>" otherwise)  */
+        (the rendering configuration is layered: general defaults, diagram
+        type defaults, then the explicit config options; the directly
+        embedded options become hard-coded values when explicitly configured
+        and CSS custom property lookups "--gradia-<option>" otherwise)  */
     static async generate (graph: Graph, options: DiagramOptions = {}): Promise<string> {
         /*  determine and validate the diagram type and output format  */
         const type   = options.type ?? diagramTypeDefault
