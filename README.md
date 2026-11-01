@@ -18,25 +18,15 @@ textual input language, as SVG diagrams. Eleven diagram types are supported whic
 of visualizing object graphs:
 
 - **graph**: a loosely grid-snapped layered layout of the whole graph.
-
 - **hub**: a graph variant, placing one primary hub node between its input and output nodes.
-
 - **tree**: a tree of nodes, connecting every parent with its children.
-
 - **sequence**: a sequence diagram of actors and their messages.
-
 - **state**: a state machine of states and transitions.
-
 - **petri**: a *Petri net* of places, holding tokens, and transitions between the places.
-
 - **layer**: a graph, stacking its node layers as horizontal bands.
-
 - **slice**: a graph, lining up its node slices as vertical bands.
-
 - **matrix**: a dependency structure matrix, counting the edges between its rows and columns.
-
 - **gantt**: a *Gantt chart* of scheduled tasks and their dependencies.
-
 - **grid**: an edge-less graph, consisting of a compact grid of nodes.
 
 Examples
