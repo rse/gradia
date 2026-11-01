@@ -72,18 +72,6 @@ Here are examples of the graph diagram renderings:
 
   ![sample-hub-crowded](smp/sample-hub-crowded.svg)
 
-- [sample-grid-regular](smp/sample-grid-regular.txt) (grid of tiles):
-
-  ![sample-grid-regular](smp/sample-grid-regular.svg)
-
-- [sample-layer-regular](smp/sample-layer-regular.txt) (layered architecture with clusters and violations):
-
-  ![sample-layer-regular](smp/sample-layer-regular.svg)
-
-- [sample-slice-regular](smp/sample-slice-regular.txt) (sliced architecture with clusters and violations):
-
-  ![sample-slice-regular](smp/sample-slice-regular.svg)
-
 - [sample-tree-regular](smp/sample-tree-regular.txt) (tree with bus connectors and a cross link):
 
   ![sample-tree-regular](smp/sample-tree-regular.svg)
@@ -95,14 +83,6 @@ Here are examples of the graph diagram renderings:
 - [sample-tree-double](smp/sample-tree-double.txt) (tree with partial and two-sided stacks and cross links):
 
   ![sample-tree-double](smp/sample-tree-double.svg)
-
-- [sample-matrix-regular](smp/sample-matrix-regular.txt) (acyclic dependency structure matrix in explicit order):
-
-  ![sample-matrix-regular](smp/sample-matrix-regular.svg)
-
-- [sample-matrix-full](smp/sample-matrix-full.txt) (dependency structure matrix with clusters, cycles, and badges):
-
-  ![sample-matrix-full](smp/sample-matrix-full.svg)
 
 - [sample-sequence-regular](smp/sample-sequence-regular.txt) (sequence diagram):
 
@@ -128,6 +108,22 @@ Here are examples of the graph diagram renderings:
 
   ![sample-petri-violations](smp/sample-petri-violations.svg)
 
+- [sample-layer-regular](smp/sample-layer-regular.txt) (layered architecture with clusters and violations):
+
+  ![sample-layer-regular](smp/sample-layer-regular.svg)
+
+- [sample-slice-regular](smp/sample-slice-regular.txt) (sliced architecture with clusters and violations):
+
+  ![sample-slice-regular](smp/sample-slice-regular.svg)
+
+- [sample-matrix-regular](smp/sample-matrix-regular.txt) (acyclic dependency structure matrix in explicit order):
+
+  ![sample-matrix-regular](smp/sample-matrix-regular.svg)
+
+- [sample-matrix-full](smp/sample-matrix-full.txt) (dependency structure matrix with clusters, cycles, and badges):
+
+  ![sample-matrix-full](smp/sample-matrix-full.svg)
+
 - [sample-gantt-regular](smp/sample-gantt-regular.txt) (Gantt chart with clusters, milestones, all dependency types, a lag, a lead, and the critical path):
 
   ![sample-gantt-regular](smp/sample-gantt-regular.svg)
@@ -135,6 +131,10 @@ Here are examples of the graph diagram renderings:
 - [sample-gantt-full](smp/sample-gantt-full.txt) (Gantt charts of two groups with nested clusters, explicit order, an earliest start, badges, and a named time unit):
 
   ![sample-gantt-full](smp/sample-gantt-full.svg)
+
+- [sample-grid-regular](smp/sample-grid-regular.txt) (grid of tiles):
+
+  ![sample-grid-regular](smp/sample-grid-regular.svg)
 
 Playground
 ----------
