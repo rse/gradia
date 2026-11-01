@@ -169,7 +169,7 @@ No test target is defined.
 ## CLI Command
 
 ```
-gradia [-t graph|hub|grid|layer|slice|tree|matrix|sequence|state|petri|gantt] [-f <format>] [-c <name>=<value>] -o <file>.svg <graph>.txt
+gradia [-t graph|hub|tree|sequence|state|petri|layer|slice|matrix|gantt|grid] [-f <format>] [-c <name>=<value>] -o <file>.svg <graph>.txt
 ```
 
 Both the `-o`/`--output` option and the input file argument are

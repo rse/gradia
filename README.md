@@ -144,7 +144,7 @@ Usage
 -----
 
 ```sh
-$ gradia [-t graph|hub|grid|layer|slice|tree|matrix|sequence|state|petri|gantt] [-f <format>] [-c <name>=<value>] -o <file>.svg <graph>.txt
+$ gradia [-t graph|hub|tree|sequence|state|petri|layer|slice|matrix|gantt|grid] [-f <format>] [-c <name>=<value>] -o <file>.svg <graph>.txt
 ```
 
 The diagram type is selected with the `-t` command-line option or, when
@@ -161,7 +161,7 @@ MCP Service
 -----------
 
 ```sh
-$ gradia --mcp [-t graph|hub|grid|layer|slice|tree|matrix|sequence|state|petri|gantt] [-f <format>] [-c <name>=<value>]
+$ gradia --mcp [-t graph|hub|tree|sequence|state|petri|layer|slice|matrix|gantt|grid] [-f <format>] [-c <name>=<value>]
 ```
 
 With the `-m`/`--mcp` option, **Gradia** instead runs as a [Model Context
@@ -229,7 +229,7 @@ separated by `|`.
 <directive>      ::= "#config" <whitespace> { <whitespace> } <option> <whitespace> { <whitespace> } ( <string> | <word> )
                    | "#type" <whitespace> { <whitespace> } <type>
 <option>         ::= <lowercase-letter> { <lowercase-letter> | <digit> | "-" }
-<type>           ::= "graph" | "hub" | "grid" | "layer" | "slice" | "tree" | "matrix" | "sequence" | "state" | "petri" | "gantt"
+<type>           ::= "graph" | "hub" | "tree" | "sequence" | "state" | "petri" | "layer" | "slice" | "matrix" | "gantt" | "grid"
 <word>           ::= <char> - <whitespace> { <char> - <whitespace> }
 <newline>        ::= "\n"
 <whitespace>     ::= " " | "\t" | "\r"
@@ -961,8 +961,8 @@ The diagram type `gantt` draws a Gantt chart of a project plan.
 
 ### Directives
 
-A `#type` directive sets the diagram type (`graph`, `hub`, `grid`,
-`layer`, `slice`, `tree`, `matrix`, `sequence`, `state`, `petri`, or `gantt`), which otherwise is
+A `#type` directive sets the diagram type (`graph`, `hub`, `tree`,
+`sequence`, `state`, `petri`, `layer`, `slice`, `matrix`, `gantt`, or `grid`), which otherwise is
 settable through the `-t`/`--type` command-line option (which takes
 precedence).
 The last occurrence wins and an invalid type is silently ignored.
